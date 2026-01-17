@@ -106,7 +106,7 @@ export async function generateStaticParams() {
     .select('country, slug')
     .eq('status', 'published')
 
-  return (resorts || []).map((resort) => ({
+  return ((resorts || []) as { country: string; slug: string }[]).map((resort) => ({
     country: resort.country.toLowerCase().replace(/\s+/g, '-'),
     slug: resort.slug,
   }))
