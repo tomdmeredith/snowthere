@@ -1,0 +1,14 @@
+# Nixpacks configuration for Railway deployment
+# Ensures Python 3.11+ and correct dependency installation
+
+[phases.setup]
+nixPkgs = ["python311", "python311Packages.pip"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[phases.build]
+# No build step needed for Python
+
+[start]
+cmd = "python cron.py"
