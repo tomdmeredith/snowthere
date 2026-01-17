@@ -53,14 +53,17 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
 
   if (error || !resort) return null
 
+  // Cast resort to a known type for spreading
+  const resortData = resort as Record<string, unknown>
+
   // Transform the passes relation
   const transformedResort = {
-    ...resort,
+    ...resortData,
     family_metrics: resort.family_metrics,
     content: resort.content,
     costs: resort.costs,
-    calendar: resort.calendar || [],
-    passes: (resort.passes || []).map((p: any) => ({
+    calendar: (resort.calendar as unknown[]) || [],
+    passes: ((resort.passes as unknown[]) || []).map((p: any) => ({
       ...p.pass,
       access_type: p.access_type,
     })),
