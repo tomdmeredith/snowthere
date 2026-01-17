@@ -1,0 +1,181 @@
+#!/usr/bin/env python
+"""Railway cron entry point for daily content generation.
+
+This is the file Railway calls on schedule.
+
+Usage:
+    # Full daily pipeline (default: up to 4 resorts)
+    python cron.py
+
+    # Custom max resorts
+    python cron.py --max-resorts 2
+
+    # Dry run (see what would happen without doing it)
+    python cron.py --dry-run
+
+    # Single resort (manual trigger)
+    python cron.py --resort "Zermatt" --country "Switzerland"
+
+Railway Configuration:
+    In railway.toml or dashboard:
+    - Command: python cron.py
+    - Schedule: 0 8 * * * (8am UTC daily)
+
+Environment Variables Required:
+    SUPABASE_URL
+    SUPABASE_SERVICE_KEY
+    ANTHROPIC_API_KEY
+    EXA_API_KEY
+    SERPAPI_API_KEY
+    TAVILY_API_KEY
+"""
+
+import argparse
+import json
+import sys
+from datetime import datetime
+
+from pipeline import run_daily_pipeline, run_single_resort
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Snowthere autonomous content generation pipeline"
+    )
+
+    parser.add_argument(
+        "--max-resorts",
+        type=int,
+        default=4,
+        help="Maximum resorts to process (default: 4)",
+    )
+
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Log what would happen without executing",
+    )
+
+    parser.add_argument(
+        "--resort",
+        type=str,
+        help="Process a single specific resort",
+    )
+
+    parser.add_argument(
+        "--country",
+        type=str,
+        help="Country for single resort (required with --resort)",
+    )
+
+    parser.add_argument(
+        "--no-publish",
+        action="store_true",
+        help="Skip auto-publishing (save as drafts)",
+    )
+
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output results as JSON",
+    )
+
+    args = parser.parse_args()
+
+    # Validate args
+    if args.resort and not args.country:
+        parser.error("--country is required when using --resort")
+
+    # Run appropriate mode
+    if args.resort:
+        # Single resort mode
+        print(f"\n{'='*60}")
+        print(f"SINGLE RESORT MODE: {args.resort}, {args.country}")
+        print(f"{'='*60}\n")
+
+        result = run_single_resort(
+            resort_name=args.resort,
+            country=args.country,
+            auto_publish=not args.no_publish,
+        )
+
+    else:
+        # Daily pipeline mode
+        print(f"\n{'='*60}")
+        print(f"DAILY PIPELINE - {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
+        print(f"Max resorts: {args.max_resorts} | Dry run: {args.dry_run}")
+        print(f"{'='*60}\n")
+
+        result = run_daily_pipeline(
+            max_resorts=args.max_resorts,
+            dry_run=args.dry_run,
+        )
+
+    # Output results
+    if args.json:
+        print(json.dumps(result, indent=2, default=str))
+    else:
+        print_human_readable(result, single_resort=bool(args.resort))
+
+    # Exit with appropriate code
+    if result.get("status") in ("completed", "published", "draft", "dry_run_complete"):
+        sys.exit(0)
+    else:
+        sys.exit(1)
+
+
+def print_human_readable(result: dict, single_resort: bool = False):
+    """Print results in a human-readable format."""
+    print(f"\n{'='*60}")
+    print("RESULTS")
+    print(f"{'='*60}\n")
+
+    print(f"Status: {result.get('status', 'unknown').upper()}")
+
+    if single_resort:
+        # Single resort output
+        print(f"Confidence: {result.get('confidence', 'N/A')}")
+        print(f"Resort ID: {result.get('resort_id', 'N/A')}")
+
+        if result.get("stages"):
+            print("\nStages:")
+            for stage, info in result["stages"].items():
+                status = info if isinstance(info, str) else info.get("status", "unknown")
+                print(f"  - {stage}: {status}")
+
+        if result.get("error"):
+            print(f"\nError: {result['error']}")
+
+    else:
+        # Daily pipeline output
+        summary = result.get("summary", {})
+
+        print(f"Duration: {summary.get('duration', 'N/A')}")
+        print(f"Daily Spend: {summary.get('daily_spend', 'N/A')}")
+        print(f"\nStrategy: {summary.get('overall_strategy', 'N/A')}")
+
+        print(f"\nResults:")
+        print(f"  Published: {summary.get('published', 0)}")
+        print(f"  Drafts: {summary.get('drafts', 0)}")
+        print(f"  Failed: {summary.get('failed', 0)}")
+
+        if result.get("resorts_processed"):
+            print("\nResorts Processed:")
+            for resort in result["resorts_processed"]:
+                status_emoji = {
+                    "published": "✓",
+                    "draft": "○",
+                    "failed": "✗",
+                    "error": "✗",
+                }.get(resort.get("status"), "?")
+
+                confidence = resort.get("confidence")
+                conf_str = f" ({confidence:.2f})" if confidence else ""
+
+                print(f"  {status_emoji} {resort['resort']}, {resort['country']}{conf_str}")
+
+    print(f"\n{'='*60}\n")
+
+
+if __name__ == "__main__":
+    main()

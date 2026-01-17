@@ -1,0 +1,19 @@
+{
+  "name": "family-ski-directory",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
+    "start": "pnpm --filter web start",
+    "lint": "pnpm --filter web lint",
+    "db:migrate": "supabase db push",
+    "db:seed": "supabase db seed",
+    "pipeline:run": "tsx scripts/run-pipeline.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "typescript": "^5.3.0"
+  }
+}

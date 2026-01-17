@@ -1,0 +1,34 @@
+# Core Framework
+fastapi>=0.109.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# HTTP Client
+httpx>=0.26.0
+
+# AI & Content
+anthropic>=0.40.0
+
+# Database
+supabase>=2.3.0
+
+# Research APIs
+exa-py>=1.0.0
+tavily-python>=0.3.0
+# Note: Brave Search uses direct HTTP calls via httpx (no SDK needed)
+# Replaced google-search-results (SerpAPI) with Brave - simpler, user already has key
+
+# MCP Server (Model Context Protocol)
+mcp>=1.0.0
+
+# Environment
+python-dotenv>=1.0.0
+
+# Scheduling
+apscheduler>=3.10.0
+
+# Dev dependencies (optional)
+# pytest>=8.0.0
+# pytest-asyncio>=0.23.0
+# ruff>=0.1.0

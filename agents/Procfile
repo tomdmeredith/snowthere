@@ -1,0 +1,6 @@
+# Railway Procfile for running agents
+# Each agent runs as a separate process
+
+research: uvicorn research_resort.main:app --host 0.0.0.0 --port ${PORT:-8001}
+generate: uvicorn generate_guide.main:app --host 0.0.0.0 --port ${PORT:-8002}
+optimize: uvicorn optimize_for_geo.main:app --host 0.0.0.0 --port ${PORT:-8003}
