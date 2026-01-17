@@ -1,0 +1,25 @@
+# Railway configuration for Snowthere agents cron job
+# Documentation: https://docs.railway.app/deploy/config-as-code
+
+[build]
+builder = "nixpacks"
+watchPatterns = ["*.py", "**/*.py", "requirements.txt"]
+
+[deploy]
+# Number of replicas (cron jobs should only have 1)
+numReplicas = 1
+
+# Start command for the cron job
+startCommand = "python cron.py"
+
+# Healthcheck disabled for cron jobs (they run and exit)
+healthcheckPath = ""
+
+# Restart policy - on-failure for cron jobs
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[cron]
+# Run daily at 8am UTC (during low-traffic hours for ski sites)
+# Cron format: minute hour day month day-of-week
+schedule = "0 8 * * *"
