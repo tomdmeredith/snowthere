@@ -53,23 +53,33 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
 
   if (error || !resort) return null
 
-  // Cast resort to a known type for spreading
-  const resortData = resort as Record<string, unknown>
+  // Cast resort to any to avoid TypeScript spread issues with Supabase's complex return type
+  const resortData = resort as any
 
   // Transform the passes relation
-  const transformedResort = {
-    ...resortData,
-    family_metrics: resort.family_metrics,
-    content: resort.content,
-    costs: resort.costs,
-    calendar: (resort.calendar as unknown[]) || [],
-    passes: ((resort.passes as unknown[]) || []).map((p: any) => ({
+  const transformedResort: ResortWithDetails = {
+    id: resortData.id,
+    slug: resortData.slug,
+    name: resortData.name,
+    country: resortData.country,
+    region: resortData.region,
+    latitude: resortData.latitude,
+    longitude: resortData.longitude,
+    status: resortData.status,
+    created_at: resortData.created_at,
+    updated_at: resortData.updated_at,
+    last_refreshed: resortData.last_refreshed,
+    family_metrics: resortData.family_metrics,
+    content: resortData.content,
+    costs: resortData.costs,
+    calendar: resortData.calendar || [],
+    passes: (resortData.passes || []).map((p: any) => ({
       ...p.pass,
       access_type: p.access_type,
     })),
   }
 
-  return transformedResort as ResortWithDetails
+  return transformedResort
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
