@@ -38,7 +38,70 @@ from datetime import datetime
 from pipeline import run_daily_pipeline, run_single_resort
 
 
+def validate_environment():
+    """Validate all required environment variables and connections.
+
+    This runs BEFORE any pipeline work to fail fast on configuration issues.
+    Previously, the pipeline would run (incurring API costs) then fail silently
+    when trying to save to Supabase.
+    """
+    from shared.config import settings
+    from shared.supabase_client import get_supabase_client
+
+    print("Validating environment...")
+    errors = []
+
+    # Check required env vars
+    required_vars = [
+        ("SUPABASE_URL", settings.supabase_url),
+        ("SUPABASE_SERVICE_KEY", settings.supabase_service_key),
+        ("ANTHROPIC_API_KEY", settings.anthropic_api_key),
+    ]
+
+    # Check optional but important vars
+    optional_vars = [
+        ("EXA_API_KEY", settings.exa_api_key),
+        ("BRAVE_API_KEY", getattr(settings, "brave_api_key", None)),
+        ("TAVILY_API_KEY", settings.tavily_api_key),
+    ]
+
+    for name, value in required_vars:
+        if not value:
+            errors.append(f"Missing required env var: {name}")
+
+    if errors:
+        print("❌ STARTUP VALIDATION FAILED:")
+        for e in errors:
+            print(f"  - {e}")
+        sys.exit(1)
+
+    # Warn about missing optional vars
+    for name, value in optional_vars:
+        if not value:
+            print(f"⚠️  Warning: {name} not set (some research features may be limited)")
+
+    # Test Supabase connection
+    try:
+        client = get_supabase_client()
+        # Connection test is built into get_supabase_client now
+        print("✓ Supabase connection verified")
+    except ValueError as e:
+        print(f"❌ Configuration error: {e}")
+        sys.exit(1)
+    except ConnectionError as e:
+        print(f"❌ Supabase connection failed: {e}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error connecting to Supabase: {e}")
+        sys.exit(1)
+
+    print("✓ Environment validation passed\n")
+
+
 def main():
+    # Validate environment FIRST - fail fast before incurring API costs
+    validate_environment()
+
     parser = argparse.ArgumentParser(
         description="Snowthere autonomous content generation pipeline"
     )
@@ -118,9 +181,20 @@ def main():
         print_human_readable(result, single_resort=bool(args.resort))
 
     # Exit with appropriate code
-    if result.get("status") in ("completed", "published", "draft", "dry_run_complete"):
+    status = result.get("status", "unknown")
+    success_statuses = ("completed", "published", "draft", "dry_run_complete")
+    partial_statuses = ("partial_failure",)  # Some succeeded
+    failure_statuses = ("all_failed", "failed", "error", "no_content")
+
+    if status in success_statuses:
+        sys.exit(0)
+    elif status in partial_statuses:
+        # Some succeeded, some failed - exit 0 but log warning
+        print("⚠️  Pipeline completed with some failures")
         sys.exit(0)
     else:
+        # All failed or unknown status
+        print(f"❌ Pipeline failed with status: {status}")
         sys.exit(1)
 
 

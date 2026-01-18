@@ -1,34 +1,51 @@
 """Supabase client for database operations."""
 
-from functools import lru_cache
-
 from supabase import Client, create_client
 
 from .config import settings
 
 
-@lru_cache
+# Module-level client instance (replaces @lru_cache which caches errors)
+_supabase_client: Client | None = None
+
+
 def get_supabase_client() -> Client:
-    """Get cached Supabase client instance."""
-    return create_client(
-        settings.supabase_url,
-        settings.supabase_service_key,
-    )
+    """Get Supabase client instance with proper error handling.
+
+    Unlike @lru_cache, this approach:
+    - Allows retry on connection failure (clears _supabase_client on error)
+    - Validates credentials before attempting connection
+    - Verifies the connection actually works
+
+    Raises:
+        ValueError: If SUPABASE_URL or SUPABASE_SERVICE_KEY are not set
+        ConnectionError: If connection to Supabase fails
+    """
+    global _supabase_client
+
+    if _supabase_client is not None:
+        return _supabase_client
+
+    if not settings.supabase_url or not settings.supabase_service_key:
+        raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set")
+
+    try:
+        _supabase_client = create_client(
+            settings.supabase_url,
+            settings.supabase_service_key,
+        )
+        # Verify connection works by making a simple query
+        _supabase_client.table("resorts").select("id").limit(1).execute()
+        return _supabase_client
+    except Exception as e:
+        _supabase_client = None  # Clear so retry is possible
+        raise ConnectionError(f"Failed to connect to Supabase: {e}") from e
 
 
-# Type aliases for common operations
-def get_resort_by_slug(slug: str, country: str) -> dict | None:
-    """Fetch a resort by slug and country."""
-    client = get_supabase_client()
-    response = (
-        client.table("resorts")
-        .select("*")
-        .eq("slug", slug)
-        .eq("country", country)
-        .single()
-        .execute()
-    )
-    return response.data if response.data else None
+def reset_supabase_client() -> None:
+    """Reset the cached client (useful for testing or reconnection)."""
+    global _supabase_client
+    _supabase_client = None
 
 
 def get_resort_with_details(resort_id: str) -> dict | None:

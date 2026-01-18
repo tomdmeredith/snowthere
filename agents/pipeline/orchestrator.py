@@ -65,7 +65,7 @@ def run_daily_pipeline(
     }
 
     log_reasoning(
-        task_id=run_id,
+        task_id=None,  # Orchestrator-level logging, not tied to queue task
         agent_name="orchestrator",
         action="daily_pipeline_start",
         reasoning=f"Starting daily pipeline. Max resorts: {max_resorts}. Dry run: {dry_run}",
@@ -79,11 +79,11 @@ def run_daily_pipeline(
     remaining_budget = settings.daily_budget_limit - daily_spend
 
     log_reasoning(
-        task_id=run_id,
+        task_id=None,
         agent_name="orchestrator",
         action="budget_check",
         reasoning=f"Daily spend: ${daily_spend:.2f}. Remaining: ${remaining_budget:.2f}",
-        metadata={"daily_spend": daily_spend, "remaining": remaining_budget},
+        metadata={"run_id": run_id, "daily_spend": daily_spend, "remaining": remaining_budget},
     )
 
     # Need at least $1.50 for one resort
@@ -95,10 +95,11 @@ def run_daily_pipeline(
         }
 
         log_reasoning(
-            task_id=run_id,
+            task_id=None,
             agent_name="orchestrator",
             action="pipeline_stopped",
             reasoning="Daily budget exhausted - stopping pipeline",
+            metadata={"run_id": run_id},
         )
 
         return digest
@@ -107,10 +108,11 @@ def run_daily_pipeline(
     # STEP 2: Generate Context
     # =========================================================================
     log_reasoning(
-        task_id=run_id,
+        task_id=None,
         agent_name="orchestrator",
         action="generating_context",
         reasoning="Gathering system context for resort selection",
+        metadata={"run_id": run_id},
     )
 
     context = generate_context()
@@ -119,13 +121,14 @@ def run_daily_pipeline(
     # STEP 3: Ask Claude to Pick Resorts
     # =========================================================================
     log_reasoning(
-        task_id=run_id,
+        task_id=None,
         agent_name="orchestrator",
         action="picking_resorts",
         reasoning=f"Asking Claude to select up to {max_resorts} resorts to research",
+        metadata={"run_id": run_id},
     )
 
-    selection = pick_resorts_to_research(max_resorts=max_resorts, task_id=run_id)
+    selection = pick_resorts_to_research(max_resorts=max_resorts, task_id=None)
 
     if selection.get("error"):
         digest["status"] = "selection_failed"
@@ -138,15 +141,15 @@ def run_daily_pipeline(
     resorts_to_process = selection.get("resorts", [])
 
     log_reasoning(
-        task_id=run_id,
+        task_id=None,
         agent_name="orchestrator",
         action="resorts_selected",
         reasoning=selection.get("overall_reasoning", "No reasoning provided"),
-        metadata={"resorts": resorts_to_process},
+        metadata={"run_id": run_id, "resorts": resorts_to_process},
     )
 
     # Log the cost of the selection call (~$0.01 for Sonnet)
-    log_cost("anthropic", 0.01, run_id, {"stage": "resort_selection"})
+    log_cost("anthropic", 0.01, None, {"run_id": run_id, "stage": "resort_selection"})
 
     if dry_run:
         digest["status"] = "dry_run_complete"
@@ -170,21 +173,22 @@ def run_daily_pipeline(
         country = resort_info.get("country")
 
         log_reasoning(
-            task_id=run_id,
+            task_id=None,
             agent_name="orchestrator",
             action="processing_resort",
             reasoning=f"Processing resort {i+1}/{len(resorts_to_process)}: {resort_name}, {country}",
-            metadata={"resort": resort_name, "country": country, "index": i},
+            metadata={"run_id": run_id, "resort": resort_name, "country": country, "index": i},
         )
 
         # Check budget before each resort
         current_spend = get_daily_spend()
         if current_spend + 1.5 > settings.daily_budget_limit:
             log_reasoning(
-                task_id=run_id,
+                task_id=None,
                 agent_name="orchestrator",
                 action="budget_limit_reached",
                 reasoning=f"Budget limit reached mid-pipeline. Processed {i} of {len(resorts_to_process)} resorts.",
+                metadata={"run_id": run_id},
             )
             break
 
@@ -193,7 +197,7 @@ def run_daily_pipeline(
             result = run_resort_pipeline(
                 resort_name=resort_name,
                 country=country,
-                task_id=f"{run_id}-{i}",
+                task_id=None,  # No queue task - run_id tracked in metadata
                 auto_publish=True,
             )
 
@@ -217,11 +221,11 @@ def run_daily_pipeline(
 
         except Exception as e:
             log_reasoning(
-                task_id=run_id,
+                task_id=None,
                 agent_name="orchestrator",
                 action="resort_error",
                 reasoning=f"Error processing {resort_name}: {e}",
-                metadata={"resort": resort_name, "error": str(e)},
+                metadata={"run_id": run_id, "resort": resort_name, "error": str(e)},
             )
 
             results.append({
@@ -243,12 +247,26 @@ def run_daily_pipeline(
     duration = (completed_at - started_at).total_seconds()
     final_spend = get_daily_spend()
 
-    digest["status"] = "completed"
+    # Determine actual status based on outcomes
+    # This is CRITICAL - don't report "completed" when everything failed
+    total_attempted = len(results)
+    if total_attempted == 0:
+        status = "no_resorts"
+    elif failed_count == total_attempted:
+        status = "all_failed"
+    elif failed_count > 0:
+        status = "partial_failure"
+    elif published_count == 0 and draft_count == 0:
+        status = "no_content"
+    else:
+        status = "completed"
+
+    digest["status"] = status
     digest["completed_at"] = completed_at.isoformat()
     digest["duration_seconds"] = duration
     digest["resorts_processed"] = results
     digest["summary"] = {
-        "total_attempted": len(resorts_to_process),
+        "total_attempted": total_attempted,
         "published": published_count,
         "drafts": draft_count,
         "failed": failed_count,
@@ -257,12 +275,14 @@ def run_daily_pipeline(
         "overall_strategy": selection.get("overall_reasoning"),
     }
 
+    # Log with appropriate severity
+    log_action = "pipeline_complete" if status == "completed" else f"pipeline_{status}"
     log_reasoning(
-        task_id=run_id,
+        task_id=None,
         agent_name="orchestrator",
-        action="pipeline_complete",
-        reasoning=f"Daily pipeline complete. Published: {published_count}, Drafts: {draft_count}, Failed: {failed_count}. Total spend: ${final_spend:.2f}",
-        metadata=digest["summary"],
+        action=log_action,
+        reasoning=f"Daily pipeline {status}. Published: {published_count}, Drafts: {draft_count}, Failed: {failed_count}. Total spend: ${final_spend:.2f}",
+        metadata={**digest["summary"], "run_id": run_id, "status": status},
     )
 
     return digest
@@ -286,18 +306,19 @@ def run_single_resort(
     Returns:
         Pipeline result
     """
-    task_id = str(uuid4())
+    run_id = str(uuid4())
 
     log_reasoning(
-        task_id=task_id,
+        task_id=None,
         agent_name="orchestrator",
         action="manual_trigger",
         reasoning=f"Manual pipeline trigger for {resort_name}, {country}",
+        metadata={"run_id": run_id},
     )
 
     return run_resort_pipeline(
         resort_name=resort_name,
         country=country,
-        task_id=task_id,
+        task_id=None,  # No queue task for manual triggers
         auto_publish=auto_publish,
     )
