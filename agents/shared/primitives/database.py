@@ -92,10 +92,11 @@ def get_resort_by_slug(slug: str, country: str) -> dict | None:
         .select("*")
         .eq("slug", slug)
         .eq("country", country)
-        .single()
+        .limit(1)
         .execute()
     )
-    return response.data
+    # Return first result or None if no matches
+    return response.data[0] if response.data else None
 
 
 def create_resort(

@@ -34,13 +34,14 @@ def log_cost(
     }
 
     # Insert into agent_audit_log with action type 'cost'
+    # task_id can be None for costs not tied to a specific queue task
     audit_data = {
         "id": str(uuid4()),
-        "task_id": task_id or "system",
+        "task_id": task_id,
         "agent_name": "cost_tracker",
         "action": "api_cost",
         "reasoning": f"API call to {api_name} cost ${amount_usd:.4f}",
-        "metadata": data,
+        "input_data": data,  # Use input_data to match schema
     }
 
     response = client.table("agent_audit_log").insert(audit_data).execute()
@@ -63,11 +64,14 @@ def log_reasoning(
 
     data = {
         "id": str(uuid4()),
+        # task_id can be None for orchestrator-level logging (not tied to a queue task)
+        # The database schema allows NULL task_id
         "task_id": task_id,
         "agent_name": agent_name,
         "action": action,
         "reasoning": reasoning,
-        "metadata": metadata or {},
+        # Use input_data for metadata since that's what the schema has
+        "input_data": metadata or {},
     }
 
     response = client.table("agent_audit_log").insert(data).execute()
@@ -181,7 +185,7 @@ def get_daily_spend() -> float:
 
     response = (
         client.table("agent_audit_log")
-        .select("metadata")
+        .select("input_data")  # Schema uses input_data, not metadata
         .eq("action", "api_cost")
         .gte("created_at", f"{today}T00:00:00")
         .execute()
@@ -189,18 +193,24 @@ def get_daily_spend() -> float:
 
     total = 0.0
     for row in response.data or []:
-        metadata = row.get("metadata", {})
-        total += metadata.get("amount_usd", 0)
+        input_data = row.get("input_data", {})
+        total += input_data.get("amount_usd", 0)
 
     return total
 
 
-def check_budget(required_usd: float, daily_limit: float = 5.0) -> bool:
+def check_budget(required_usd: float, daily_limit: float | None = None) -> bool:
     """
     Check if we have budget for an operation.
 
     Returns True if we can proceed, False if we'd exceed budget.
+    Uses settings.daily_budget_limit if no limit specified.
     """
+    from ..config import settings
+
+    if daily_limit is None:
+        daily_limit = settings.daily_budget_limit
+
     current_spend = get_daily_spend()
     return (current_spend + required_usd) <= daily_limit
 
@@ -407,7 +417,7 @@ def get_cost_breakdown(days: int = 7) -> dict[str, Any]:
 
     response = (
         client.table("agent_audit_log")
-        .select("metadata, created_at")
+        .select("input_data, created_at")  # Schema uses input_data, not metadata
         .eq("action", "api_cost")
         .order("created_at", desc=True)
         .execute()
@@ -420,9 +430,9 @@ def get_cost_breakdown(days: int = 7) -> dict[str, Any]:
     }
 
     for row in response.data or []:
-        metadata = row.get("metadata", {})
-        amount = metadata.get("amount_usd", 0)
-        api_name = metadata.get("api_name", "unknown")
+        input_data = row.get("input_data", {})
+        amount = input_data.get("amount_usd", 0)
+        api_name = input_data.get("api_name", "unknown")
         date = row.get("created_at", "")[:10]  # Extract date portion
 
         breakdown["total_usd"] += amount

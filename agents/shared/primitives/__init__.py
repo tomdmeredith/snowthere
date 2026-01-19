@@ -3,12 +3,13 @@
 Following Agent Native principles, these primitives are the atomic building
 blocks that enable agents to achieve any outcome a human editor can.
 
-Organized into four categories:
+Organized into six categories:
 - Research: Information gathering from external sources
 - Content: AI-powered content generation
 - Database: CRUD operations for resorts, passes, metrics
 - Publishing: Publication lifecycle and page revalidation
 - System: Queue management, cost tracking, audit logging
+- Intelligence: LLM-based reasoning and decision-making
 """
 
 # Research primitives
@@ -95,6 +96,147 @@ from .system import (
     clear_completed_tasks,
 )
 
+# Intelligence primitives (Agent Native reasoning)
+from .intelligence import (
+    # Data quality
+    assess_data_quality,
+    QualityAssessment,
+    # Schema extraction
+    synthesize_to_schema,
+    # Decision making
+    make_decision,
+    Decision,
+    # Prioritization
+    prioritize_items,
+    PrioritizedItem,
+    # Error handling
+    handle_error_intelligently,
+    ErrorHandling,
+    # Learning
+    learn_from_outcome,
+    LearningOutcome,
+)
+
+# Quality audit primitives
+from .quality import (
+    # Enums and data classes
+    IssueSeverity,
+    IssueType,
+    QualityIssue,
+    AuditResult,
+    # Formula-based checks
+    check_staleness,
+    check_low_confidence,
+    check_completeness,
+    get_resorts_needing_audit,
+    get_stale_resorts_count,
+    # Audit logging
+    log_quality_issue,
+    log_audit_run,
+    get_recent_quality_issues,
+    # Helpers
+    calculate_fix_priority,
+    batch_issues_for_fix,
+    # Constants
+    REQUIRED_CONTENT_SECTIONS,
+    OPTIONAL_CONTENT_SECTIONS,
+)
+
+# Trail map primitives
+from .trail_map import (
+    # Data classes
+    PisteData,
+    LiftData,
+    TrailMapResult,
+    TrailMapQuality,
+    TrailDifficulty,
+    # Main functions
+    get_trail_map,
+    search_resort_location,
+    get_difficulty_breakdown,
+    search_official_trail_map,
+    has_trail_map_data,
+    # Helpers
+    calculate_bbox,
+)
+
+# Image generation primitives (3-tier fallback)
+from .images import (
+    # Enums and data classes
+    ImageType,
+    ImageProvider,
+    AspectRatio,
+    ImageResult,
+    # Prompt helpers
+    get_resort_prompt,
+    VIBE_PROMPTS,
+    # Provider functions
+    generate_with_gemini,
+    generate_with_glif,
+    generate_with_replicate,
+    # Main fallback function
+    generate_image_with_fallback,
+    provider_configured,
+    # Resort-specific generation
+    generate_resort_hero_image,
+    generate_resort_atmosphere_image,
+    generate_resort_image_set,
+    # Database operations
+    save_resort_image,
+    get_resort_images,
+    get_resort_hero_image,
+    delete_resort_images,
+    # Storage
+    upload_image_to_storage,
+)
+
+# UGC Photos primitives (Google Places API)
+from .ugc_photos import (
+    # Data classes
+    PhotoCategory,
+    UGCPhoto,
+    UGCPhotoResult,
+    # Google Places functions
+    find_place_id,
+    get_place_details,
+    fetch_place_photo,
+    # Main functions
+    fetch_ugc_photos,
+    fetch_and_store_ugc_photos,
+    get_ugc_photos_for_resort,
+    # Vision classification
+    classify_photo_with_vision,
+)
+
+# Linking primitives (Similar resorts, internal links)
+from .linking import (
+    # Constants
+    SIMILARITY_WEIGHTS,
+    PRICE_TIERS,
+    REGION_GROUPS,
+    LinkType,
+    # Data classes
+    SimilarityResult,
+    SimilarResort,
+    InternalLink,
+    # Similarity calculation
+    calculate_similarity,
+    store_similarity,
+    get_similar_resorts,
+    get_similarity_score,
+    # Internal links
+    create_internal_link,
+    get_internal_links,
+    generate_anchor_text,
+    # Batch operations
+    calculate_similarities_for_resort,
+    generate_links_for_resort,
+    refresh_all_similarities,
+    # Utilities
+    get_shared_features,
+    delete_stale_similarities,
+)
+
 __all__ = [
     # Research
     "exa_search",
@@ -163,4 +305,121 @@ __all__ = [
     "list_queue",
     "get_queue_stats",
     "clear_completed_tasks",
+    # Intelligence - Data quality
+    "assess_data_quality",
+    "QualityAssessment",
+    # Intelligence - Schema extraction
+    "synthesize_to_schema",
+    # Intelligence - Decision making
+    "make_decision",
+    "Decision",
+    # Intelligence - Prioritization
+    "prioritize_items",
+    "PrioritizedItem",
+    # Intelligence - Error handling
+    "handle_error_intelligently",
+    "ErrorHandling",
+    # Intelligence - Learning
+    "learn_from_outcome",
+    "LearningOutcome",
+    # Quality - Enums and data classes
+    "IssueSeverity",
+    "IssueType",
+    "QualityIssue",
+    "AuditResult",
+    # Quality - Formula-based checks
+    "check_staleness",
+    "check_low_confidence",
+    "check_completeness",
+    "get_resorts_needing_audit",
+    "get_stale_resorts_count",
+    # Quality - Audit logging
+    "log_quality_issue",
+    "log_audit_run",
+    "get_recent_quality_issues",
+    # Quality - Helpers
+    "calculate_fix_priority",
+    "batch_issues_for_fix",
+    # Quality - Constants
+    "REQUIRED_CONTENT_SECTIONS",
+    "OPTIONAL_CONTENT_SECTIONS",
+    # Trail map - Data classes
+    "PisteData",
+    "LiftData",
+    "TrailMapResult",
+    "TrailMapQuality",
+    "TrailDifficulty",
+    # Trail map - Main functions
+    "get_trail_map",
+    "search_resort_location",
+    "get_difficulty_breakdown",
+    "search_official_trail_map",
+    "has_trail_map_data",
+    # Trail map - Helpers
+    "calculate_bbox",
+    # Image generation - Enums and data classes
+    "ImageType",
+    "ImageProvider",
+    "AspectRatio",
+    "ImageResult",
+    # Image generation - Prompt helpers
+    "get_resort_prompt",
+    "VIBE_PROMPTS",
+    # Image generation - Provider functions
+    "generate_with_gemini",
+    "generate_with_glif",
+    "generate_with_replicate",
+    # Image generation - Main fallback function
+    "generate_image_with_fallback",
+    "provider_configured",
+    # Image generation - Resort-specific
+    "generate_resort_hero_image",
+    "generate_resort_atmosphere_image",
+    "generate_resort_image_set",
+    # Image generation - Database operations
+    "save_resort_image",
+    "get_resort_images",
+    "get_resort_hero_image",
+    "delete_resort_images",
+    # Image generation - Storage
+    "upload_image_to_storage",
+    # UGC Photos - Data classes
+    "PhotoCategory",
+    "UGCPhoto",
+    "UGCPhotoResult",
+    # UGC Photos - Google Places functions
+    "find_place_id",
+    "get_place_details",
+    "fetch_place_photo",
+    # UGC Photos - Main functions
+    "fetch_ugc_photos",
+    "fetch_and_store_ugc_photos",
+    "get_ugc_photos_for_resort",
+    # UGC Photos - Vision classification
+    "classify_photo_with_vision",
+    # Linking - Constants
+    "SIMILARITY_WEIGHTS",
+    "PRICE_TIERS",
+    "REGION_GROUPS",
+    "LinkType",
+    # Linking - Data classes
+    "SimilarityResult",
+    "SimilarResort",
+    "InternalLink",
+    # Linking - Similarity calculation
+    "calculate_similarity",
+    "store_similarity",
+    "get_similar_resorts",
+    "get_similarity_score",
+    # Linking - Internal links
+    "create_internal_link",
+    "get_internal_links",
+    "generate_anchor_text",
+    # Linking - Batch operations
+    "calculate_similarities_for_resort",
+    "generate_links_for_resort",
+    "refresh_all_similarities",
+    # Linking - Utilities
+    "get_shared_features",
+    "delete_stale_similarities",
 ]

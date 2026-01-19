@@ -36,7 +36,21 @@ family-ski-directory/
 │   │   ├── config.py             # Pydantic settings
 │   │   ├── supabase_client.py    # Database operations
 │   │   ├── voice_profiles.py     # Content voices
-│   │   └── primitives/           # 50+ atomic primitives
+│   │   └── primitives/           # 63 atomic primitives
+│   │       ├── intelligence.py   # ⭐ NEW: 6 LLM-based primitives
+│   │       ├── research.py       # Exa/Brave/Tavily
+│   │       ├── content.py        # Claude content generation
+│   │       ├── database.py       # Resort CRUD
+│   │       ├── publishing.py     # Publication lifecycle
+│   │       └── system.py         # Queue, costs, logging
+│   │
+│   ├── agent_layer/              # ⭐ NEW: True Agent Infrastructure
+│   │   ├── base.py               # BaseAgent with think→act→observe
+│   │   ├── memory.py             # 3-tier memory system
+│   │   ├── tracer.py             # Observability/tracing
+│   │   ├── coordinator.py        # Agent-to-agent messaging
+│   │   ├── hooks.py              # Human intervention points
+│   │   └── agents/               # Concrete agent implementations (Phase 2)
 │   │
 │   ├── pipeline/                 # ⭐ CORE: Autonomous execution
 │   │   ├── orchestrator.py       # Daily pipeline coordination

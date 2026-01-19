@@ -7,7 +7,8 @@ import {
   GraduationCap,
   Ticket,
   Sparkles,
-  TreePine
+  TreePine,
+  BarChart3
 } from 'lucide-react'
 
 interface FamilyMetricsTableProps {
@@ -70,36 +71,58 @@ export function FamilyMetricsTable({ metrics }: FamilyMetricsTableProps) {
   ]
 
   return (
-    <section>
-      <h2 className="font-display text-2xl font-semibold text-slate-900 mb-6">
-        The Numbers
-      </h2>
+    <section id="the-numbers" className="space-y-6">
+      {/* Editorial Header */}
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 rounded-2xl bg-slate-100 border border-slate-200">
+          <BarChart3 className="w-5 h-5 text-slate-600" />
+        </div>
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="h-px w-4 bg-slate-300" />
+            <h2 className="font-display text-2xl font-semibold text-espresso-900">
+              The Numbers
+            </h2>
+          </div>
+          <p className="text-sm text-espresso-500 mt-0.5">What families need to know</p>
+        </div>
+      </div>
 
-      <div className="data-table">
+      {/* Soft card container */}
+      <div className="card bg-ivory-50/70 border-ivory-100 p-0 overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr>
-              <th className="rounded-tl-xl">Metric</th>
-              <th className="text-right rounded-tr-xl">Value</th>
+            <tr className="bg-ivory-100/50">
+              <th className="text-left px-5 py-3.5 text-xs font-medium uppercase tracking-wide text-espresso-500">
+                Metric
+              </th>
+              <th className="text-right px-5 py-3.5 text-xs font-medium uppercase tracking-wide text-espresso-500">
+                Value
+              </th>
             </tr>
           </thead>
-          <tbody>
-            {rows.map((row, i) => {
+          <tbody className="divide-y divide-ivory-100">
+            {rows.map((row) => {
               const Icon = row.icon
               return (
-                <tr key={row.label}>
-                  <td className="flex items-center gap-3">
-                    <span className={`p-2 rounded-lg ${row.highlight ? 'bg-glow-100' : 'bg-cream-100'}`}>
-                      <Icon className={`w-4 h-4 ${row.highlight ? 'text-glow-600' : 'text-slate-500'}`} />
-                    </span>
-                    <span className="font-medium text-slate-800">{row.label}</span>
+                <tr
+                  key={row.label}
+                  className={`transition-colors ${row.highlight ? 'bg-crimson-50/50' : 'hover:bg-ivory-50'}`}
+                >
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <span className={`p-2 rounded-xl ${row.highlight ? 'bg-crimson-100' : 'bg-white'} shadow-sm`}>
+                        <Icon className={`w-4 h-4 ${row.highlight ? 'text-crimson-600' : 'text-espresso-400'}`} />
+                      </span>
+                      <span className="font-medium text-espresso-800">{row.label}</span>
+                    </div>
                   </td>
-                  <td className="text-right">
-                    <span className={row.highlight ? 'highlight text-lg' : 'text-slate-700'}>
+                  <td className="text-right px-5 py-4">
+                    <span className={row.highlight ? 'font-semibold text-lg text-crimson-700' : 'text-espresso-700'}>
                       {row.value}
                     </span>
                     {row.subvalue && (
-                      <span className="block text-xs text-slate-500 mt-0.5">
+                      <span className="block text-xs text-espresso-400 mt-0.5">
                         {row.subvalue}
                       </span>
                     )}

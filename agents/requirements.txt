@@ -10,6 +10,10 @@ httpx>=0.26.0
 # AI & Content
 anthropic>=0.40.0
 
+# Image Generation (3-tier fallback)
+google-genai>=1.0.0     # Tier 1: Gemini (Flash/Pro models)
+replicate>=0.25.0        # Tier 3: Flux Schnell
+
 # Database
 supabase>=2.3.0
 

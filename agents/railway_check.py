@@ -1,174 +1,299 @@
 #!/usr/bin/env python
-"""Quick check of Railway environment configuration.
+"""Quick verification of Railway environment configuration.
 
 Run this script to verify all required environment variables are set
-and the Supabase connection works BEFORE running the full pipeline.
+and that connections to external services work.
 
 Usage:
-    python railway_check.py
+    python railway_check.py          # Full check with connection tests
+    python railway_check.py --quick  # Just check env vars, no connections
 
-Exit codes:
-    0 - All checks passed
-    1 - One or more checks failed
+This is useful for:
+- Debugging Railway deployment issues
+- Verifying environment before running pipeline
+- Quick health checks
 """
 
 import os
 import sys
-
-# Load .env file if present (for local development)
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass  # dotenv not installed, rely on system environment
+import argparse
 
 
-def check_environment():
-    """Check all required environment variables and connections."""
-    print("=" * 60)
-    print("RAILWAY ENVIRONMENT CHECK")
-    print("=" * 60)
-    print()
+def check_env_vars() -> list[str]:
+    """Check required environment variables are set.
 
-    errors = []
-    warnings = []
-
-    # Required environment variables
-    required_vars = [
-        "SUPABASE_URL",
-        "SUPABASE_SERVICE_KEY",
-        "ANTHROPIC_API_KEY",
+    Returns:
+        List of missing variable names
+    """
+    required = [
+        ("SUPABASE_URL", "Database connection"),
+        ("SUPABASE_SERVICE_KEY", "Database authentication"),
+        ("ANTHROPIC_API_KEY", "Claude AI access"),
     ]
 
-    # Optional but important
-    optional_vars = [
-        "EXA_API_KEY",
-        "BRAVE_API_KEY",
-        "TAVILY_API_KEY",
+    optional = [
+        ("EXA_API_KEY", "Semantic search"),
+        ("BRAVE_API_KEY", "Web search"),
+        ("TAVILY_API_KEY", "Web research"),
     ]
 
-    # Check required vars
-    print("Checking required environment variables...")
-    for var in required_vars:
+    missing_required = []
+
+    print("=" * 60)
+    print("ENVIRONMENT VARIABLE CHECK")
+    print("=" * 60)
+
+    print("\nRequired variables:")
+    for var, purpose in required:
         value = os.getenv(var)
         if value:
-            # Show partial value for verification (first 8 chars)
-            masked = value[:8] + "..." if len(value) > 8 else value
-            print(f"  ✓ {var}: {masked}")
+            # Mask the value for security
+            masked = value[:4] + "..." + value[-4:] if len(value) > 8 else "***"
+            print(f"  ✓ {var}: {masked} ({purpose})")
         else:
-            print(f"  ✗ {var}: NOT SET")
-            errors.append(f"Missing required: {var}")
-    print()
+            print(f"  ✗ {var}: NOT SET ({purpose})")
+            missing_required.append(var)
 
-    # Check optional vars
-    print("Checking optional environment variables...")
-    for var in optional_vars:
+    print("\nOptional variables:")
+    for var, purpose in optional:
         value = os.getenv(var)
         if value:
-            masked = value[:8] + "..." if len(value) > 8 else value
-            print(f"  ✓ {var}: {masked}")
+            masked = value[:4] + "..." + value[-4:] if len(value) > 8 else "***"
+            print(f"  ✓ {var}: {masked} ({purpose})")
         else:
-            print(f"  ⚠ {var}: NOT SET (some features may be limited)")
-            warnings.append(f"Missing optional: {var}")
-    print()
+            print(f"  ⚠ {var}: NOT SET ({purpose}) - some features may not work")
 
-    # If required vars are missing, stop here
-    if errors:
-        print("=" * 60)
-        print("ENVIRONMENT CHECK FAILED")
-        print("=" * 60)
-        print()
-        for error in errors:
-            print(f"  ✗ {error}")
-        print()
-        print("Please set these environment variables in Railway dashboard:")
-        print("  railway variables set VAR_NAME=value")
-        return False
+    return missing_required
 
-    # Test Supabase connection
-    print("Testing Supabase connection...")
+
+def test_supabase_connection() -> bool:
+    """Test Supabase database connection.
+
+    Returns:
+        True if connection works
+    """
+    print("\n" + "=" * 60)
+    print("SUPABASE CONNECTION TEST")
+    print("=" * 60)
+
     try:
-        # Import here so missing vars don't cause import errors
         from shared.supabase_client import get_supabase_client
 
+        print("\nConnecting to Supabase...")
         client = get_supabase_client()
 
-        # Test read operation
-        result = client.table("resorts").select("id, name, status").limit(5).execute()
-        print(f"  ✓ Connection successful")
-        print(f"  ✓ Found {len(result.data)} resorts in database")
+        # Test query
+        print("Running test query (SELECT id FROM resorts LIMIT 1)...")
+        result = client.table("resorts").select("id").limit(1).execute()
 
-        if result.data:
-            print("    Sample resorts:")
-            for resort in result.data[:3]:
-                print(f"      - {resort.get('name', 'Unknown')} ({resort.get('status', 'unknown')})")
+        print("  ✓ Connection successful")
+        print(f"  ✓ Test query returned {len(result.data)} row(s)")
 
-    except ValueError as e:
-        print(f"  ✗ Configuration error: {e}")
-        errors.append(f"Supabase config error: {e}")
-    except ConnectionError as e:
+        # Get resort count
+        count_result = client.table("resorts").select("id", count="exact").execute()
+        print(f"  ✓ Total resorts in database: {count_result.count}")
+
+        return True
+
+    except ImportError as e:
+        print(f"  ✗ Import error: {e}")
+        print("    Make sure you're running from the agents/ directory")
+        return False
+    except Exception as e:
         print(f"  ✗ Connection failed: {e}")
-        errors.append(f"Supabase connection error: {e}")
-    except Exception as e:
-        print(f"  ✗ Unexpected error: {e}")
-        errors.append(f"Supabase error: {e}")
-    print()
+        return False
 
-    # Test Anthropic connection (optional - just check key format)
-    print("Checking Anthropic API key format...")
-    anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
-    if anthropic_key.startswith("sk-ant-"):
-        print("  ✓ Anthropic API key format looks valid")
-    else:
-        print("  ⚠ Anthropic API key doesn't start with 'sk-ant-'")
-        warnings.append("Anthropic key format unusual")
-    print()
 
-    # Check budget settings
-    print("Checking budget configuration...")
+def test_anthropic_connection() -> bool:
+    """Test Anthropic API connection.
+
+    Returns:
+        True if connection works
+    """
+    print("\n" + "=" * 60)
+    print("ANTHROPIC API TEST")
+    print("=" * 60)
+
     try:
+        from anthropic import Anthropic
         from shared.config import settings
-        print(f"  ✓ Daily budget limit: ${settings.daily_budget_limit:.2f}")
+
+        print("\nInitializing Anthropic client...")
+        client = Anthropic(api_key=settings.anthropic_api_key)
+
+        print("Sending test message (simple ping)...")
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=10,
+            messages=[{"role": "user", "content": "Say 'OK' and nothing else."}]
+        )
+
+        reply = response.content[0].text if response.content else ""
+        print(f"  ✓ API responding: '{reply.strip()}'")
+        print(f"  ✓ Usage: {response.usage.input_tokens} in, {response.usage.output_tokens} out")
+
+        return True
+
+    except ImportError as e:
+        print(f"  ✗ Import error: {e}")
+        return False
     except Exception as e:
-        print(f"  ⚠ Could not read settings: {e}")
-        warnings.append(f"Settings error: {e}")
-    print()
+        print(f"  ✗ API call failed: {e}")
+        return False
+
+
+def test_research_apis() -> dict[str, bool]:
+    """Test research API connections (optional).
+
+    Returns:
+        Dict mapping API name to success boolean
+    """
+    print("\n" + "=" * 60)
+    print("RESEARCH APIS TEST (Optional)")
+    print("=" * 60)
+
+    results = {}
+
+    # Exa
+    exa_key = os.getenv("EXA_API_KEY")
+    if exa_key:
+        try:
+            import httpx
+            print("\nTesting Exa API...")
+            response = httpx.post(
+                "https://api.exa.ai/search",
+                headers={"x-api-key": exa_key},
+                json={"query": "test", "numResults": 1},
+                timeout=10.0,
+            )
+            if response.status_code == 200:
+                print("  ✓ Exa API working")
+                results["exa"] = True
+            else:
+                print(f"  ✗ Exa API returned {response.status_code}")
+                results["exa"] = False
+        except Exception as e:
+            print(f"  ✗ Exa API error: {e}")
+            results["exa"] = False
+    else:
+        print("\n  ⚠ Exa API: Skipped (no key)")
+        results["exa"] = None
+
+    # Brave
+    brave_key = os.getenv("BRAVE_API_KEY")
+    if brave_key:
+        try:
+            import httpx
+            print("\nTesting Brave API...")
+            response = httpx.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                headers={"X-Subscription-Token": brave_key},
+                params={"q": "test"},
+                timeout=10.0,
+            )
+            if response.status_code == 200:
+                print("  ✓ Brave API working")
+                results["brave"] = True
+            else:
+                print(f"  ✗ Brave API returned {response.status_code}")
+                results["brave"] = False
+        except Exception as e:
+            print(f"  ✗ Brave API error: {e}")
+            results["brave"] = False
+    else:
+        print("\n  ⚠ Brave API: Skipped (no key)")
+        results["brave"] = None
+
+    return results
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Verify Railway environment configuration"
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Quick mode: only check env vars, skip connection tests"
+    )
+    parser.add_argument(
+        "--skip-anthropic",
+        action="store_true",
+        help="Skip Anthropic API test (to avoid API costs)"
+    )
+    args = parser.parse_args()
+
+    print("\n" + "=" * 60)
+    print("RAILWAY ENVIRONMENT VERIFICATION")
+    print("=" * 60)
+    print(f"Mode: {'Quick (env vars only)' if args.quick else 'Full (with connection tests)'}")
+
+    # Step 1: Check environment variables
+    missing = check_env_vars()
+
+    if missing:
+        print("\n" + "=" * 60)
+        print("❌ REQUIRED VARIABLES MISSING")
+        print("=" * 60)
+        for var in missing:
+            print(f"  - {var}")
+        print("\nSet these variables in Railway dashboard or .env file.")
+        sys.exit(1)
+
+    if args.quick:
+        print("\n" + "=" * 60)
+        print("✓ QUICK CHECK PASSED")
+        print("=" * 60)
+        print("All required environment variables are set.")
+        print("Run without --quick to test actual connections.")
+        sys.exit(0)
+
+    # Step 2: Test Supabase connection
+    supabase_ok = test_supabase_connection()
+
+    # Step 3: Test Anthropic connection (optional)
+    if args.skip_anthropic:
+        print("\n⚠ Skipping Anthropic API test (--skip-anthropic)")
+        anthropic_ok = True
+    else:
+        anthropic_ok = test_anthropic_connection()
+
+    # Step 4: Test research APIs
+    research_results = test_research_apis()
 
     # Summary
+    print("\n" + "=" * 60)
+    print("SUMMARY")
     print("=" * 60)
-    if errors:
-        print("CHECK FAILED")
+
+    all_critical_ok = supabase_ok and anthropic_ok
+
+    print("\nCritical services:")
+    print(f"  Supabase:   {'✓ OK' if supabase_ok else '✗ FAILED'}")
+    print(f"  Anthropic:  {'✓ OK' if anthropic_ok else '✗ FAILED'}")
+
+    print("\nResearch APIs (optional):")
+    for api, status in research_results.items():
+        if status is None:
+            print(f"  {api.capitalize()}:  ⚠ Not configured")
+        elif status:
+            print(f"  {api.capitalize()}:  ✓ OK")
+        else:
+            print(f"  {api.capitalize()}:  ✗ FAILED")
+
+    if all_critical_ok:
+        print("\n" + "=" * 60)
+        print("✓ ALL CRITICAL CHECKS PASSED")
         print("=" * 60)
-        print()
-        print("Errors:")
-        for error in errors:
-            print(f"  ✗ {error}")
-        if warnings:
-            print()
-            print("Warnings:")
-            for warning in warnings:
-                print(f"  ⚠ {warning}")
-        return False
+        print("The pipeline should be able to run.")
+        sys.exit(0)
     else:
-        print("ALL CHECKS PASSED")
+        print("\n" + "=" * 60)
+        print("❌ CRITICAL CHECKS FAILED")
         print("=" * 60)
-        if warnings:
-            print()
-            print("Warnings (non-blocking):")
-            for warning in warnings:
-                print(f"  ⚠ {warning}")
-        print()
-        print("Environment is ready for pipeline execution.")
-        print("Run: python cron.py --dry-run")
-        return True
+        print("Fix the issues above before running the pipeline.")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
-    # Need to be in agents directory for imports to work
-    import pathlib
-    script_dir = pathlib.Path(__file__).parent
-    if script_dir.name == "agents":
-        os.chdir(script_dir)
-
-    success = check_environment()
-    sys.exit(0 if success else 1)
+    main()

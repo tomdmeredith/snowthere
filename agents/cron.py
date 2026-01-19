@@ -4,7 +4,7 @@
 This is the file Railway calls on schedule.
 
 Usage:
-    # Full daily pipeline (default: up to 4 resorts)
+    # Full daily pipeline (default: up to 4 resorts, Claude-based selection)
     python cron.py
 
     # Custom max resorts
@@ -16,9 +16,21 @@ Usage:
     # Single resort (manual trigger)
     python cron.py --resort "Zermatt" --country "Switzerland"
 
+    # Use mixed selection (discovery + stale + queue) instead of Claude
+    python cron.py --use-mixed-selection
+
+    # Run discovery before selection (finds new resort opportunities)
+    python cron.py --run-discovery
+
+    # Force discovery even if ran recently
+    python cron.py --run-discovery --force-discovery
+
+    # Full autonomous mode: discovery + mixed selection
+    python cron.py --run-discovery --use-mixed-selection
+
 Railway Configuration:
     In railway.toml or dashboard:
-    - Command: python cron.py
+    - Command: python cron.py --run-discovery --use-mixed-selection
     - Schedule: 0 8 * * * (8am UTC daily)
 
 Environment Variables Required:
@@ -143,6 +155,24 @@ def main():
         help="Output results as JSON",
     )
 
+    parser.add_argument(
+        "--use-mixed-selection",
+        action="store_true",
+        help="Use balanced selection from multiple sources (discovery, stale, queue) instead of Claude-based selection",
+    )
+
+    parser.add_argument(
+        "--run-discovery",
+        action="store_true",
+        help="Run discovery agent before selection to find new resort opportunities",
+    )
+
+    parser.add_argument(
+        "--force-discovery",
+        action="store_true",
+        help="Force discovery run even if it ran recently (requires --run-discovery)",
+    )
+
     args = parser.parse_args()
 
     # Validate args
@@ -164,14 +194,21 @@ def main():
 
     else:
         # Daily pipeline mode
+        selection_mode = "mixed" if args.use_mixed_selection else "claude"
+        discovery_mode = "enabled" if args.run_discovery else "disabled"
+
         print(f"\n{'='*60}")
         print(f"DAILY PIPELINE - {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}")
         print(f"Max resorts: {args.max_resorts} | Dry run: {args.dry_run}")
+        print(f"Selection: {selection_mode} | Discovery: {discovery_mode}")
         print(f"{'='*60}\n")
 
         result = run_daily_pipeline(
             max_resorts=args.max_resorts,
             dry_run=args.dry_run,
+            use_mixed_selection=args.use_mixed_selection,
+            run_discovery=args.run_discovery,
+            force_discovery=args.force_discovery,
         )
 
     # Output results
@@ -226,7 +263,26 @@ def print_human_readable(result: dict, single_resort: bool = False):
 
         print(f"Duration: {summary.get('duration', 'N/A')}")
         print(f"Daily Spend: {summary.get('daily_spend', 'N/A')}")
-        print(f"\nStrategy: {summary.get('overall_strategy', 'N/A')}")
+        print(f"Selection Method: {summary.get('selection_method', 'N/A')}")
+
+        # Show discovery result if available
+        discovery_result = result.get("discovery_result")
+        if discovery_result:
+            if discovery_result.get("skipped"):
+                print(f"Discovery: Skipped - {discovery_result.get('reason', 'N/A')}")
+            elif discovery_result.get("error"):
+                print(f"Discovery: Error - {discovery_result.get('reason', 'N/A')}")
+            else:
+                print(f"Discovery: Found {discovery_result.get('candidates_saved', 0)} new candidates")
+
+        print(f"\nSelection Reasoning: {summary.get('selection_reasoning', 'N/A')}")
+
+        # Show source breakdown if available
+        source_breakdown = summary.get("source_breakdown", {})
+        if source_breakdown:
+            print("\nSource Breakdown:")
+            for source, count in source_breakdown.items():
+                print(f"  - {source}: {count}")
 
         print(f"\nResults:")
         print(f"  Published: {summary.get('published', 0)}")
@@ -246,7 +302,10 @@ def print_human_readable(result: dict, single_resort: bool = False):
                 confidence = resort.get("confidence")
                 conf_str = f" ({confidence:.2f})" if confidence else ""
 
-                print(f"  {status_emoji} {resort['resort']}, {resort['country']}{conf_str}")
+                source = resort.get("source", "")
+                source_str = f" [{source}]" if source else ""
+
+                print(f"  {status_emoji} {resort['resort']}, {resort['country']}{conf_str}{source_str}")
 
     print(f"\n{'='*60}\n")
 

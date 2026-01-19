@@ -1,17 +1,30 @@
 import type { Metadata } from 'next'
-import { DM_Sans, Fraunces } from 'next/font/google'
+import { Plus_Jakarta_Sans, Fraunces, Caveat } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-const dmSans = DM_Sans({
+// CHALET Design System Typography
+// Plus Jakarta Sans - Swiss-inspired geometry with rounded terminals (body text, UI)
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
-  variable: '--font-dm-sans',
+  variable: '--font-plus-jakarta',
+  weight: ['300', '400', '500', '600', '700'],
   display: 'swap',
 })
 
+// Fraunces - Distinctive "wonky" serifs, editorial warmth (headlines, display)
 const fraunces = Fraunces({
   subsets: ['latin'],
   variable: '--font-fraunces',
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+})
+
+// Caveat - Handwritten warmth for personal moments (quotes, annotations)
+const caveat = Caveat({
+  subsets: ['latin'],
+  variable: '--font-caveat',
+  weight: ['400', '500', '600', '700'],
   display: 'swap',
 })
 
@@ -56,7 +69,7 @@ export default function RootLayout({
   const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
 
   return (
-    <html lang="en" className={`${dmSans.variable} ${fraunces.variable}`}>
+    <html lang="en" className={`${plusJakarta.variable} ${fraunces.variable} ${caveat.variable}`}>
       <head>
         {gaId && (
           <>
@@ -75,7 +88,7 @@ export default function RootLayout({
           </>
         )}
       </head>
-      <body className="font-sans">
+      <body className="font-sans bg-ivory-50 text-espresso-800">
         <div className="min-h-screen flex flex-col">
           {children}
         </div>

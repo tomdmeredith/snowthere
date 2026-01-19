@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { Button, Badge, ScoreBadge } from '@/components/ui'
 import {
   Mountain,
   MapPin,
@@ -12,6 +13,8 @@ import {
   Globe,
   Heart,
   Send,
+  Coffee,
+  Snowflake,
 } from 'lucide-react'
 
 async function getFeaturedResorts() {
@@ -35,144 +38,266 @@ export default async function HomePage() {
   const featuredResorts = await getFeaturedResorts()
 
   return (
-    <main className="min-h-screen bg-cream-50">
-      {/* Hero Section */}
-      <section className="hero relative overflow-hidden py-20 sm:py-28 lg:py-36">
-        {/* Decorative elements */}
-        <div className="absolute top-20 left-10 opacity-20">
-          <Mountain className="w-32 h-32 text-forest-200" />
+    <main className="min-h-screen bg-ivory-50">
+      {/* Navigation */}
+      <nav className="sticky top-0 z-50 bg-ivory-50/95 backdrop-blur-sm border-b border-ivory-200">
+        <div className="container-page">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="font-display text-2xl font-bold text-espresso-900">
+                Snowthere
+              </span>
+            </Link>
+
+            <div className="hidden sm:flex items-center gap-8">
+              <Link href="/resorts" className="nav-link text-sm">
+                Resorts
+              </Link>
+              <Link href="/guides" className="nav-link text-sm">
+                Guides
+              </Link>
+              <Link href="/about" className="nav-link text-sm">
+                About
+              </Link>
+            </div>
+
+            <Button size="sm" asChild>
+              <Link href="/resorts">Explore</Link>
+            </Button>
+          </div>
         </div>
-        <div className="absolute bottom-20 right-10 opacity-20">
-          <Sparkles className="w-24 h-24 text-glow-300" />
+      </nav>
+
+      {/* Hero Section - CHALET Editorial Magazine Style */}
+      <section className="relative overflow-hidden py-20 sm:py-28 lg:py-36">
+        {/* Soft gradient background - ivory with subtle warmth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-camel-100/30 via-ivory-50 to-ivory-100" />
+
+        {/* Decorative snowflakes - subtle, muted */}
+        <div className="absolute top-16 left-[15%] opacity-[0.06]">
+          <Snowflake className="w-24 h-24 text-slate-400 animate-float" style={{ animationDelay: '0s' }} />
+        </div>
+        <div className="absolute bottom-24 right-[10%] opacity-[0.06]">
+          <Snowflake className="w-16 h-16 text-camel-400 animate-float" style={{ animationDelay: '2s' }} />
+        </div>
+        <div className="absolute top-1/2 left-[5%] opacity-[0.04]">
+          <Snowflake className="w-12 h-12 text-slate-300 animate-float" style={{ animationDelay: '1s' }} />
         </div>
 
         <div className="container-page relative z-10">
-          <div className="mx-auto max-w-3xl text-center animate-in animate-in-1">
-            {/* Handwritten intro */}
-            <span className="font-accent text-2xl sm:text-3xl text-glow-300 block mb-4">
-              Your ski-obsessed friend who&apos;s done the research
-            </span>
+          <div className="mx-auto max-w-3xl text-center">
+            {/* Editorial accent - Swiss precision with warm camel tones */}
+            <div className="inline-flex items-center gap-3 mb-6 animate-in animate-in-1">
+              <span className="h-px w-10 bg-crimson-400" />
+              <span className="font-accent text-xl text-camel-600">
+                For ski families, by ski families
+              </span>
+              <span className="h-px w-10 bg-crimson-400" />
+            </div>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-cream-50">
-              Family Ski Adventures
-              <span className="block mt-2 text-glow-400">Made Simple</span>
+            {/* Fraunces display heading */}
+            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold tracking-tight text-espresso-800 leading-[1.1] animate-in animate-in-2">
+              The Family Ski Guide
+              <span className="block text-crimson-500 mt-2">You&apos;ll Actually Use</span>
             </h1>
 
-            <p className="mt-8 text-lg sm:text-xl leading-relaxed text-forest-200 max-w-2xl mx-auto">
-              Real talk from parents who&apos;ve been there. Find the perfect ski resort
-              for your family with honest guides, cost comparisons, and everything
-              you need to plan an amazing trip.
+            <p className="mt-8 text-lg sm:text-xl leading-relaxed text-espresso-600 max-w-2xl mx-auto animate-in animate-in-3">
+              Complete trip guides with childcare details, real costs, and
+              age-by-age terrain breakdowns. Because planning a ski trip with
+              kids shouldn&apos;t require a PhD.
             </p>
 
-            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/resorts" className="btn btn-primary px-8 py-4 text-lg">
-                Browse Resorts
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Link>
-              <Link
-                href="/guides"
-                className="btn btn-secondary px-8 py-4 text-lg"
-              >
-                Trip Planning Guides
-              </Link>
+            {/* CHALET Button components */}
+            <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-in animate-in-4">
+              <Button size="lg" asChild>
+                <Link href="/resorts" className="inline-flex items-center gap-2">
+                  Browse Resorts
+                  <ArrowRight className="w-5 h-5" />
+                </Link>
+              </Button>
+              <Button variant="ghost" size="lg" asChild>
+                <Link href="/guides">
+                  Trip Planning Guides
+                </Link>
+              </Button>
             </div>
 
-            {/* Trust badges */}
-            <div className="mt-12 flex flex-wrap items-center justify-center gap-6 text-forest-300 text-sm">
+            {/* Trust indicators - camel warm tones */}
+            <div className="mt-14 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-espresso-600 animate-in animate-in-5">
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-glow-400" />
-                <span>3000+ resorts worldwide</span>
+                <Globe className="w-4 h-4 text-camel-500" />
+                <span>3,000+ resorts</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-glow-400" />
-                <span>Family-tested advice</span>
+                <Heart className="w-4 h-4 text-crimson-400" />
+                <span>Family-focused guides</span>
               </div>
               <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-glow-400" />
-                <span>100% free guides</span>
+                <Sparkles className="w-4 h-4 text-pine-500" />
+                <span>100% free</span>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Value Proposition - The Big Insight */}
-      <section className="py-16 sm:py-24 bg-cream-100 border-y border-cream-200">
+      {/* The Value Story - Editorial Style */}
+      <section className="py-20 sm:py-28 bg-white border-y border-ivory-200">
         <div className="container-page">
-          <div className="mx-auto max-w-3xl text-center animate-in animate-in-2">
-            <span className="font-accent text-2xl text-glow-600">
-              Here&apos;s the thing...
+          <div className="mx-auto max-w-4xl">
+            {/* Editorial opener */}
+            <div className="text-center mb-16">
+              <span className="font-accent text-2xl text-camel-500 block mb-4">
+                The open secret
+              </span>
+              <h2 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight text-espresso-800 leading-tight">
+                A week in the Alps often costs less than
+                <span className="relative inline-block mx-2">
+                  <span className="relative z-10">a weekend at Vail</span>
+                  <span className="absolute bottom-1 left-0 right-0 h-3 bg-crimson-100 -z-10" />
+                </span>
+              </h2>
+            </div>
+
+            {/* Side-by-side comparison */}
+            <div className="grid md:grid-cols-2 gap-6 mb-12">
+              <div className="card bg-camel-50/50 border-camel-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-camel-100">
+                    <MapPin className="w-5 h-5 text-camel-600" />
+                  </div>
+                  <span className="font-display font-semibold text-espresso-800">
+                    Colorado Weekend
+                  </span>
+                </div>
+                <div className="space-y-2 text-espresso-600">
+                  <div className="flex justify-between">
+                    <span>Lift tickets (2 days)</span>
+                    <span className="font-medium">$1,000</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Lodging (2 nights)</span>
+                    <span className="font-medium">$800</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Meals</span>
+                    <span className="font-medium">$400</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-camel-200 font-semibold text-espresso-800">
+                    <span>Family of 4 total</span>
+                    <span>$2,200+</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="card bg-pine-50/50 border-pine-100">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 rounded-lg bg-pine-100">
+                    <Globe className="w-5 h-5 text-pine-600" />
+                  </div>
+                  <span className="font-display font-semibold text-espresso-800">
+                    Austrian Alps Week
+                  </span>
+                </div>
+                <div className="space-y-2 text-espresso-600">
+                  <div className="flex justify-between">
+                    <span>Lift tickets (6 days)</span>
+                    <span className="font-medium">$450</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Lodging (6 nights)</span>
+                    <span className="font-medium">$900</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Meals</span>
+                    <span className="font-medium">$600</span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-pine-200 font-semibold text-pine-700">
+                    <span>Family of 4 total</span>
+                    <span>$1,950</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-center text-espresso-600 max-w-2xl mx-auto leading-relaxed">
+              The tricky part? Knowing which European resorts actually work for families.
+              That&apos;s what we spent hundreds of hours researching.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* What Makes Us Different - Card Grid */}
+      <section className="py-20 sm:py-28">
+        <div className="container-page">
+          <div className="text-center mb-14">
+            <span className="font-accent text-xl text-camel-500">
+              What makes us different
             </span>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">
-              International skiing is often <span className="highlight">cheaper</span> than US resorts
+            <h2 className="mt-2 font-display text-3xl sm:text-4xl font-semibold tracking-tight text-espresso-800">
+              Trip Guides That Feel Like a Friend&apos;s Advice
             </h2>
-            <p className="mt-6 text-lg leading-relaxed text-slate-600">
-              Fly to Austria, get lodging, and buy lift tickets for less than a weekend at Vail.
-              But families feel overwhelmed: <em>&quot;How do we do this? Which ones?&quot;</em>
-            </p>
-            <p className="mt-4 text-lg font-medium text-forest-700">
-              We answer that.
-            </p>
           </div>
 
-          {/* Value cards */}
-          <div className="mx-auto mt-16 max-w-5xl">
-            <div className="grid gap-6 sm:grid-cols-3">
-              <div className="card text-center group hover:shadow-lifted transition-all duration-300">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-glow-100 group-hover:bg-glow-200 transition-colors">
-                  <MapPin className="w-7 h-7 text-glow-600" />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-slate-900">
-                  Complete Trip Guides
-                </h3>
-                <p className="mt-3 text-slate-600 leading-relaxed">
-                  Everything you need in one place. Print it, use it, enjoy your trip without endless googling.
-                </p>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 max-w-5xl mx-auto">
+            <div className="card group hover:shadow-soft transition-all duration-300">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-camel-50 group-hover:bg-camel-100 transition-colors">
+                <Coffee className="w-6 h-6 text-camel-600" />
               </div>
+              <h3 className="font-display text-lg font-semibold text-espresso-800 mb-2">
+                Print &amp; Go Ready
+              </h3>
+              <p className="text-espresso-600 leading-relaxed text-sm">
+                Everything in one place: ski school ages, lunch spots with high chairs,
+                where to grab groceries. Print it and you&apos;re set.
+              </p>
+            </div>
 
-              <div className="card text-center group hover:shadow-lifted transition-all duration-300">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-forest-100 group-hover:bg-forest-200 transition-colors">
-                  <Ticket className="w-7 h-7 text-forest-600" />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-slate-900">
-                  Real Cost Comparisons
-                </h3>
-                <p className="mt-3 text-slate-600 leading-relaxed">
-                  Side-by-side costs so you can find value skiing that fits your budget. No surprises.
-                </p>
+            <div className="card group hover:shadow-soft transition-all duration-300">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 group-hover:bg-slate-200 transition-colors">
+                <Ticket className="w-6 h-6 text-slate-600" />
               </div>
+              <h3 className="font-display text-lg font-semibold text-espresso-800 mb-2">
+                Honest Cost Breakdowns
+              </h3>
+              <p className="text-espresso-600 leading-relaxed text-sm">
+                Real lift ticket prices, lodging ranges by budget, and a family-of-four
+                daily estimate. No surprises.
+              </p>
+            </div>
 
-              <div className="card text-center group hover:shadow-lifted transition-all duration-300">
-                <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gold-100 group-hover:bg-gold-200 transition-colors">
-                  <Users className="w-7 h-7 text-gold-600" />
-                </div>
-                <h3 className="font-display text-xl font-semibold text-slate-900">
-                  Parent-Tested Advice
-                </h3>
-                <p className="mt-3 text-slate-600 leading-relaxed">
-                  Honest recommendations based on real family experiences, not marketing fluff.
-                </p>
+            <div className="card group hover:shadow-soft transition-all duration-300">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-pine-50 group-hover:bg-pine-100 transition-colors">
+                <Users className="w-6 h-6 text-pine-600" />
               </div>
+              <h3 className="font-display text-lg font-semibold text-espresso-800 mb-2">
+                Age-Specific Details
+              </h3>
+              <p className="text-espresso-600 leading-relaxed text-sm">
+                Ski school from age 3, childcare from 18 months, magic carpets,
+                &quot;kids ski free&quot; policies. The details that matter.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Featured Resorts */}
-      <section className="py-16 sm:py-24">
+      {/* Featured Resorts - Magazine Grid */}
+      <section className="py-20 sm:py-28 bg-ivory-100">
         <div className="container-page">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-12">
             <div>
-              <span className="font-accent text-xl text-glow-600">
+              <span className="font-accent text-xl text-camel-500">
                 Start exploring
               </span>
-              <h2 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+              <h2 className="mt-2 font-display text-3xl sm:text-4xl font-semibold tracking-tight text-espresso-900">
                 Featured Family Resorts
               </h2>
             </div>
             <Link
               href="/resorts"
-              className="text-sm font-semibold text-glow-600 hover:text-glow-700 flex items-center gap-1 group"
+              className="group flex items-center gap-2 text-sm font-medium text-crimson-500 hover:text-crimson-600"
             >
               View all resorts
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -185,54 +310,60 @@ export default async function HomePage() {
                 <Link
                   key={resort.id}
                   href={`/resorts/${resort.country.toLowerCase().replace(/\s+/g, '-')}/${resort.slug}`}
-                  className="card group cursor-pointer hover:shadow-lifted transition-all duration-300"
+                  className="group"
                 >
-                  {/* Placeholder image */}
-                  <div className="aspect-[16/10] rounded-2xl bg-gradient-to-br from-forest-100 to-forest-200 mb-5 overflow-hidden">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Mountain className="w-16 h-16 text-forest-300 group-hover:scale-110 transition-transform duration-300" />
-                    </div>
-                  </div>
-
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-display text-lg font-semibold text-slate-900 group-hover:text-glow-600 transition-colors">
-                        {resort.name}
-                      </h3>
-                      <p className="mt-1 text-sm text-slate-500 flex items-center gap-1">
-                        <Globe className="w-3.5 h-3.5" />
-                        {resort.region}, {resort.country}
-                      </p>
-                    </div>
-
-                    {resort.family_metrics?.family_overall_score && (
-                      <div className="flex items-center gap-1 bg-glow-100 text-glow-700 px-2.5 py-1 rounded-full text-sm font-medium">
-                        <Star className="w-3.5 h-3.5" />
-                        {resort.family_metrics.family_overall_score}/10
+                  <div className="card bg-white hover:shadow-lifted transition-all duration-300">
+                    {/* Image placeholder */}
+                    <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-slate-100 via-slate-50 to-camel-50 mb-5 overflow-hidden relative">
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <Mountain className="w-12 h-12 text-slate-200 group-hover:scale-110 transition-transform duration-500" />
                       </div>
+                      {/* Country badge */}
+                      <div className="absolute top-3 left-3">
+                        <span className="badge badge-category bg-white/90 backdrop-blur-sm">
+                          {resort.country}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="font-display text-lg font-semibold text-espresso-900 group-hover:text-crimson-500 transition-colors">
+                          {resort.name}
+                        </h3>
+                        <p className="mt-1 text-sm text-espresso-500">
+                          {resort.region}
+                        </p>
+                      </div>
+
+                      {resort.family_metrics?.family_overall_score && (
+                        <div className="flex items-center gap-1.5 bg-pine-50 text-pine-700 px-2.5 py-1.5 rounded-full text-sm font-semibold">
+                          <Star className="w-3.5 h-3.5 fill-current" />
+                          {resort.family_metrics.family_overall_score}
+                        </div>
+                      )}
+                    </div>
+
+                    {resort.family_metrics?.best_age_min && resort.family_metrics?.best_age_max && (
+                      <p className="mt-3 text-sm text-espresso-500 flex items-center gap-1.5">
+                        <Heart className="w-3.5 h-3.5 text-crimson-400" />
+                        Best for ages {resort.family_metrics.best_age_min}–{resort.family_metrics.best_age_max}
+                      </p>
                     )}
                   </div>
-
-                  {resort.family_metrics?.best_age_min && resort.family_metrics?.best_age_max && (
-                    <p className="mt-3 text-sm text-slate-600">
-                      Best for ages {resort.family_metrics.best_age_min}–{resort.family_metrics.best_age_max}
-                    </p>
-                  )}
                 </Link>
               ))
             ) : (
-              // Placeholder cards when no resorts
-              ['Park City', 'St. Anton', 'Zermatt'].map((resort) => (
-                <div key={resort} className="card group">
-                  <div className="aspect-[16/10] rounded-2xl bg-gradient-to-br from-forest-100 to-forest-200 mb-5 overflow-hidden">
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Mountain className="w-16 h-16 text-forest-300" />
-                    </div>
+              // Placeholder cards
+              ['Park City, USA', 'St. Anton, Austria', 'Zermatt, Switzerland'].map((resort) => (
+                <div key={resort} className="card bg-white">
+                  <div className="aspect-[4/3] rounded-xl bg-gradient-to-br from-slate-100 via-slate-50 to-camel-50 mb-5 overflow-hidden flex items-center justify-center">
+                    <Mountain className="w-12 h-12 text-slate-200" />
                   </div>
-                  <h3 className="font-display text-lg font-semibold text-slate-900">
-                    {resort}
+                  <h3 className="font-display text-lg font-semibold text-espresso-900">
+                    {resort.split(',')[0]}
                   </h3>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="mt-1 text-sm text-espresso-400">
                     Coming soon...
                   </p>
                 </div>
@@ -242,15 +373,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Why Families Trust Us */}
-      <section className="py-16 sm:py-24 bg-forest-900 text-cream-50">
-        <div className="container-page">
-          <div className="text-center mb-12">
-            <span className="font-accent text-2xl text-glow-400">
-              Made for families like yours
+      {/* What Every Guide Includes */}
+      <section className="py-20 sm:py-28 bg-espresso-800 text-ivory-50 relative overflow-hidden">
+        {/* Subtle texture */}
+        <div className="absolute inset-0 opacity-5 texture-knit" />
+
+        <div className="container-page relative z-10">
+          <div className="text-center mb-14">
+            <span className="font-accent text-2xl text-camel-300">
+              Every guide includes
             </span>
-            <h2 className="mt-4 font-display text-3xl sm:text-4xl font-bold tracking-tight">
-              Why Parents Trust Our Guides
+            <h2 className="mt-3 font-display text-3xl sm:text-4xl font-semibold tracking-tight">
+              The Details That Matter
             </h2>
           </div>
 
@@ -258,31 +392,31 @@ export default async function HomePage() {
             {[
               {
                 icon: Heart,
-                title: 'Kid-Focused',
-                desc: 'Age-specific recommendations from toddlers to teens',
+                title: 'Age-by-Age',
+                desc: 'Ski school minimums, childcare ages, teen terrain parks',
               },
               {
                 icon: Ticket,
-                title: 'Budget-Friendly',
-                desc: 'Find value skiing that fits real family budgets',
+                title: 'Real Costs',
+                desc: 'Lift tickets, lodging tiers, family daily totals',
               },
               {
                 icon: CheckCircle,
-                title: 'Honest Reviews',
-                desc: 'Real parent experiences, not resort PR fluff',
+                title: 'Perfect If / Skip If',
+                desc: 'Quick verdict on who this resort is for',
               },
               {
-                icon: Globe,
-                title: 'Worldwide',
-                desc: 'From Colorado to the Alps to Japan',
+                icon: MapPin,
+                title: 'Getting There',
+                desc: 'Nearest airports, transfers, car vs shuttle',
               },
             ].map((item) => (
               <div key={item.title} className="text-center">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-forest-800">
-                  <item.icon className="w-6 h-6 text-glow-400" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-espresso-700/50">
+                  <item.icon className="w-7 h-7 text-camel-300" />
                 </div>
-                <h3 className="font-display font-semibold text-lg">{item.title}</h3>
-                <p className="mt-2 text-forest-300 text-sm leading-relaxed">
+                <h3 className="font-display font-semibold text-lg text-ivory-50">{item.title}</h3>
+                <p className="mt-2 text-ivory-200/80 text-sm leading-relaxed">
                   {item.desc}
                 </p>
               </div>
@@ -292,76 +426,76 @@ export default async function HomePage() {
       </section>
 
       {/* Newsletter Signup */}
-      <section className="py-16 sm:py-24">
+      <section className="py-20 sm:py-28">
         <div className="container-page">
-          <div className="card card-warm max-w-2xl mx-auto text-center">
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-glow-100">
-              <Send className="w-8 h-8 text-glow-600" />
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="card card-warm p-10 sm:p-12">
+              <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-crimson-100">
+                <Send className="w-7 h-7 text-crimson-500" />
+              </div>
+
+              <span className="font-accent text-2xl text-camel-500">
+                Planning ahead?
+              </span>
+              <h2 className="mt-2 font-display text-2xl sm:text-3xl font-semibold tracking-tight text-espresso-900">
+                Get the Family Ski Newsletter
+              </h2>
+              <p className="mt-4 text-espresso-600 max-w-md mx-auto">
+                Monthly destination spotlights, deal alerts, and trip tips.
+                Designed for families, never spammy.
+              </p>
+
+              <form className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  className="input flex-1"
+                />
+                <Button type="submit" className="whitespace-nowrap">
+                  Subscribe
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </form>
+
+              <p className="mt-4 text-xs text-espresso-400">
+                Join 5,000+ ski families. Unsubscribe anytime.
+              </p>
             </div>
-
-            <span className="font-accent text-2xl text-glow-600">
-              Planning a trip?
-            </span>
-            <h2 className="mt-2 font-display text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
-              Get Our Family Ski Newsletter
-            </h2>
-            <p className="mt-4 text-slate-600 max-w-md mx-auto">
-              Monthly tips, deals, and destination spotlights. No spam, just helpful stuff for ski families.
-            </p>
-
-            <form className="mt-8 flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 rounded-full border border-cream-300 bg-white px-5 py-3 text-slate-900 placeholder-slate-400 focus:border-glow-500 focus:outline-none focus:ring-2 focus:ring-glow-200 transition-all"
-              />
-              <button type="submit" className="btn btn-primary px-6 py-3 whitespace-nowrap">
-                Subscribe
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
-            </form>
-
-            <p className="mt-4 text-xs text-slate-500">
-              Join 5,000+ ski families. Unsubscribe anytime.
-            </p>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-cream-200 bg-cream-100 py-12">
+      <footer className="border-t border-ivory-200 bg-ivory-100 py-12">
         <div className="container-page">
           <div className="flex flex-col items-center justify-between gap-8 sm:flex-row">
             <div className="text-center sm:text-left">
-              <Link href="/" className="font-display text-xl font-bold text-forest-800">
+              <Link href="/" className="font-display text-xl font-bold text-espresso-800">
                 Snowthere
               </Link>
-              <p className="mt-2 text-sm text-slate-500">
-                Family ski guides made with <Heart className="w-3.5 h-3.5 inline text-glow-500" /> for ski families.
+              <p className="mt-2 text-sm text-espresso-500">
+                Family ski guides made with care.
               </p>
             </div>
 
             <div className="flex flex-wrap justify-center gap-6">
-              <Link href="/resorts" className="text-sm text-slate-600 hover:text-glow-600 transition-colors">
+              <Link href="/resorts" className="text-sm text-espresso-600 hover:text-crimson-500 transition-colors">
                 Resorts
               </Link>
-              <Link href="/guides" className="text-sm text-slate-600 hover:text-glow-600 transition-colors">
+              <Link href="/guides" className="text-sm text-espresso-600 hover:text-crimson-500 transition-colors">
                 Guides
               </Link>
-              <Link href="/about" className="text-sm text-slate-600 hover:text-glow-600 transition-colors">
+              <Link href="/about" className="text-sm text-espresso-600 hover:text-crimson-500 transition-colors">
                 About
               </Link>
-              <Link href="/contact" className="text-sm text-slate-600 hover:text-glow-600 transition-colors">
+              <Link href="/contact" className="text-sm text-espresso-600 hover:text-crimson-500 transition-colors">
                 Contact
-              </Link>
-              <Link href="/privacy" className="text-sm text-slate-600 hover:text-glow-600 transition-colors">
-                Privacy
               </Link>
             </div>
           </div>
 
-          <div className="mt-8 pt-8 border-t border-cream-200 text-center">
-            <p className="text-xs text-slate-400">
+          <div className="mt-8 pt-8 border-t border-ivory-200 text-center">
+            <p className="text-xs text-espresso-400">
               © {new Date().getFullYear()} Snowthere. All rights reserved.
             </p>
           </div>

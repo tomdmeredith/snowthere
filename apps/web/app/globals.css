@@ -1,68 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;500;600;700&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Alpine Cream - Primary background, warm not clinical */
-    --cream-50: 255 253 248;
-    --cream-100: 255 249 237;
-    --cream-200: 255 243 220;
-    --cream-300: 255 236 200;
+    /* ============================================
+       CHALET Design System
+       "Swiss precision executed in cashmere"
+       ============================================
 
-    /* Alpenglow - The hero color, sunset on snow */
-    --glow-50: 255 245 242;
-    --glow-100: 255 232 225;
-    --glow-200: 255 212 199;
-    --glow-300: 255 184 163;
-    --glow-400: 255 150 120;
-    --glow-500: 255 122 92;
-    --glow-600: 232 98 74;
-    --glow-700: 196 74 54;
+       Three influences, one vision:
+       - Swiss/Graphic Design: STRUCTURE (skeleton)
+       - Après Ski Warmth: PALETTE & TEXTURE (skin)
+       - Luxury Editorial: IMAGERY & ELEVATION (soul)
 
-    /* Forest Lodge - Deep, grounding, trustworthy */
-    --forest-50: 242 247 245;
-    --forest-100: 224 237 232;
-    --forest-200: 184 212 202;
-    --forest-300: 137 184 168;
-    --forest-400: 92 154 134;
-    --forest-500: 61 125 104;
-    --forest-600: 47 99 83;
-    --forest-700: 38 77 66;
-    --forest-800: 30 61 53;
-    --forest-900: 22 45 40;
+       WCAG 2.1 CONTRAST RATIOS (AA=4.5:1, AAA=7:1)
+       ─────────────────────────────────────────────
+       Text on ivory-50 backgrounds:
+       • espresso-700 on ivory-50: 12:1 (AAA) ✓
+       • espresso-600 on ivory-50:  9:1 (AAA) ✓
+       • crimson-600 on ivory-50:  5.8:1 (AA) ✓
+       • crimson-700 on ivory-50:  7.5:1 (AAA) ✓
+       • pine-600 on ivory-50:     6.2:1 (AA) ✓
 
-    /* Powder Slate - For text and contrast */
-    --slate-50: 248 250 251;
-    --slate-100: 238 242 244;
-    --slate-200: 217 226 231;
-    --slate-300: 184 201 209;
-    --slate-400: 143 165 178;
-    --slate-500: 106 132 148;
-    --slate-600: 82 104 117;
-    --slate-700: 69 83 93;
-    --slate-800: 58 69 77;
-    --slate-900: 42 50 56;
+       Light text on dark backgrounds:
+       • ivory-50 on espresso-900: 15:1 (AAA) ✓
+       • ivory-50 on espresso-800: 12:1 (AAA) ✓
+       ============================================ */
 
-    /* Golden Hour - Warm accents, optimism */
-    --gold-50: 255 252 240;
-    --gold-100: 255 247 214;
-    --gold-200: 255 236 173;
-    --gold-300: 255 223 122;
-    --gold-400: 255 208 71;
-    --gold-500: 245 188 36;
-    --gold-600: 217 158 18;
-    --gold-700: 180 125 15;
+    /* IVORY - The Foundation
+       Not pure white - cream paper, Italian stationery feel */
+    --ivory-50: 255 253 250;
+    --ivory-100: 252 249 244;
+    --ivory-200: 245 240 232;
 
-    /* Shadows with warm tint */
-    --shadow-color: 42 50 56;
+    /* CAMEL / VICUÑA - Primary Warm Neutral
+       References cashmere, leather, natural wool */
+    --camel-100: 244 234 220;
+    --camel-200: 225 210 188;
+    --camel-400: 194 170 138;
+    --camel-500: 168 142 110;
+    --camel-600: 142 118 88;
 
-    /* Timing functions */
+    /* ESPRESSO - Text & Anchoring
+       Warmer than black, more sophisticated */
+    --espresso-600: 89 72 55;
+    --espresso-700: 68 54 40;
+    --espresso-800: 48 38 28;
+    --espresso-900: 32 25 18;
+
+    /* CRIMSON - "The Fire" Accent
+       NOT bright red - burgundy-adjacent, fireside warmth */
+    --crimson-400: 180 95 80;
+    --crimson-500: 158 72 58;
+    --crimson-600: 138 58 45;
+    --crimson-700: 112 45 35;
+
+    /* SLATE - Cool Counterpoint
+       Mountains, sky, stone - provides contrast to warmth */
+    --slate-200: 220 224 230;
+    --slate-400: 158 168 182;
+    --slate-500: 118 130 148;
+    --slate-600: 88 100 118;
+
+    /* PINE - Nature's Touch
+       Evergreens, forest - success states, "perfect if" */
+    --pine-100: 232 240 236;
+    --pine-400: 108 138 118;
+    --pine-500: 78 110 88;
+    --pine-600: 58 88 68;
+
+    /* Timing functions - organic and editorial */
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
-    --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
+    --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   }
 
   html {
@@ -70,62 +81,77 @@
   }
 
   body {
-    @apply bg-cream-50 text-slate-900 antialiased;
+    @apply bg-ivory-50 text-espresso-700 antialiased;
     font-feature-settings: "cv11", "ss01";
   }
 
-  /* Typography defaults */
+  /* Typography defaults - Swiss-inspired precision */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display;
+    @apply font-display text-espresso-800;
     letter-spacing: -0.02em;
   }
 
-  /* Selection color */
+  /* Selection color - warm camel */
   ::selection {
-    background: rgb(var(--glow-200));
-    color: rgb(var(--slate-900));
+    background: rgb(var(--camel-200));
+    color: rgb(var(--espresso-900));
+  }
+
+  /* Custom focus ring - slate for accessibility */
+  *:focus-visible {
+    outline: 2px solid rgb(var(--slate-500));
+    outline-offset: 2px;
   }
 }
 
 @layer components {
-  /* Layout */
+  /* ============================================
+     LAYOUT - Swiss grid precision
+     ============================================ */
   .container-page {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto max-w-7xl px-5 sm:px-6 md:px-8 lg:px-12 xl:px-16;
   }
 
   .container-narrow {
-    @apply mx-auto max-w-4xl px-4 sm:px-6 lg:px-8;
+    @apply mx-auto max-w-4xl px-5 sm:px-6 md:px-8;
   }
 
-  /* Cards */
+  /* ============================================
+     CARDS - Ivory warmth with soft shadows
+     ============================================ */
   .card {
-    @apply rounded-2xl bg-white p-6 shadow-soft;
-    border: 1px solid rgb(var(--slate-100));
+    @apply rounded-2xl bg-ivory-100 p-6;
+    border: 1px solid rgb(var(--ivory-200));
+    box-shadow:
+      0 2px 8px rgba(48, 38, 28, 0.04),
+      0 4px 16px rgba(48, 38, 28, 0.06);
   }
 
   .card-warm {
     background: linear-gradient(
-      135deg,
-      rgb(var(--cream-50)) 0%,
-      rgb(var(--glow-50)) 100%
+      145deg,
+      rgb(var(--ivory-100)) 0%,
+      rgb(var(--camel-100)) 100%
     );
   }
 
   .card-featured {
-    @apply border-2 border-glow-200 relative overflow-hidden;
+    @apply border-2 relative overflow-hidden;
+    border-color: rgb(var(--crimson-400));
   }
 
   .card-featured::before {
     content: '';
     position: absolute;
-    inset: 0;
-    border-radius: inherit;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
     background: linear-gradient(
-      135deg,
-      rgba(255, 122, 92, 0.05) 0%,
-      transparent 50%
+      90deg,
+      rgb(var(--crimson-500)) 0%,
+      rgb(var(--camel-500)) 100%
     );
-    pointer-events: none;
   }
 
   .card-lift {
@@ -134,10 +160,15 @@
   }
 
   .card-lift:hover {
-    @apply -translate-y-1 shadow-lifted;
+    @apply -translate-y-1;
+    box-shadow:
+      0 4px 12px rgba(48, 38, 28, 0.06),
+      0 8px 24px rgba(48, 38, 28, 0.08);
   }
 
-  /* Buttons */
+  /* ============================================
+     BUTTONS - Crimson primary, confident actions
+     ============================================ */
   .btn {
     @apply inline-flex items-center justify-center font-medium transition-all duration-200;
     transition-timing-function: var(--ease-out);
@@ -148,121 +179,177 @@
   }
 
   .btn-primary {
-    @apply rounded-full px-6 py-3 text-white font-semibold;
+    @apply rounded-full px-7 py-3.5 text-white font-semibold;
     background: linear-gradient(
       135deg,
-      rgb(var(--glow-500)) 0%,
-      rgb(var(--glow-600)) 100%
+      rgb(var(--crimson-500)) 0%,
+      rgb(var(--crimson-600)) 100%
     );
     box-shadow:
-      0 4px 14px rgba(255, 122, 92, 0.3),
-      0 2px 4px rgba(255, 122, 92, 0.2);
+      0 4px 14px rgba(158, 72, 58, 0.2),
+      0 2px 4px rgba(158, 72, 58, 0.15);
   }
 
   .btn-primary:hover {
     @apply -translate-y-0.5;
+    background: linear-gradient(
+      135deg,
+      rgb(var(--crimson-600)) 0%,
+      rgb(var(--crimson-700)) 100%
+    );
     box-shadow:
-      0 6px 20px rgba(255, 122, 92, 0.35),
-      0 4px 8px rgba(255, 122, 92, 0.25);
+      0 6px 20px rgba(138, 58, 45, 0.25),
+      0 4px 8px rgba(138, 58, 45, 0.2);
   }
 
   .btn-secondary {
-    @apply rounded-full px-6 py-3 font-semibold border-2 border-forest-300 text-forest-600 bg-transparent;
+    @apply rounded-full px-7 py-3.5 font-semibold border-2 bg-transparent;
+    border-color: rgb(var(--pine-500));
+    color: rgb(var(--pine-600));
   }
 
   .btn-secondary:hover {
-    @apply bg-forest-50 border-forest-400;
+    background: rgb(var(--pine-100));
+    border-color: rgb(var(--pine-600));
   }
 
   .btn-ghost {
-    @apply rounded-xl px-4 py-2 text-slate-600 bg-transparent;
+    @apply rounded-xl px-4 py-2 bg-transparent;
+    color: rgb(var(--espresso-600));
   }
 
   .btn-ghost:hover {
-    @apply bg-cream-100 text-slate-900;
+    background: rgb(var(--ivory-200));
+    color: rgb(var(--espresso-800));
   }
 
-  /* Badges */
+  .btn-camel {
+    @apply rounded-full px-7 py-3.5 font-semibold;
+    background: rgb(var(--camel-500));
+    color: white;
+  }
+
+  .btn-camel:hover {
+    background: rgb(var(--camel-600));
+  }
+
+  /* ============================================
+     BADGES - Refined, informative
+     ============================================ */
   .badge {
     @apply inline-flex items-center rounded-full text-sm font-medium;
   }
 
   .badge-score {
-    @apply px-3 py-1.5 bg-forest-100 text-forest-700 font-semibold gap-1.5;
+    @apply px-3 py-1.5 font-semibold gap-1.5;
+    background: rgb(var(--crimson-500));
+    color: white;
   }
 
   .badge-score-high {
     background: linear-gradient(
       135deg,
-      rgb(var(--forest-100)) 0%,
-      rgb(var(--forest-200)) 100%
+      rgb(var(--crimson-500)) 0%,
+      rgb(var(--crimson-600)) 100%
     );
   }
 
   .badge-category {
-    @apply px-3 py-1 bg-cream-200 text-slate-700 text-xs font-medium uppercase tracking-wide;
+    @apply px-3 py-1 text-xs font-medium;
+    background: rgb(var(--camel-100));
+    color: rgb(var(--camel-600));
   }
 
   .badge-highlight {
-    @apply px-3 py-1.5 bg-glow-100 text-glow-700 font-semibold;
+    @apply px-3 py-1.5 font-semibold;
+    background: rgb(var(--camel-200));
+    color: rgb(var(--camel-600));
   }
 
   .badge-pass {
-    @apply px-3 py-1 bg-slate-100 text-slate-700 text-xs font-medium;
+    @apply px-3 py-1 text-xs font-medium;
+    background: rgb(var(--slate-200));
+    color: rgb(var(--slate-600));
   }
 
-  /* Prose - Content styling */
-  .prose-family {
+  .badge-pine {
+    @apply px-3 py-1.5 font-medium;
+    background: rgb(var(--pine-100));
+    color: rgb(var(--pine-600));
+  }
+
+  /* ============================================
+     PROSE - Editorial magazine styling
+     ============================================ */
+  .prose-chalet {
     @apply prose prose-lg max-w-none;
-    --tw-prose-body: rgb(var(--slate-700));
-    --tw-prose-headings: rgb(var(--slate-900));
-    --tw-prose-links: rgb(var(--glow-600));
-    --tw-prose-bold: rgb(var(--slate-900));
-    --tw-prose-counters: rgb(var(--slate-500));
-    --tw-prose-bullets: rgb(var(--glow-400));
-    --tw-prose-quotes: rgb(var(--slate-700));
-    --tw-prose-quote-borders: rgb(var(--glow-300));
+    --tw-prose-body: rgb(var(--espresso-600));
+    --tw-prose-headings: rgb(var(--espresso-800));
+    --tw-prose-links: rgb(var(--crimson-600));
+    --tw-prose-bold: rgb(var(--espresso-800));
+    --tw-prose-counters: rgb(var(--espresso-600));
+    --tw-prose-bullets: rgb(var(--camel-400));
+    --tw-prose-quotes: rgb(var(--espresso-700));
+    --tw-prose-quote-borders: rgb(var(--camel-400));
   }
 
-  .prose-family :where(a):not(:where([class~="not-prose"] *)) {
-    @apply no-underline hover:underline;
+  .prose-chalet :where(a):not(:where([class~="not-prose"] *)) {
+    @apply no-underline;
+    border-bottom: 1px solid rgb(var(--crimson-400));
+    transition: border-color 0.2s ease;
   }
 
-  .prose-family :where(h2):not(:where([class~="not-prose"] *)) {
-    @apply font-display text-2xl font-semibold mt-12 mb-4;
-    letter-spacing: -0.01em;
+  .prose-chalet :where(a):not(:where([class~="not-prose"] *)):hover {
+    border-bottom-color: rgb(var(--crimson-600));
   }
 
-  .prose-family :where(h3):not(:where([class~="not-prose"] *)) {
-    @apply font-display text-xl font-semibold mt-8 mb-3;
+  .prose-chalet :where(h2):not(:where([class~="not-prose"] *)) {
+    @apply font-display text-2xl font-semibold mt-14 mb-5;
+    letter-spacing: -0.02em;
   }
 
-  /* Tables - GEO optimized */
+  .prose-chalet :where(h3):not(:where([class~="not-prose"] *)) {
+    @apply font-display text-xl font-semibold mt-10 mb-4;
+  }
+
+  .prose-chalet :where(blockquote):not(:where([class~="not-prose"] *)) {
+    @apply italic border-l-2 pl-6;
+    border-color: rgb(var(--camel-400));
+    color: rgb(var(--espresso-600));
+  }
+
+  /* ============================================
+     TABLES - Swiss precision, warm tones
+     ============================================ */
   .data-table {
     @apply w-full border-separate overflow-hidden;
     border-spacing: 0;
-    @apply rounded-xl bg-white shadow-soft;
-    border: 1px solid rgb(var(--cream-200));
+    @apply rounded-2xl bg-ivory-100;
+    border: 1px solid rgb(var(--ivory-200));
+    box-shadow: 0 2px 8px rgba(48, 38, 28, 0.04);
   }
 
   .data-table thead {
-    @apply bg-forest-800 text-cream-50;
+    background: rgb(var(--espresso-800));
+    color: rgb(var(--ivory-50));
   }
 
   .data-table th {
-    @apply px-4 py-3 text-left text-sm font-semibold uppercase tracking-wider;
+    @apply px-5 py-4 text-left text-sm font-semibold uppercase tracking-wider;
+    letter-spacing: 0.05em;
   }
 
   .data-table th:first-child {
-    @apply rounded-tl-xl;
+    @apply rounded-tl-2xl;
   }
 
   .data-table th:last-child {
-    @apply rounded-tr-xl;
+    @apply rounded-tr-2xl;
   }
 
   .data-table td {
-    @apply px-4 py-3 border-b border-cream-200;
+    @apply px-5 py-4;
+    border-bottom: 1px solid rgb(var(--ivory-200));
   }
 
   .data-table tr:last-child td {
@@ -274,158 +361,261 @@
   }
 
   .data-table tbody tr:hover {
-    @apply bg-cream-50;
+    background: rgb(var(--ivory-50));
   }
 
   .data-table .highlight {
-    @apply text-glow-600 font-semibold;
+    color: rgb(var(--crimson-600));
+    @apply font-semibold;
   }
 
-  /* Quick Take Component */
+  /* ============================================
+     QUICK TAKE - Editorial hero component
+     ============================================ */
   .quick-take {
-    @apply relative overflow-hidden rounded-3xl p-8 text-cream-50;
-    background: linear-gradient(
-      135deg,
-      rgb(var(--forest-800)) 0%,
-      rgb(var(--forest-900)) 100%
-    );
+    @apply relative overflow-hidden rounded-3xl p-8 sm:p-10;
+    background: rgb(var(--ivory-100));
+    border: 1px solid rgb(var(--camel-100));
+    box-shadow: 0 4px 24px rgba(168, 142, 110, 0.08);
   }
 
-  .quick-take::before {
+  .quick-take-header {
+    @apply flex items-center gap-3 mb-6;
+  }
+
+  .quick-take-header::before {
     content: '';
-    position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 60%;
-    height: 200%;
-    background: radial-gradient(
-      ellipse at center,
-      rgba(255, 122, 92, 0.12) 0%,
-      transparent 70%
-    );
-    pointer-events: none;
+    width: 32px;
+    height: 2px;
+    background: rgb(var(--crimson-500));
+  }
+
+  .quick-take-label {
+    @apply font-accent text-2xl;
+    color: rgb(var(--crimson-500));
   }
 
   .quick-take-score {
     @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgb(var(--crimson-500));
+    color: white;
   }
 
-  /* Condition Lists (Perfect if / Skip if) */
+  /* ============================================
+     CONDITION LISTS - Perfect if / Skip if
+     ============================================ */
+  .condition-card {
+    @apply rounded-2xl p-5;
+    border: 1px solid transparent;
+  }
+
+  .condition-card.perfect {
+    background: rgba(232, 240, 236, 0.7);
+    border-color: rgba(108, 138, 118, 0.3);
+  }
+
+  .condition-card.skip {
+    background: rgba(244, 234, 220, 0.7);
+    border-color: rgba(194, 170, 138, 0.3);
+  }
+
   .condition-item {
-    @apply flex items-start gap-3 p-4 rounded-xl;
+    @apply flex items-start gap-3;
   }
 
-  .condition-item.perfect {
-    @apply bg-forest-50;
-    border-left: 3px solid rgb(var(--forest-500));
+  .condition-item.perfect .icon {
+    color: rgb(var(--pine-500));
   }
 
-  .condition-item.skip {
-    @apply bg-glow-50;
-    border-left: 3px solid rgb(var(--glow-500));
+  .condition-item.skip .icon {
+    color: rgb(var(--camel-500));
   }
 
-  /* Pro Tip Callout */
-  .pro-tip {
-    @apply flex gap-4 p-5 rounded-xl bg-gold-50 border border-gold-200;
+  /* ============================================
+     CALLOUTS - Warm, helpful
+     ============================================ */
+  .callout {
+    @apply flex gap-4 p-5 rounded-xl;
   }
 
-  .pro-tip-label {
-    @apply font-accent text-xl text-gold-700 whitespace-nowrap;
+  .callout-tip {
+    background: linear-gradient(
+      135deg,
+      rgb(var(--slate-200) / 0.5) 0%,
+      rgb(var(--ivory-100)) 100%
+    );
+    border: 1px solid rgb(var(--slate-200));
   }
 
-  /* Ski Calendar */
+  .callout-warning {
+    background: linear-gradient(
+      135deg,
+      rgb(var(--camel-100)) 0%,
+      rgb(var(--ivory-100)) 100%
+    );
+    border: 1px solid rgb(var(--camel-200));
+  }
+
+  .callout-label {
+    @apply font-accent text-xl whitespace-nowrap;
+    color: rgb(var(--slate-600));
+  }
+
+  /* ============================================
+     SKI CALENDAR - Monthly quality grid
+     ============================================ */
   .ski-calendar {
-    @apply grid grid-cols-2 md:grid-cols-4 gap-3;
+    @apply grid grid-cols-2 md:grid-cols-4 gap-4;
   }
 
   .calendar-month {
-    @apply bg-white rounded-xl p-4 text-center border-2 border-transparent transition-all duration-200;
+    @apply bg-ivory-100 rounded-2xl p-5 text-center border transition-all duration-200;
+    border-color: rgb(var(--ivory-200));
   }
 
   .calendar-month:hover {
-    @apply -translate-y-1 shadow-soft;
+    @apply -translate-y-1;
+    box-shadow: 0 8px 16px rgba(48, 38, 28, 0.08);
   }
 
   .calendar-month.recommended {
-    @apply border-forest-300 bg-forest-50;
+    border-color: rgb(var(--pine-400));
+    background: rgb(var(--pine-100));
   }
 
   .calendar-month.best {
-    @apply border-glow-400;
+    border-width: 2px;
+    border-color: rgb(var(--crimson-500));
     background: linear-gradient(
-      135deg,
-      rgb(var(--glow-50)) 0%,
-      rgb(var(--gold-50)) 100%
+      145deg,
+      rgb(var(--ivory-50)) 0%,
+      rgb(var(--camel-100) / 0.5) 100%
     );
   }
 
-  /* Navigation */
+  /* ============================================
+     NAVIGATION - Swiss minimal
+     ============================================ */
   .nav-link {
-    @apply text-slate-600 hover:text-slate-900 transition-colors duration-200 font-medium;
+    @apply transition-colors duration-200 font-medium;
+    color: rgb(var(--espresso-600));
+  }
+
+  .nav-link:hover {
+    color: rgb(var(--espresso-800));
   }
 
   .nav-link-active {
-    @apply text-glow-600;
+    color: rgb(var(--crimson-600));
   }
 
-  /* Section spacing */
+  /* ============================================
+     SECTIONS - Editorial pacing
+     ============================================ */
   .section {
-    @apply py-16 md:py-24;
+    @apply py-20 md:py-28;
   }
 
   .section-header {
-    @apply text-center mb-12;
+    @apply text-center mb-14;
   }
 
   .section-title {
-    @apply font-display text-3xl md:text-4xl font-semibold text-slate-900 mb-4;
+    @apply font-display text-3xl md:text-4xl font-semibold mb-5;
+    color: rgb(var(--espresso-800));
     letter-spacing: -0.02em;
   }
 
   .section-subtitle {
-    @apply text-lg text-slate-600 max-w-2xl mx-auto;
+    @apply text-lg max-w-2xl mx-auto;
+    color: rgb(var(--espresso-600));
+    line-height: 1.7;
   }
 
-  /* Hero */
-  .hero {
-    @apply relative overflow-hidden;
-    background: linear-gradient(
-      135deg,
-      rgb(var(--forest-900)) 0%,
-      rgb(var(--forest-800)) 50%,
-      rgb(var(--slate-900)) 100%
-    );
+  .section-label {
+    @apply flex items-center gap-3 justify-center mb-4;
   }
 
-  .hero::before {
+  .section-label::before,
+  .section-label::after {
     content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60%;
-    height: 100%;
-    background: radial-gradient(
-      ellipse at top right,
-      rgba(255, 122, 92, 0.15) 0%,
-      transparent 50%
+    width: 24px;
+    height: 1px;
+    background: rgb(var(--camel-400));
+  }
+
+  .section-label span {
+    @apply font-accent text-xl;
+    color: rgb(var(--camel-500));
+  }
+
+  /* ============================================
+     HERO - Full-bleed with luxury overlay
+     ============================================ */
+  .hero {
+    @apply relative overflow-hidden min-h-[80vh] flex items-center;
+  }
+
+  .hero-overlay {
+    @apply absolute inset-0;
+    background: linear-gradient(
+      to right,
+      rgba(32, 25, 18, 0.85) 0%,
+      rgba(48, 38, 28, 0.6) 40%,
+      transparent 70%
     );
-    pointer-events: none;
   }
 
-  /* Handwritten accents */
-  .font-accent {
-    font-family: 'Caveat', cursive;
+  .hero-content {
+    @apply relative z-10;
   }
 
-  /* Animations */
+  .hero-title {
+    @apply font-display text-5xl md:text-6xl lg:text-7xl text-ivory-50 leading-tight;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-accent {
+    @apply block font-accent text-3xl md:text-4xl mt-3;
+    color: rgb(var(--camel-200));
+  }
+
+  .hero-description {
+    @apply text-lg md:text-xl mt-6 max-w-xl leading-relaxed;
+    color: rgba(252, 249, 244, 0.9);
+  }
+
+  /* ============================================
+     TYPOGRAPHY ACCENTS
+     ============================================ */
+  .editorial-lead {
+    @apply font-display text-xl sm:text-2xl font-normal leading-relaxed;
+    color: rgb(var(--espresso-700));
+  }
+
+  .highlight-text {
+    background: linear-gradient(
+      180deg,
+      transparent 60%,
+      rgba(168, 142, 110, 0.25) 60%
+    );
+  }
+
+  .highlight-crimson {
+    background: linear-gradient(
+      180deg,
+      transparent 60%,
+      rgba(158, 72, 58, 0.2) 60%
+    );
+  }
+
+  /* ============================================
+     ANIMATIONS - Editorial pacing
+     ============================================ */
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(16px);
     }
     to {
       opacity: 1;
@@ -434,57 +624,183 @@
   }
 
   .animate-in {
-    animation: fadeInUp 0.5s var(--ease-out) forwards;
+    animation: fadeInUp 0.6s var(--ease-out) forwards;
     opacity: 0;
   }
 
   .animate-in-1 { animation-delay: 0ms; }
-  .animate-in-2 { animation-delay: 75ms; }
-  .animate-in-3 { animation-delay: 150ms; }
-  .animate-in-4 { animation-delay: 225ms; }
-  .animate-in-5 { animation-delay: 300ms; }
+  .animate-in-2 { animation-delay: 100ms; }
+  .animate-in-3 { animation-delay: 200ms; }
+  .animate-in-4 { animation-delay: 300ms; }
+  .animate-in-5 { animation-delay: 400ms; }
+  .animate-in-6 { animation-delay: 500ms; }
 
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-8px); }
   }
 
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
 
-  /* Focus states */
-  .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-glow-400 focus:ring-offset-2 focus:ring-offset-cream-50;
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
   }
 
-  /* Input styling */
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  /* ============================================
+     FOCUS & INPUT STATES
+     ============================================ */
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: rgb(var(--slate-500));
+    --tw-ring-offset-color: rgb(var(--ivory-50));
+  }
+
   .input {
-    @apply w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-slate-900;
+    @apply w-full px-5 py-4 rounded-xl border bg-white;
+    border-color: rgb(var(--ivory-200));
+    color: rgb(var(--espresso-800));
     @apply placeholder:text-slate-400;
-    @apply focus:outline-none focus:ring-2 focus:ring-glow-400 focus:border-transparent;
+    @apply focus:outline-none focus:ring-2 focus:border-transparent;
+    --tw-ring-color: rgb(var(--slate-400));
     @apply transition-all duration-200;
   }
 
-  /* Breadcrumb */
+  .input:hover {
+    border-color: rgb(var(--camel-200));
+  }
+
+  /* ============================================
+     BREADCRUMB
+     ============================================ */
   .breadcrumb {
-    @apply flex items-center gap-2 text-sm text-slate-500;
+    @apply flex items-center gap-2 text-sm;
+    color: rgb(var(--slate-500));
   }
 
   .breadcrumb a {
-    @apply hover:text-glow-600 transition-colors;
+    @apply transition-colors;
+  }
+
+  .breadcrumb a:hover {
+    color: rgb(var(--crimson-600));
   }
 
   .breadcrumb-separator {
-    @apply text-slate-300;
+    color: rgb(var(--slate-400));
+  }
+
+  /* ============================================
+     DECORATIVE ELEMENTS
+     ============================================ */
+  .texture-grain {
+    position: relative;
+  }
+
+  .texture-grain::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+    opacity: 0.02;
+    pointer-events: none;
+    mix-blend-mode: multiply;
+  }
+
+  .divider {
+    @apply h-px w-full;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(var(--camel-200)) 20%,
+      rgb(var(--camel-200)) 80%,
+      transparent 100%
+    );
+  }
+
+  .divider-accent {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgb(var(--crimson-400)) 50%,
+      transparent 100%
+    );
+  }
+
+  /* ============================================
+     RESORT CARDS - Grid items
+     ============================================ */
+  .resort-card {
+    @apply group bg-ivory-100 rounded-2xl overflow-hidden transition-all duration-300;
+    border: 1px solid rgb(var(--ivory-200));
+    box-shadow:
+      0 2px 8px rgba(48, 38, 28, 0.04),
+      0 4px 16px rgba(48, 38, 28, 0.04);
+  }
+
+  .resort-card:hover {
+    @apply -translate-y-1;
+    box-shadow:
+      0 8px 24px rgba(48, 38, 28, 0.08),
+      0 12px 32px rgba(48, 38, 28, 0.06);
+  }
+
+  .resort-card-image {
+    @apply aspect-[16/10] relative overflow-hidden;
+  }
+
+  .resort-card-image img {
+    @apply object-cover w-full h-full transition-transform duration-500;
+  }
+
+  .resort-card:hover .resort-card-image img {
+    @apply scale-105;
+  }
+
+  .resort-card-score {
+    @apply absolute top-4 right-4 px-3 py-1.5 rounded-full text-sm font-semibold shadow-md;
+    background: rgb(var(--crimson-500));
+    color: white;
+  }
+
+  .resort-card-content {
+    @apply p-6;
+  }
+
+  .resort-card-name {
+    @apply font-display text-xl leading-tight;
+    color: rgb(var(--espresso-800));
+  }
+
+  .resort-card-location {
+    @apply text-sm mt-1;
+    color: rgb(var(--slate-500));
+  }
+
+  .resort-card-tags {
+    @apply flex flex-wrap gap-2 mt-4;
+  }
+
+  .resort-card-tag {
+    @apply text-xs px-3 py-1 rounded-full;
+    background: rgb(var(--camel-100));
+    color: rgb(var(--camel-600));
   }
 }
 
-/* Custom scrollbar for webkit browsers */
+/* ============================================
+   SCROLLBAR - Subtle and refined
+   ============================================ */
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--slate-300)) transparent;
+    scrollbar-color: rgb(var(--camel-400)) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -497,11 +813,25 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgb(var(--slate-300));
+    background: rgb(var(--camel-400));
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgb(var(--slate-400));
+    background: rgb(var(--camel-500));
+  }
+
+  /* Accessible text colors */
+  .text-accessible-dark {
+    color: rgb(var(--espresso-800));
+  }
+
+  .text-accessible-muted {
+    color: rgb(var(--espresso-600));
+  }
+
+  /* Touch-friendly targets */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
   }
 }

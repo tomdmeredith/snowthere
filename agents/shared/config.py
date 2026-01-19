@@ -26,6 +26,14 @@ class Settings(BaseSettings):
     # AI
     anthropic_api_key: str
 
+    # Image Generation (3-tier fallback)
+    google_api_key: str | None = None  # Tier 1: Gemini
+    glif_api_key: str | None = None  # Tier 2: Nano Banana Pro
+    replicate_api_token: str | None = None  # Tier 3: Flux Schnell
+
+    # Google Places API (UGC photos)
+    google_places_api_key: str | None = None
+
     # Budget Controls
     daily_budget_limit: float = 5.00  # Daily API spend limit
     daily_budget_usd: float = 5.00  # Alias for compatibility

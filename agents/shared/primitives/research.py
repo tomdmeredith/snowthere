@@ -41,7 +41,6 @@ class SearchResult:
 async def exa_search(
     query: str,
     num_results: int = 10,
-    use_autoprompt: bool = True,
     include_domains: list[str] | None = None,
 ) -> list[SearchResult]:
     """
@@ -56,14 +55,14 @@ async def exa_search(
 
     # Run in thread pool since exa-py is sync
     def _search():
-        return exa.search_and_contents(
-            query,
-            type="neural",
-            use_autoprompt=use_autoprompt,
-            num_results=num_results,
-            include_domains=include_domains,
-            text={"max_characters": 1500},
-        )
+        kwargs = {
+            "type": "neural",
+            "num_results": num_results,
+            "text": {"max_characters": 1500},
+        }
+        if include_domains:
+            kwargs["include_domains"] = include_domains
+        return exa.search_and_contents(query, **kwargs)
 
     loop = asyncio.get_event_loop()
     response = await loop.run_in_executor(None, _search)

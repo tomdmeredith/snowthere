@@ -22,6 +22,7 @@ export interface Database {
           created_at: string
           updated_at: string
           last_refreshed: string | null
+          trail_map_data: Json | null
         }
         Insert: {
           id?: string
@@ -35,6 +36,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           last_refreshed?: string | null
+          trail_map_data?: Json | null
         }
         Update: {
           id?: string
@@ -48,6 +50,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
           last_refreshed?: string | null
+          trail_map_data?: Json | null
         }
       }
       resort_family_metrics: {

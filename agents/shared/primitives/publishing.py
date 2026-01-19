@@ -240,30 +240,35 @@ def revalidate_page(path: str) -> dict[str, Any]:
         Revalidation result with status
     """
     # Get Vercel revalidation settings
-    revalidate_url = getattr(settings, "vercel_revalidate_url", None)
+    vercel_url = getattr(settings, "vercel_url", None)
     revalidate_token = getattr(settings, "vercel_revalidate_token", None)
 
-    if not revalidate_url:
-        # Fallback: construct URL from deployment
-        vercel_url = getattr(settings, "vercel_url", None)
-        if vercel_url:
-            revalidate_url = f"{vercel_url}/api/revalidate"
-
-    if not revalidate_url:
+    if not vercel_url:
         return {
             "success": False,
-            "error": "Revalidation URL not configured",
+            "error": "VERCEL_URL not configured - skipping revalidation",
             "path": path,
         }
+
+    if not revalidate_token:
+        return {
+            "success": False,
+            "error": "VERCEL_REVALIDATE_TOKEN not configured - skipping revalidation",
+            "path": path,
+        }
+
+    # Ensure path starts with /
+    if not path.startswith("/"):
+        path = "/" + path
+
+    # Construct revalidation URL with query parameters
+    revalidate_url = f"{vercel_url.rstrip('/')}/api/revalidate"
 
     try:
         with httpx.Client(timeout=30.0) as client:
             response = client.post(
                 revalidate_url,
-                json={"path": path},
-                headers={
-                    "Authorization": f"Bearer {revalidate_token}" if revalidate_token else "",
-                },
+                params={"secret": revalidate_token, "path": path},
             )
 
             if response.status_code == 200:

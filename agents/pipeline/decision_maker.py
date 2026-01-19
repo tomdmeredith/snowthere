@@ -30,6 +30,40 @@ def get_claude_client() -> anthropic.Anthropic:
     return anthropic.Anthropic(api_key=settings.anthropic_api_key)
 
 
+def get_discovery_candidates_count() -> tuple[int, list[dict]]:
+    """Get count and top discovery candidates.
+
+    Returns:
+        Tuple of (total_count, top_candidates)
+    """
+    try:
+        from shared.supabase_client import get_supabase_client
+        supabase = get_supabase_client()
+
+        # Get count
+        result = supabase.table("discovery_candidates")\
+            .select("id", count="exact")\
+            .eq("status", "pending")\
+            .execute()
+
+        total = result.count if result.count else 0
+
+        # Get top candidates
+        top_result = supabase.table("discovery_candidates")\
+            .select("resort_name, country, opportunity_score, discovery_source")\
+            .eq("status", "pending")\
+            .order("opportunity_score", desc=True)\
+            .limit(5)\
+            .execute()
+
+        top_candidates = top_result.data if top_result.data else []
+
+        return total, top_candidates
+
+    except Exception:
+        return 0, []
+
+
 def generate_context() -> str:
     """Generate context about current system state.
 
@@ -43,6 +77,7 @@ def generate_context() -> str:
         stale = get_stale_resorts(days_threshold=30, limit=20)
         queue_stats = get_queue_stats()
         daily_spend = get_daily_spend()
+        discovery_count, top_discoveries = get_discovery_candidates_count()
     except Exception as e:
         # If DB not connected, return minimal context
         return f"[Database not connected: {e}. Starting fresh.]"
@@ -71,17 +106,29 @@ def generate_context() -> str:
 ## Content Needing Attention
 - Stale (>30 days old): {len(stale)} resorts
 - Queue pending: {queue_stats.get('by_status', {}).get('pending', 0)} tasks
+- Discovery candidates: {discovery_count} pending
+"""
 
+    # Add top discoveries if available
+    if top_discoveries:
+        context += "\n## Top Discovery Candidates (by opportunity score)\n"
+        for d in top_discoveries:
+            score = d.get('opportunity_score', 0)
+            source = d.get('discovery_source', 'unknown')
+            context += f"- {d.get('resort_name')}, {d.get('country')} (score: {score:.2f}, source: {source})\n"
+
+    context += f"""
 ## Budget Status
 - Daily spend so far: ${daily_spend:.2f}
 - Daily limit: $5.00
 - Remaining: ${5.0 - daily_spend:.2f}
 
 ## Priority Guidance
-1. High-demand resorts families are searching for
-2. Value skiing destinations (Europe, often cheaper than US)
-3. Stale content needing refresh
-4. Geographic diversity (not just US/Alps)
+1. **Discovery candidates** - High-scoring resorts identified through search demand analysis
+2. High-demand resorts families are searching for
+3. Value skiing destinations (Europe, often cheaper than US)
+4. Stale content needing refresh
+5. Geographic diversity (not just US/Alps)
 
 ## Voice Reminder
 All content should be in 'instagram_mom' voice - encouraging, practical,
