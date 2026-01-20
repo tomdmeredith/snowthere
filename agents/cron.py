@@ -121,8 +121,8 @@ def main():
     parser.add_argument(
         "--max-resorts",
         type=int,
-        default=4,
-        help="Maximum resorts to process (default: 4)",
+        default=5,
+        help="Maximum resorts to process (default: 5)",
     )
 
     parser.add_argument(
