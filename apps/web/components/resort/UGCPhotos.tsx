@@ -94,13 +94,13 @@ export function UGCPhotos({
       {/* Section Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-camel-100/60">
-            <Users className="w-4 h-4 text-camel-600" />
+          <div className="p-2 rounded-lg bg-gold-100/60">
+            <Users className="w-4 h-4 text-gold-600" />
           </div>
-          <h2 className="font-display text-xl font-semibold text-espresso-900">
+          <h2 className="font-display text-xl font-semibold text-dark-900">
             {title}
           </h2>
-          <span className="text-sm text-camel-500">
+          <span className="text-sm text-gold-500">
             ({photos.length} photos)
           </span>
         </div>
@@ -110,18 +110,18 @@ export function UGCPhotos({
           <button
             onClick={() => scroll('left')}
             disabled={!canScrollLeft}
-            className="p-2 rounded-full bg-ivory-100 hover:bg-ivory-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-full bg-dark-50 hover:bg-dark-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="w-5 h-5 text-espresso-700" />
+            <ChevronLeft className="w-5 h-5 text-dark-700" />
           </button>
           <button
             onClick={() => scroll('right')}
             disabled={!canScrollRight}
-            className="p-2 rounded-full bg-ivory-100 hover:bg-ivory-200 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="p-2 rounded-full bg-dark-50 hover:bg-dark-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             aria-label="Scroll right"
           >
-            <ChevronRight className="w-5 h-5 text-espresso-700" />
+            <ChevronRight className="w-5 h-5 text-dark-700" />
           </button>
         </div>
       </div>
@@ -138,7 +138,7 @@ export function UGCPhotos({
             onClick={() => setLightboxIndex(index)}
             className="relative flex-shrink-0 snap-start group"
           >
-            <div className="relative w-40 sm:w-48 aspect-[4/3] rounded-xl overflow-hidden bg-camel-100">
+            <div className="relative w-40 sm:w-48 aspect-[4/3] rounded-xl overflow-hidden bg-gold-100">
               <Image
                 src={photo.url}
                 alt={photo.alt_text || `Visitor photo ${index + 1} at ${resortName}`}
@@ -148,11 +148,11 @@ export function UGCPhotos({
               />
 
               {/* Hover overlay */}
-              <div className="absolute inset-0 bg-espresso-900/0 group-hover:bg-espresso-900/20 transition-colors" />
+              <div className="absolute inset-0 bg-dark-900/0 group-hover:bg-dark-900/20 transition-colors" />
 
               {/* Category badge (if family-relevant) */}
               {photo.category === 'family' && (
-                <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-camel-500/90 text-white text-[10px] font-medium">
+                <div className="absolute top-2 left-2 px-2 py-1 rounded-full bg-gold-500/90 text-white text-[10px] font-medium">
                   Family
                 </div>
               )}
@@ -160,7 +160,7 @@ export function UGCPhotos({
               {/* Expand icon on hover */}
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="p-2 rounded-full bg-white/90 shadow-lg">
-                  <Camera className="w-4 h-4 text-espresso-800" />
+                  <Camera className="w-4 h-4 text-dark-800" />
                 </div>
               </div>
             </div>
@@ -169,7 +169,7 @@ export function UGCPhotos({
       </div>
 
       {/* Attribution (Google Places requirement) */}
-      <p className="mt-3 text-[11px] text-camel-400 italic">
+      <p className="mt-3 text-[11px] text-gold-400 italic">
         Photos from Google Places. Posted by visitors.
       </p>
 
@@ -227,7 +227,7 @@ function Lightbox({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-espresso-900/95 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/95 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Close button */}
@@ -309,14 +309,14 @@ export function UGCPhotosSkeleton() {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg bg-camel-100 animate-pulse" />
-        <div className="w-40 h-6 rounded bg-camel-100 animate-pulse" />
+        <div className="w-8 h-8 rounded-lg bg-gold-100 animate-pulse" />
+        <div className="w-40 h-6 rounded bg-gold-100 animate-pulse" />
       </div>
       <div className="flex gap-3 overflow-hidden">
         {[...Array(5)].map((_, i) => (
           <div
             key={i}
-            className="flex-shrink-0 w-40 sm:w-48 aspect-[4/3] rounded-xl bg-camel-100 animate-pulse"
+            className="flex-shrink-0 w-40 sm:w-48 aspect-[4/3] rounded-xl bg-gold-100 animate-pulse"
           />
         ))}
       </div>

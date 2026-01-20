@@ -312,13 +312,13 @@ export default async function ResortPage({ params }: Props) {
   const faqs = content?.faqs as { question: string; answer: string }[] | null
 
   return (
-    <main className="min-h-screen bg-ivory-50">
+    <main className="min-h-screen bg-white">
       {/* Breadcrumb */}
-      <nav className="bg-ivory-100 py-4 border-b border-ivory-200">
+      <nav className="bg-dark-50 py-4 border-b border-dark-100">
         <div className="container-page">
           <ol className="breadcrumb">
             <li>
-              <Link href="/" className="hover:text-cashmere-600 transition-colors">
+              <Link href="/" className="hover:text-coral-500 transition-colors">
                 Home
               </Link>
             </li>
@@ -326,7 +326,7 @@ export default async function ResortPage({ params }: Props) {
               <ChevronRight className="w-4 h-4" />
             </li>
             <li>
-              <Link href="/resorts" className="hover:text-cashmere-600 transition-colors">
+              <Link href="/resorts" className="hover:text-coral-500 transition-colors">
                 Resorts
               </Link>
             </li>
@@ -336,7 +336,7 @@ export default async function ResortPage({ params }: Props) {
             <li>
               <Link
                 href={`/resorts/${params.country}`}
-                className="hover:text-cashmere-600 transition-colors capitalize"
+                className="hover:text-coral-500 transition-colors capitalize"
               >
                 {decodeURIComponent(params.country).replace(/-/g, ' ')}
               </Link>
@@ -344,37 +344,45 @@ export default async function ResortPage({ params }: Props) {
             <li className="breadcrumb-separator">
               <ChevronRight className="w-4 h-4" />
             </li>
-            <li className="text-espresso-900 font-medium">{resort.name}</li>
+            <li className="text-dark-800 font-medium">{resort.name}</li>
           </ol>
         </div>
       </nav>
 
-      {/* Hero Header */}
-      <header className="hero py-16 sm:py-20">
+      {/* Hero Header - Design-5 Warm Gradient */}
+      <header className="relative py-20 sm:py-28 overflow-hidden">
+        {/* Design-5: "Sunset on snow" warm gradient background */}
+        <div className="absolute inset-0 hero-gradient" />
+
+        {/* Decorative gradient orbs */}
+        <div className="absolute top-10 right-10 w-64 h-64 bg-coral-200/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-10 w-48 h-48 bg-teal-200/30 rounded-full blur-3xl" />
+
         <div className="container-page relative z-10">
           <div className="animate-in animate-in-1">
-            <div className="flex items-center gap-2 text-powder-300 mb-3">
+            <div className="flex items-center gap-2 text-dark-500 mb-4">
               <MapPin className="w-4 h-4" />
               <span className="text-sm font-medium">
                 {resort.region}, {resort.country}
               </span>
             </div>
 
-            <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-ivory-50 tracking-tight">
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-black text-dark-800 tracking-tight leading-[0.95]">
               {resort.name}
             </h1>
 
             {metrics && (
-              <div className="mt-6 flex flex-wrap items-center gap-4">
-                <div className="quick-take-score">
-                  <Star className="w-5 h-5 text-cashmere-400" />
+              <div className="mt-8 flex flex-wrap items-center gap-4">
+                {/* Design-5: Score badge with coral gradient */}
+                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-coral-500 to-coral-600 text-white rounded-full shadow-coral font-semibold">
+                  <Star className="w-5 h-5 text-white" />
                   <span className="text-lg">
                     Family Score: <strong>{metrics.family_overall_score}/10</strong>
                   </span>
                 </div>
 
                 {metrics.best_age_min && metrics.best_age_max && (
-                  <div className="flex items-center gap-2 text-powder-200">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-teal-100 text-teal-700 rounded-full font-medium">
                     <Users className="w-4 h-4" />
                     <span>
                       Best for ages {metrics.best_age_min}–{metrics.best_age_max}
@@ -384,8 +392,8 @@ export default async function ResortPage({ params }: Props) {
               </div>
             )}
 
-            {/* Handwritten tagline */}
-            <p className="mt-6 font-accent text-2xl text-cashmere-300 max-w-xl">
+            {/* Handwritten tagline - Design-5 */}
+            <p className="mt-8 font-accent text-2xl sm:text-3xl text-teal-600 max-w-xl">
               Everything you need to plan your family ski trip
             </p>
           </div>
@@ -418,11 +426,11 @@ export default async function ResortPage({ params }: Props) {
             {/* Getting There */}
             {content?.getting_there && (
               <section id="getting-there">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-cashmere-100">
-                    <Plane className="w-5 h-5 text-cashmere-600" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
+                    <Plane className="w-6 h-6 text-gold-600" />
                   </div>
-                  <h2 className="font-display text-2xl font-semibold text-espresso-900">
+                  <h2 className="font-display text-3xl font-bold text-dark-800">
                     Getting There
                   </h2>
                 </div>
@@ -436,11 +444,11 @@ export default async function ResortPage({ params }: Props) {
             {/* Where to Stay */}
             {content?.where_to_stay && (
               <section id="where-to-stay">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-powder-100">
-                    <Home className="w-5 h-5 text-powder-600" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-100 to-mint-100 shadow-teal">
+                    <Home className="w-6 h-6 text-teal-600" />
                   </div>
-                  <h2 className="font-display text-2xl font-semibold text-espresso-900">
+                  <h2 className="font-display text-3xl font-bold text-dark-800">
                     Where to Stay
                   </h2>
                 </div>
@@ -454,11 +462,11 @@ export default async function ResortPage({ params }: Props) {
             {/* Lift Tickets & Passes */}
             {content?.lift_tickets && (
               <section id="lift-tickets">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-lodge-100">
-                    <Ticket className="w-5 h-5 text-lodge-600" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral">
+                    <Ticket className="w-6 h-6 text-coral-600" />
                   </div>
-                  <h2 className="font-display text-2xl font-semibold text-espresso-900">
+                  <h2 className="font-display text-3xl font-bold text-dark-800">
                     Lift Tickets & Passes
                   </h2>
                 </div>
@@ -468,7 +476,7 @@ export default async function ResortPage({ params }: Props) {
                 />
                 {resort.passes.length > 0 && (
                   <div className="mt-8">
-                    <h3 className="font-display font-semibold text-espresso-900 mb-4">
+                    <h3 className="font-display font-semibold text-dark-800 mb-4">
                       Available Passes
                     </h3>
                     <div className="flex flex-wrap gap-2">
@@ -478,11 +486,11 @@ export default async function ResortPage({ params }: Props) {
                           href={pass.purchase_url || pass.website_url || '#'}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="badge badge-pass hover:bg-espresso-200 transition-colors"
+                          className="badge badge-pass hover:bg-dark-200 transition-colors"
                         >
                           {pass.name}
                           {pass.access_type && (
-                            <span className="text-espresso-500 ml-1">({pass.access_type})</span>
+                            <span className="text-dark-500 ml-1">({pass.access_type})</span>
                           )}
                         </a>
                       ))}
@@ -495,11 +503,11 @@ export default async function ResortPage({ params }: Props) {
             {/* On the Mountain */}
             {content?.on_mountain && (
               <section id="on-mountain">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-sage-100">
-                    <Mountain className="w-5 h-5 text-sage-600" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-100 to-mint-100 shadow-teal">
+                    <Mountain className="w-6 h-6 text-teal-600" />
                   </div>
-                  <h2 className="font-display text-2xl font-semibold text-espresso-900">
+                  <h2 className="font-display text-3xl font-bold text-dark-800">
                     On the Mountain
                   </h2>
                 </div>
@@ -522,11 +530,11 @@ export default async function ResortPage({ params }: Props) {
             {/* Off the Mountain */}
             {content?.off_mountain && (
               <section id="off-mountain">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-cashmere-100">
-                    <Coffee className="w-5 h-5 text-cashmere-600" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
+                    <Coffee className="w-6 h-6 text-gold-600" />
                   </div>
-                  <h2 className="font-display text-2xl font-semibold text-espresso-900">
+                  <h2 className="font-display text-3xl font-bold text-dark-800">
                     Off the Mountain
                   </h2>
                 </div>
@@ -545,11 +553,11 @@ export default async function ResortPage({ params }: Props) {
             {/* Parent Reviews */}
             {content?.parent_reviews_summary && (
               <section id="reviews">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-xl bg-lodge-100">
-                    <MessageSquare className="w-5 h-5 text-lodge-600" />
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral">
+                    <MessageSquare className="w-6 h-6 text-coral-600" />
                   </div>
-                  <h2 className="font-display text-2xl font-semibold text-espresso-900">
+                  <h2 className="font-display text-3xl font-bold text-dark-800">
                     What Parents Say
                   </h2>
                 </div>
@@ -572,97 +580,101 @@ export default async function ResortPage({ params }: Props) {
               {/* Cost Summary Card */}
               {costs && <CostTable costs={costs} />}
 
-              {/* Quick Links */}
-              <div className="card">
-                <h3 className="font-display font-semibold text-espresso-900 mb-4">
+              {/* Quick Links - Design-5 Card */}
+              <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">
+                <h3 className="font-display text-lg font-bold text-dark-800 mb-5">
                   Jump to Section
                 </h3>
-                <nav className="space-y-2">
+                <nav className="space-y-1">
                   {content?.quick_take && (
                     <a
                       href="#quick-take"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <Sparkles className="w-4 h-4" />
+                      <Sparkles className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       Quick Take
                     </a>
                   )}
                   {content?.getting_there && (
                     <a
                       href="#getting-there"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <Plane className="w-4 h-4" />
+                      <Plane className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       Getting There
                     </a>
                   )}
                   {content?.where_to_stay && (
                     <a
                       href="#where-to-stay"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <Home className="w-4 h-4" />
+                      <Home className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       Where to Stay
                     </a>
                   )}
                   {content?.lift_tickets && (
                     <a
                       href="#lift-tickets"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <Ticket className="w-4 h-4" />
+                      <Ticket className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       Lift Tickets
                     </a>
                   )}
                   {content?.on_mountain && (
                     <a
                       href="#on-mountain"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <Mountain className="w-4 h-4" />
+                      <Mountain className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       On the Mountain
                     </a>
                   )}
                   <a
                     href="#trail-map"
-                    className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                    className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                   >
-                    <Map className="w-4 h-4" />
+                    <Map className="w-4 h-4 group-hover:scale-110 transition-transform" />
                     Trail Map
                   </a>
                   {faqs && faqs.length > 0 && (
                     <a
                       href="#faq"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <MessageSquare className="w-4 h-4" />
+                      <MessageSquare className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       FAQ
                     </a>
                   )}
                   {similarResorts.length > 0 && (
                     <a
                       href="#similar-resorts"
-                      className="flex items-center gap-2 text-sm text-espresso-600 hover:text-cashmere-600 transition-colors py-1"
+                      className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
-                      <Mountain className="w-4 h-4" />
+                      <Mountain className="w-4 h-4 group-hover:scale-110 transition-transform" />
                       Similar Resorts
                     </a>
                   )}
                 </nav>
               </div>
 
-              {/* Newsletter CTA */}
-              <div className="card card-warm">
-                <div className="text-center">
-                  <span className="font-accent text-2xl text-cashmere-600">
+              {/* Newsletter CTA - Design-5 Playful Card */}
+              <div className="relative overflow-hidden p-8" style={{ borderRadius: '32px', background: 'linear-gradient(145deg, rgba(149, 225, 211, 0.15) 0%, rgba(255, 107, 107, 0.08) 100%)', border: '2px solid rgba(149, 225, 211, 0.3)' }}>
+                {/* Decorative elements */}
+                <div className="absolute top-3 right-3 w-12 h-12 bg-coral-100 rounded-full opacity-50 blur-2xl" />
+                <div className="absolute bottom-3 left-3 w-10 h-10 bg-teal-100 rounded-full opacity-50 blur-2xl" />
+
+                <div className="relative z-10 text-center">
+                  <span className="font-accent text-2xl text-teal-600">
                     Planning a trip?
                   </span>
-                  <p className="mt-2 text-sm text-espresso-600">
+                  <p className="mt-3 text-sm text-dark-600">
                     Get our free family ski trip checklist and monthly deal alerts.
                   </p>
-                  <button className="btn btn-primary w-full mt-4">
+                  <button className="w-full mt-5 px-6 py-3.5 bg-gradient-to-r from-coral-500 to-coral-600 text-white font-semibold rounded-full shadow-coral hover:shadow-coral-lg hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
                     Get the Checklist
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                    <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -671,10 +683,12 @@ export default async function ResortPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Similar Resorts */}
+      {/* Similar Resorts - Design-5 Warm Gradient Background */}
       {similarResorts.length > 0 && (
-        <section className="bg-ivory-100 py-16 border-t border-ivory-200">
-          <div className="container-page">
+        <section className="relative py-20 border-t border-dark-100 overflow-hidden">
+          {/* Design-5: Warm gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-mint-50/50 via-white to-coral-50/30" />
+          <div className="container-page relative z-10">
             <SimilarResorts
               resorts={similarResorts}
               currentResortName={resort.name}

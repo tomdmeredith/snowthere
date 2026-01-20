@@ -5,84 +5,125 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 /**
- * CHALET Design System - Badge Component
+ * SPIELPLATZ Design System - Badge Component
+ * "Playful. Memorable. Fun."
  *
  * Used for:
- * - Family score badges (crimson gradient)
- * - Status indicators (pine for positive, camel for warning)
- * - Category labels (slate muted)
- * - Highlight tags (camel subtle)
+ * - Family score badges (coral gradient)
+ * - Status indicators (teal for positive, gold for warning)
+ * - Category labels (dark muted)
+ * - Highlight tags (gold subtle)
  *
- * Variants follow the CHALET color philosophy:
- * - score: Crimson - bold accent for the key family score
- * - success/perfect: Pine - nature's touch for positive states
- * - warning/skip: Camel - warm neutral for caution
- * - muted: Slate - cool counterpoint for secondary info
- * - highlight: Camel subtle - category tags on resort cards
+ * Variants follow the SPIELPLATZ color philosophy:
+ * - score: Coral - bold accent for the key family score
+ * - success/perfect: Teal - fresh, vibrant positive states
+ * - warning/skip: Gold - playful warm caution
+ * - muted: Dark - neutral for secondary info
+ * - highlight: Gold subtle - category tags on resort cards
  */
 
 const badgeVariants = cva(
-  // Base styles
+  // Base styles - Spielplatz playful precision
+  // Design-5: Pill shapes (rounded-full) for all badges
   [
     'inline-flex items-center justify-center',
-    'font-sans font-medium',
+    'font-sans font-semibold',
     'whitespace-nowrap',
-    'transition-colors duration-200',
+    'rounded-full', // Design-5: Pill shape by default
+    'transition-all duration-300',
   ],
   {
     variants: {
       variant: {
-        // Crimson score badge - bold family score display
+        // Coral score badge - gradient for bold family score display (Design-5)
         score: [
-          'bg-crimson-500',
-          'text-ivory-50',
-          'shadow-md',
+          'bg-gradient-to-br from-coral-500 to-coral-600',
+          'text-white',
+          'shadow-coral',
+          'hover:shadow-coral-lg hover:scale-105',
         ],
-        // Pine success/perfect - positive indicators
+        // Large score - extra prominent for hero displays
+        'score-lg': [
+          'bg-gradient-to-br from-coral-500 via-coral-500 to-coral-600',
+          'text-white',
+          'shadow-coral-lg',
+          'hover:shadow-coral-glow hover:scale-105',
+        ],
+        // Teal success/perfect - fresh positive indicators
         success: [
-          'bg-pine-100',
-          'text-pine-600',
-          'border border-pine-200/50',
+          'bg-teal-100',
+          'text-teal-700',
+          'border border-teal-200',
+          'hover:bg-teal-200/70 hover:scale-105',
         ],
-        // Camel warning/skip - caution indicators
+        // Perfect - stronger teal for "Perfect if" sections
+        perfect: [
+          'bg-gradient-to-br from-teal-400 to-teal-500',
+          'text-white',
+          'shadow-teal',
+          'hover:shadow-teal-lg hover:scale-105',
+        ],
+        // Gold warning/skip - playful caution indicators
         warning: [
-          'bg-camel-100',
-          'text-camel-600',
-          'border border-camel-200/50',
+          'bg-gold-100',
+          'text-gold-700',
+          'border border-gold-200',
+          'hover:bg-gold-200/70 hover:scale-105',
         ],
-        // Slate muted - secondary/neutral info
+        // Skip - stronger gold for "Skip if" sections
+        skip: [
+          'bg-gradient-to-br from-gold-300 to-gold-400',
+          'text-dark-700',
+          'shadow-gold',
+          'hover:shadow-gold-lg hover:scale-105',
+        ],
+        // Dark muted - secondary/neutral info
         muted: [
-          'bg-slate-200/60',
-          'text-slate-600',
+          'bg-dark-100',
+          'text-dark-600',
+          'hover:bg-dark-200/70 hover:scale-105',
         ],
-        // Camel highlight - subtle category tags
+        // Gold highlight - subtle category tags
         highlight: [
-          'bg-camel-100',
-          'text-camel-600',
+          'bg-gold-100',
+          'text-gold-700',
+          'hover:bg-gold-200/70 hover:scale-105',
         ],
-        // Outline - espresso outlined style
+        // Outline - dark outlined style
         outline: [
           'bg-transparent',
-          'text-espresso-700',
-          'border border-espresso-700/30',
+          'text-dark-700',
+          'border border-dark-300',
+          'hover:bg-dark-100 hover:border-dark-400 hover:scale-105',
         ],
-        // Pine solid - for strong positive emphasis
-        pine: [
-          'bg-pine-500',
-          'text-ivory-50',
+        // Teal solid - for strong positive emphasis
+        teal: [
+          'bg-teal-500',
+          'text-white',
+          'shadow-teal',
+          'hover:bg-teal-600 hover:shadow-teal-lg hover:scale-105',
         ],
-        // Crimson outline - secondary CTA style
-        'crimson-outline': [
+        // Coral outline - secondary CTA style
+        'coral-outline': [
           'bg-transparent',
-          'text-crimson-600',
-          'border border-crimson-500',
+          'text-coral-600',
+          'border-2 border-coral-500',
+          'hover:bg-coral-50 hover:scale-105',
+        ],
+        // Mint - soft accent for gentle highlights
+        mint: [
+          'bg-mint-100',
+          'text-mint-700',
+          'border border-mint-200',
+          'hover:bg-mint-200/70 hover:scale-105',
         ],
       },
       size: {
-        xs: 'px-2 py-0.5 text-xs rounded',
-        sm: 'px-2.5 py-1 text-xs rounded-md',
-        md: 'px-3 py-1.5 text-sm rounded-lg',
-        lg: 'px-4 py-2 text-base rounded-xl',
+        xs: 'px-2.5 py-0.5 text-xs',
+        sm: 'px-3 py-1 text-xs',
+        md: 'px-4 py-1.5 text-sm',
+        lg: 'px-5 py-2 text-base',
+        xl: 'px-6 py-2.5 text-lg', // Design-5: Extra large for hero scores
       },
     },
     defaultVariants: {
@@ -121,30 +162,45 @@ Badge.displayName = 'Badge'
 /**
  * ScoreBadge - Specialized badge for family scores (1-10)
  * Displays as larger, more prominent badge with score number
+ * Design-5: Gradient background, glow shadow, scale on hover
  */
 interface ScoreBadgeProps extends Omit<BadgeProps, 'variant' | 'size' | 'children'> {
   score: number
   maxScore?: number
   showMax?: boolean
+  /** Size variant for different contexts */
+  badgeSize?: 'sm' | 'md' | 'lg' | 'xl'
+}
+
+const scoreBadgeSizes = {
+  sm: 'px-3 py-1 text-sm min-w-[48px]',
+  md: 'px-4 py-1.5 text-base min-w-[56px]',
+  lg: 'px-5 py-2 text-lg min-w-[64px]',
+  xl: 'px-6 py-3 text-xl min-w-[80px]', // Hero displays
 }
 
 const ScoreBadge = forwardRef<HTMLSpanElement, ScoreBadgeProps>(
-  ({ className, score, maxScore = 10, showMax = true, ...props }, ref) => {
+  ({ className, score, maxScore = 10, showMax = true, badgeSize = 'md', ...props }, ref) => {
     return (
       <span
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center',
-          'bg-crimson-500 text-ivory-50',
-          'px-3 py-1.5 rounded-full',
-          'font-sans font-semibold text-sm',
-          'shadow-md',
+          'inline-flex items-center justify-center gap-0.5',
+          'bg-gradient-to-br from-coral-500 to-coral-600',
+          'text-white rounded-full',
+          'font-sans font-bold',
+          'shadow-coral',
+          'transition-all duration-300',
+          'hover:shadow-coral-lg hover:scale-105',
+          scoreBadgeSizes[badgeSize],
           className
         )}
         {...props}
       >
-        {score}
-        {showMax && <span className="opacity-80">/{maxScore}</span>}
+        <span className="tabular-nums">{score}</span>
+        {showMax && (
+          <span className="opacity-70 font-medium">/{maxScore}</span>
+        )}
       </span>
     )
   }
@@ -152,4 +208,69 @@ const ScoreBadge = forwardRef<HTMLSpanElement, ScoreBadgeProps>(
 
 ScoreBadge.displayName = 'ScoreBadge'
 
-export { Badge, ScoreBadge, badgeVariants }
+/**
+ * CategoryBadge - For resort category tags (e.g., "Family-Friendly", "Advanced")
+ * Design-5: Subtle gold background, playful hover
+ */
+interface CategoryBadgeProps extends Omit<BadgeProps, 'variant' | 'size'> {
+  category: string
+}
+
+const CategoryBadge = forwardRef<HTMLSpanElement, CategoryBadgeProps>(
+  ({ className, category, ...props }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          'inline-flex items-center justify-center',
+          'bg-gold-100 text-gold-700',
+          'px-3 py-1 rounded-full',
+          'font-sans font-medium text-xs',
+          'transition-all duration-300',
+          'hover:bg-gold-200/70 hover:scale-105',
+          className
+        )}
+        {...props}
+      >
+        {category}
+      </span>
+    )
+  }
+)
+
+CategoryBadge.displayName = 'CategoryBadge'
+
+/**
+ * PassBadge - For ski pass tags (e.g., "Epic Pass", "Ikon Pass")
+ * Design-5: Teal accent, subtle hover
+ */
+interface PassBadgeProps extends Omit<BadgeProps, 'variant' | 'size'> {
+  passName: string
+}
+
+const PassBadge = forwardRef<HTMLSpanElement, PassBadgeProps>(
+  ({ className, passName, ...props }, ref) => {
+    return (
+      <span
+        ref={ref}
+        className={cn(
+          'inline-flex items-center justify-center',
+          'bg-teal-100 text-teal-700',
+          'px-3 py-1 rounded-full',
+          'font-sans font-medium text-xs',
+          'border border-teal-200',
+          'transition-all duration-300',
+          'hover:bg-teal-200/70 hover:scale-105',
+          className
+        )}
+        {...props}
+      >
+        {passName}
+      </span>
+    )
+  }
+)
+
+PassBadge.displayName = 'PassBadge'
+
+export { Badge, ScoreBadge, CategoryBadge, PassBadge, badgeVariants }

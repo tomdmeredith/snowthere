@@ -5,67 +5,78 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 /**
- * CHALET Design System - Card Component
+ * SPIELPLATZ Design System - Card Component
+ * "Playful. Memorable. Fun."
  *
- * Cards are the primary content containers in the CHALET system.
+ * Cards are the primary content containers in SPIELPLATZ.
  * They feature:
- * - Ivory backgrounds (not stark white)
- * - Warm-tinted shadows using espresso tones
- * - Generous rounded corners (24px+)
- * - Subtle borders in ivory/camel tones
+ * - Clean white backgrounds
+ * - Playful shadows with subtle color tints
+ * - Generous rounded corners (16px+)
+ * - Subtle borders in neutral tones
  *
  * Variants:
- * - default: Ivory background with soft shadow
+ * - default: White background with card shadow
  * - elevated: Lifted appearance with stronger shadow
  * - outlined: Subtle border, no shadow
- * - feature: For featured/highlighted content (camel accent)
+ * - feature: For featured/highlighted content (gold accent)
  */
 
 const cardVariants = cva(
-  // Base styles - warm, inviting, luxury feel
+  // Base styles - playful, clean, memorable
+  // Design-5: rounded-3xl, shadow escalation on hover
   [
-    'rounded-2xl',
+    'rounded-3xl', // Design-5: Bigger rounded corners
     'overflow-hidden',
-    'transition-all duration-300 ease-out',
+    'transition-all duration-300',
   ],
   {
     variants: {
       variant: {
-        // Default - ivory bg with soft warm shadow
+        // Default - white bg with card shadow
         default: [
-          'bg-ivory-100',
-          'shadow-soft',
-          'border border-ivory-200',
+          'bg-white',
+          'shadow-card',
+          'border border-dark-100',
         ],
         // Elevated - stronger lift effect
         elevated: [
-          'bg-ivory-100',
-          'shadow-lifted',
-          'border border-ivory-200',
+          'bg-white',
+          'shadow-card-hover',
+          'border border-dark-100',
         ],
         // Outlined - subtle border, no shadow
         outlined: [
-          'bg-ivory-50',
-          'border border-camel-100',
+          'bg-white',
+          'border border-dark-200',
         ],
-        // Feature - camel accent border for highlights
+        // Feature - coral accent border for highlights (Design-5)
         feature: [
-          'bg-ivory-100',
-          'shadow-soft',
-          'border-2 border-camel-200',
+          'bg-white',
+          'shadow-card',
+          'border-2 border-coral-300',
         ],
         // Glass - subtle transparency for overlays
         glass: [
-          'bg-ivory-100/80',
+          'bg-white/80',
           'backdrop-blur-sm',
-          'border border-ivory-200/50',
+          'border border-dark-100/50',
+        ],
+        // Warm - gradient background (Design-5 playful)
+        warm: [
+          'bg-gradient-to-br from-mint-50 to-coral-50/50',
+          'border border-mint-200',
+          'shadow-playful',
         ],
       },
       interactive: {
+        // Design-5: Scale + lift + shadow escalation on hover
         true: [
           'cursor-pointer',
-          'hover:shadow-lifted',
-          'hover:-translate-y-1',
+          'hover:shadow-card-active',
+          'hover:-translate-y-2',
+          'hover:scale-[1.02]',
+          'hover:border-coral-200',
         ],
         false: '',
       },
@@ -74,6 +85,7 @@ const cardVariants = cva(
         sm: 'p-4',
         md: 'p-6',
         lg: 'p-8 md:p-10',
+        xl: 'p-10 md:p-12', // Design-5: Extra generous padding
       },
     },
     defaultVariants: {
@@ -128,7 +140,7 @@ const CardTitle = forwardRef<HTMLHeadingElement, HTMLAttributes<HTMLHeadingEleme
       <h3
         ref={ref}
         className={cn(
-          'font-display text-xl text-espresso-700 leading-tight',
+          'font-display text-xl text-dark-700 leading-tight',
           className
         )}
         {...props}
@@ -147,7 +159,7 @@ const CardDescription = forwardRef<HTMLParagraphElement, HTMLAttributes<HTMLPara
     return (
       <p
         ref={ref}
-        className={cn('text-sm text-slate-500', className)}
+        className={cn('text-sm text-dark-400', className)}
         {...props}
       />
     )

@@ -6,13 +6,15 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 /**
- * CHALET Design System - Button Component
+ * SPIELPLATZ Design System - Button Component
+ * "Playful. Memorable. Fun."
  *
  * Variants:
- * - primary: Crimson gradient - "the bold moment" for primary CTAs
- * - secondary: Camel tones - warm, inviting secondary actions
- * - ghost: Transparent with border - subtle, editorial feel
- * - outline: Espresso outlined - for neutral actions
+ * - primary: Coral gradient - energetic, playful CTAs
+ * - secondary: Teal tones - fresh, vibrant secondary actions
+ * - ghost: Transparent with border - subtle, clean feel
+ * - outline: Dark outlined - for neutral actions
+ * - gold: Playful highlight buttons
  *
  * Sizes:
  * - sm: Compact for inline use
@@ -21,80 +23,96 @@ import { cn } from '@/lib/utils'
  */
 
 const buttonVariants = cva(
-  // Base styles - Swiss precision meets warmth
+  // Base styles - Spielplatz playful precision
+  // Design-5: rounded-full (pill), scale on hover, bouncy transitions
   [
     'inline-flex items-center justify-center gap-2',
     'font-sans font-semibold',
-    'rounded-xl',
-    'transition-all duration-200 ease-out',
-    'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-ivory-50',
+    'rounded-full', // Design-5: Pill shape by default
+    'transition-all duration-300',
+    'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white',
     'disabled:opacity-50 disabled:pointer-events-none',
     'touch-target', // 48px+ touch area from globals.css
   ],
   {
     variants: {
       variant: {
-        // Crimson primary - "The Fire" accent, bold CTAs
+        // Coral primary - playful, energetic CTAs
+        // Design-5: Scale + lift + shadow escalation on hover
         primary: [
-          'bg-gradient-to-b from-crimson-500 to-crimson-600',
-          'text-ivory-50',
-          'shadow-crimson',
-          'hover:from-crimson-600 hover:to-crimson-700',
-          'hover:shadow-lg hover:-translate-y-0.5',
-          'active:translate-y-0',
-          'focus:ring-crimson-400',
+          'bg-gradient-to-b from-coral-500 to-coral-600',
+          'text-white',
+          'shadow-coral',
+          'hover:from-coral-600 hover:to-coral-700',
+          'hover:shadow-coral-lg hover:-translate-y-1 hover:scale-105',
+          'active:scale-[0.98] active:translate-y-0',
+          'focus:ring-coral-400',
         ],
-        // Camel secondary - warm, inviting
+        // Teal secondary - fresh, vibrant
         secondary: [
-          'bg-camel-500',
-          'text-ivory-50',
-          'shadow-camel',
-          'hover:bg-camel-600',
-          'hover:shadow-lg hover:-translate-y-0.5',
-          'active:translate-y-0',
-          'focus:ring-camel-400',
+          'bg-teal-500',
+          'text-white',
+          'shadow-teal',
+          'hover:bg-teal-600',
+          'hover:shadow-teal-lg hover:-translate-y-1 hover:scale-105',
+          'active:scale-[0.98] active:translate-y-0',
+          'focus:ring-teal-400',
         ],
         // Ghost - transparent with subtle border
         ghost: [
           'bg-transparent',
-          'text-espresso-700',
-          'border border-espresso-700/20',
-          'hover:bg-espresso-700/5',
-          'hover:border-espresso-700/30',
-          'focus:ring-espresso-600',
+          'text-dark-700',
+          'border border-dark-700/20',
+          'hover:bg-dark-700/5',
+          'hover:border-dark-700/30',
+          'hover:scale-105',
+          'focus:ring-dark-600',
         ],
-        // Outline - espresso outlined
+        // Outline - dark outlined
         outline: [
-          'bg-ivory-50',
-          'text-espresso-700',
-          'border-2 border-espresso-700',
-          'hover:bg-espresso-700',
-          'hover:text-ivory-50',
-          'focus:ring-espresso-600',
+          'bg-white',
+          'text-dark-700',
+          'border-2 border-dark-700',
+          'hover:bg-dark-700',
+          'hover:text-white',
+          'hover:scale-105',
+          'focus:ring-dark-600',
         ],
-        // Pine - for positive/success actions
-        pine: [
-          'bg-pine-500',
-          'text-ivory-50',
-          'hover:bg-pine-600',
-          'hover:shadow-lg hover:-translate-y-0.5',
-          'active:translate-y-0',
-          'focus:ring-pine-400',
+        // Teal - for positive/success actions
+        teal: [
+          'bg-teal-500',
+          'text-white',
+          'shadow-teal',
+          'hover:bg-teal-600',
+          'hover:shadow-teal-lg hover:-translate-y-1 hover:scale-105',
+          'active:scale-[0.98] active:translate-y-0',
+          'focus:ring-teal-400',
+        ],
+        // Gold - playful highlight buttons
+        gold: [
+          'bg-gold-400',
+          'text-dark-800',
+          'shadow-gold',
+          'hover:bg-gold-500',
+          'hover:shadow-gold-lg hover:-translate-y-1 hover:scale-105',
+          'active:scale-[0.98] active:translate-y-0',
+          'focus:ring-gold-400',
         ],
         // Light ghost - for dark backgrounds (hero overlays)
         'ghost-light': [
           'bg-transparent',
-          'text-ivory-100',
-          'border border-ivory-100/30',
-          'hover:bg-ivory-100/10',
-          'hover:border-ivory-100/50',
-          'focus:ring-ivory-100',
+          'text-white',
+          'border border-white/30',
+          'hover:bg-white/10',
+          'hover:border-white/50',
+          'hover:scale-105',
+          'focus:ring-white',
         ],
       },
       size: {
-        sm: 'px-4 py-2 text-sm min-h-[36px]',
-        md: 'px-6 py-3 text-base min-h-[44px]',
-        lg: 'px-8 py-4 text-lg min-h-[52px]', // Ultra touch-friendly
+        sm: 'px-5 py-2.5 text-sm min-h-[40px]',
+        md: 'px-7 py-3.5 text-base min-h-[48px]',
+        lg: 'px-9 py-4.5 text-lg min-h-[56px]', // Ultra touch-friendly
       },
       fullWidth: {
         true: 'w-full',

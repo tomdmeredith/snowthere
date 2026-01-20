@@ -103,15 +103,214 @@ def pick_resorts_to_research(max_resorts: int = 4) -> dict:
 
 ### The Three Decision Points
 
-| Decision | Threshold Logic | Claude Involvement |
-|----------|-----------------|-------------------|
-| **Resort selection** | None | Always asks Claude |
-| **Publication** | >0.8 = auto-publish, <0.6 = auto-reject | 0.6-0.8 asks Claude |
-| **Error handling** | None | Always asks Claude |
+| Decision | Mechanism | Rationale |
+|----------|-----------|-----------|
+| **Resort selection** | Claude picks from context | Flexibility, reasoning captured |
+| **Publication** | Three-agent approval panel | Diverse perspectives, quality gate |
+| **Error handling** | Claude determines action | Handle novel errors gracefully |
 
 ---
 
-## Confidence Scoring
+## Three-Agent Approval Panel
+
+### The Problem with Confidence Thresholds
+
+We previously used a formula-based confidence score (0.0-1.0) to decide publication:
+- ≥0.8 → Auto-publish
+- 0.6-0.8 → Ask Claude
+- <0.6 → Save as draft
+
+**Issues with this approach:**
+1. Single-dimensional - one number can't capture content quality
+2. Arbitrary thresholds - why 0.8? why not 0.75?
+3. No diverse perspectives - misses voice/completeness/accuracy tradeoffs
+4. No self-improvement loop - content that fails just fails
+
+### The Solution: Three-Agent Approval Panel
+
+We replaced confidence thresholds with a **three-agent approval panel** that:
+- Provides diverse perspectives aligned with our mission
+- Uses **2/3 majority vote** for publication
+- **Iterates until approved** (up to 3 attempts)
+- **Improves content** based on feedback each iteration
+- Follows Agent Native principles (GRANULARITY, COMPOSABILITY)
+
+### The Three Agents
+
+Each agent represents a key family need aligned with our mission:
+
+> **Mission**: Help overwhelmed families discover that international skiing is achievable and affordable
+
+| Agent | Perspective | Key Question | Protects Against |
+|-------|-------------|--------------|------------------|
+| **TrustGuard** | Accuracy | "Can families trust this?" | Misinformation, outdated prices, false claims |
+| **FamilyValue** | Completeness | "Can families use this to plan?" | Vague content, missing info, unusable guides |
+| **VoiceCoach** | Tone | "Does this encourage, not intimidate?" | Corporate tone, jargon, overwhelming content |
+
+### Agent 1: TrustGuard
+
+**Mission**: Protect families from misinformation. They're making expensive trip decisions.
+
+**Evaluates:**
+- Source verification - Are facts backed by provided sources?
+- Price realism - Are costs realistic for this region/tier?
+- Consistency - Do metrics match narrative? Trail percentages add up?
+- Red flags - Outdated info? Claims without evidence?
+
+### Agent 2: FamilyValue
+
+**Mission**: Ensure families can actually PLAN A TRIP from this guide.
+
+**Evaluates:**
+- Completeness - All 10 required sections present and substantive?
+- Specificity - Named hotels, actual prices, specific restaurants?
+- Mobile-friendliness - Short paragraphs, scannable, tables not too wide?
+- GEO optimization - Tables for data, FAQs with natural questions?
+
+**Required Sections:**
+1. quick_take - BLUF verdict with "Perfect if/Skip if"
+2. family_metrics - Table with actual scores
+3. getting_there - Airports, transfers, times
+4. where_to_stay - 3 tiers with NAMED properties
+5. lift_tickets - ACTUAL prices + pass info
+6. on_mountain - Terrain breakdown, ski school with ages
+7. off_mountain - NAMED restaurants, activities
+8. ski_calendar - Monthly table
+9. faqs - 5-8 natural questions
+
+### Agent 3: VoiceCoach
+
+**Mission**: Make families feel "YOU CAN DO THIS."
+
+**Evaluates:**
+- Warmth - Sounds like a trusted friend, not a brochure?
+- Jargon - Technical terms explained? Not assuming expert knowledge?
+- Brand alignment - SPIELPLATZ feel (playful, warm)?
+- Patterns to avoid - "Here's the thing...", excessive enthusiasm
+
+**Voice Profile**: `snowthere_guide` (expert but warm, Wirecutter meets travel publication)
+
+### Approval Flow
+
+```
+Content Generated
+       │
+       ▼
+┌──────────────────────────────────────────────┐
+│         APPROVAL PANEL (Parallel)             │
+│                                              │
+│   ┌──────────┐ ┌──────────┐ ┌──────────┐    │
+│   │TrustGuard│ │FamilyVal │ │VoiceCoach│    │
+│   │ Agent    │ │ Agent    │ │ Agent    │    │
+│   └────┬─────┘ └────┬─────┘ └────┬─────┘    │
+│        │            │            │           │
+│        ▼            ▼            ▼           │
+│   [APPROVE]    [IMPROVE]    [APPROVE]        │
+│                                              │
+│   VOTE: 2 approve, 1 improve                 │
+│   THRESHOLD: 2/3 majority                    │
+│   RESULT: ✅ APPROVED                        │
+└──────────────────────────────────────────────┘
+       │
+       │ 2/3 approved → PUBLISH
+       │
+       │ <2/3 approved → ITERATE (up to 3x)
+       │
+       ├── Combine issues from all agents
+       ├── Apply improvements via Claude
+       ├── Re-run approval panel
+       └── Max 3 iterations → DRAFT if still <2/3
+```
+
+### Implementation
+
+**File:** `agents/shared/primitives/approval.py`
+
+```python
+# Atomic evaluation primitives
+async def evaluate_trust(content, sources, resort_data) -> EvaluationResult
+async def evaluate_completeness(content, resort_data) -> EvaluationResult
+async def evaluate_voice(content, voice_profile) -> EvaluationResult
+
+# Orchestration (runs all 3 in parallel)
+async def run_approval_panel(content, sources, resort_data, voice_profile) -> PanelResult
+
+# Content improvement
+async def improve_content(content, issues, suggestions) -> dict
+
+# Full approval loop
+async def approval_loop(content, sources, resort_data, voice_profile, max_iterations=3) -> ApprovalLoopResult
+```
+
+**Data Structures:**
+
+```python
+@dataclass
+class EvaluationResult:
+    agent_name: str       # "TrustGuard", "FamilyValue", "VoiceCoach"
+    verdict: str          # "approve", "improve", "reject"
+    confidence: float     # 0.0-1.0
+    issues: list[str]     # Specific problems found
+    suggestions: list[str] # How to fix
+    reasoning: str        # Overall assessment
+
+@dataclass
+class PanelResult:
+    votes: list[EvaluationResult]
+    approved: bool        # 2/3 majority
+    approve_count: int
+    improve_count: int
+    reject_count: int
+    combined_issues: list[str]
+    combined_suggestions: list[str]
+
+@dataclass
+class ApprovalLoopResult:
+    final_content: dict
+    approved: bool
+    iterations: int
+    panel_history: list[PanelResult]
+    final_issues: list[str]  # If not approved, why
+```
+
+### Cost Estimation
+
+Each panel run ≈ $0.15-0.20 (3 Claude calls)
+- TrustGuard: ~$0.05 (shorter context)
+- FamilyValue: ~$0.07 (checklist evaluation)
+- VoiceCoach: ~$0.05 (voice analysis)
+
+With max 3 iterations: $0.45-0.60 per resort (worst case)
+Still within $1.50/resort budget.
+
+### Edge Cases
+
+| Scenario | Outcome |
+|----------|---------|
+| **Unanimous approve** (3/3) | Publish immediately |
+| **2/3 approve** | Publish (meets threshold) |
+| **1/3 approve, 2 improve** | Iterate with combined feedback |
+| **0/3 approve, 3 improve** | Iterate with combined feedback |
+| **Any reject** | Iterate (reject = strong improve signal) |
+| **3 iterations, still <2/3** | Save as draft with agent notes |
+
+### Agent Prompt Templates
+
+Located in `agents/prompts/`:
+- `trustguard.md` - TrustGuard system prompt and user prompt template
+- `familyvalue.md` - FamilyValue system prompt and user prompt template
+- `voicecoach.md` - VoiceCoach system prompt and user prompt template
+
+---
+
+## Research Confidence Score (Still Used)
+
+We still calculate a confidence score from research quality. This is used for:
+- Logging and observability
+- Memory context (learning from past runs)
+- Potential fallback if approval panel fails
+
+The formula remains unchanged, but it no longer gates publication directly.
 
 ### The Formula
 
@@ -128,44 +327,11 @@ def calculate_confidence(research_data: dict) -> float:
         score += 0.2
 
     # Price data completeness (max 0.2)
-    costs = research_data.get("costs", {})
-    price_fields = ["lift_adult_daily", "lodging_budget_nightly", "lodging_mid_nightly"]
-    price_completeness = sum(1 for f in price_fields if costs.get(f)) / len(price_fields)
-    score += price_completeness * 0.2
-
     # Family metrics completeness (max 0.15)
-    metrics = research_data.get("family_metrics", {})
-    metric_fields = ["family_overall_score", "childcare_min_age", "ski_school_min_age"]
-    metric_completeness = sum(1 for f in metric_fields if metrics.get(f)) / len(metric_fields)
-    score += metric_completeness * 0.15
-
     # Review data (max 0.15)
-    reviews = research_data.get("reviews", [])
-    if len(reviews) >= 5:
-        score += 0.15
-    elif len(reviews) >= 2:
-        score += 0.08
 
     return min(score, 1.0)
 ```
-
-### Why These Weights?
-
-| Component | Weight | Rationale |
-|-----------|--------|-----------|
-| Sources | 0.30 | More sources = more confident in facts |
-| Official data | 0.20 | Official site is authoritative |
-| Price data | 0.20 | Users need accurate pricing |
-| Family metrics | 0.15 | Core value proposition |
-| Reviews | 0.15 | Social proof matters |
-
-### Publication Thresholds
-
-| Confidence | Action | Rationale |
-|------------|--------|-----------|
-| >= 0.8 | Auto-publish | High quality, ship it |
-| 0.6 - 0.8 | Ask Claude | Borderline, need judgment |
-| < 0.6 | Auto-reject | Too risky, needs human review |
 
 ---
 
@@ -244,8 +410,10 @@ class Settings(BaseSettings):
 |-----------|-----------|
 | Research (3 APIs) | $0.20 |
 | Content generation (Claude) | $0.80 |
+| Approval panel (3 agents × 1-3 iterations) | $0.15-0.60 |
+| Content improvement (if needed) | $0.10-0.30 |
 | Decision calls (Sonnet) | $0.05 |
-| **Total per resort** | ~$1.05-1.50 |
+| **Total per resort** | ~$1.30-1.95 |
 
 ### Budget Exhaustion Behavior
 
@@ -341,23 +509,38 @@ This lets us handle novel errors without code changes.
 | Level | Human Involvement | Where We Are |
 |-------|-------------------|--------------|
 | Level 1 | Human reviews all | Past this |
-| **Level 2** | 20-30% review (low confidence only) | **Starting here** |
-| Level 3 | <10% review (emergencies only) | Goal |
-| Level 4 | 0% review (fully autonomous) | Future |
+| Level 2 | 20-30% review (low confidence only) | Past this |
+| **Level 3** | <10% review (panel rejections only) | **Current** |
+| Level 4 | 0% review (fully autonomous) | Goal |
 
-### Level 2 Safeguards
+### Level 3 Safeguards (Current)
 
-- Confidence < 0.6 → Human review required
+- **Three-agent approval panel** - diverse perspectives before publication
+- **2/3 majority required** - no single point of failure
+- **Iterative improvement** - content improves until approved
+- **Draft on rejection** - human review only for truly problematic content
 - Budget caps with daily limits
-- Full audit trail
+- Full audit trail with agent reasoning
 - No destructive operations without confirmation
 
-### Graduating to Level 3
+### Why Approval Panel Enables Higher Autonomy
+
+The approval panel provides **built-in quality gates** that were previously manual:
+
+| Old Approach | New Approach |
+|--------------|--------------|
+| Human reviews all < 0.8 confidence | Panel reviews all, human only sees rejects |
+| Single dimension (confidence score) | Three dimensions (trust, completeness, voice) |
+| Content fails → stays draft | Content fails → improves → tries again |
+| ~30% human involvement | ~5-10% human involvement |
+
+### Graduating to Level 4
 
 Requirements:
-- 100+ successful auto-publishes
+- 100+ successful panel approvals
 - <5% post-publish corrections
-- Proven error recovery patterns
+- Panel agreement rate >80%
+- First-pass approval rate >60%
 - Discovery agent operational
 
 ---
@@ -371,22 +554,39 @@ agents/
 │   ├── supabase_client.py
 │   ├── voice_profiles.py
 │   └── primitives/      # Atomic building blocks
+│       ├── approval.py  # ⭐ Three-agent approval panel
+│       ├── research.py
+│       ├── content.py
+│       ├── database.py
+│       ├── publishing.py
+│       ├── system.py
+│       └── ...          # 63+ primitives total
+│
+├── prompts/             # ⭐ Agent prompt templates
+│   ├── trustguard.md    # TrustGuard agent prompt
+│   ├── familyvalue.md   # FamilyValue agent prompt
+│   └── voicecoach.md    # VoiceCoach agent prompt
 │
 ├── pipeline/            # Autonomous execution
 │   ├── __init__.py      # Public interface
 │   ├── orchestrator.py  # Entry point
-│   ├── runner.py        # Execution logic
+│   ├── runner.py        # Execution logic (uses approval panel)
 │   └── decision_maker.py # Intelligence
 │
+├── agent_layer/         # Agent infrastructure
+│   ├── base.py          # BaseAgent with think→act→observe
+│   ├── memory.py        # 3-tier memory system
+│   └── ...
+│
 ├── mcp_server/          # Interactive CLI tool
-│   ├── __init__.py
 │   ├── server.py        # 55 MCP tools
 │   └── README.md
 │
-├── research_resort/     # IACP agent (optional)
-├── generate_guide/      # IACP agent (optional)
-├── optimize_for_geo/    # IACP agent (optional)
+├── research_resort/     # IACP agent (reference only)
+├── generate_guide/      # IACP agent (reference only)
+├── optimize_for_geo/    # IACP agent (reference only)
 │
+├── cron.py              # Railway entry point
 ├── requirements.txt
 ├── ARCHITECTURE.md      # This file
 └── run.py               # Agent runner

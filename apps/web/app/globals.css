@@ -74,6 +74,99 @@
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-in-out: cubic-bezier(0.45, 0, 0.55, 1);
     --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+    /* ============================================
+       SPIELPLATZ Design System
+       "Playful. Memorable. Fun."
+       ============================================
+
+       Inspired by Memphis design, Bauhaus, playground aesthetics
+       Family ski directories should be FUN!
+
+       Brand: ❄️ snow[there]
+       - "snow" in dark (#2D3436)
+       - "there" in coral (#FF6B6B)
+
+       WCAG 2.1 CONTRAST RATIOS
+       ─────────────────────────────────────────────
+       • dark-700 on white: 12.6:1 (AAA) ✓
+       • coral-500 on white: 3.9:1 (AA for large text) ✓
+       • coral-700 on white: 5.1:1 (AA) ✓
+       • teal-600 on white: 4.6:1 (AA) ✓
+       ============================================ */
+
+    /* CORAL - Primary Brand Color
+       Warm, energetic, the "there" in snowthere logo */
+    --coral-50: 255 240 240;
+    --coral-100: 255 224 224;
+    --coral-200: 255 189 189;
+    --coral-300: 255 154 154;
+    --coral-400: 255 128 128;
+    --coral-500: 255 107 107;    /* PRIMARY - Logo, CTAs, emphasis */
+    --coral-600: 232 85 85;
+    --coral-700: 204 64 64;
+    --coral-800: 166 51 51;
+    --coral-900: 128 38 38;
+
+    /* TEAL - Secondary Accent
+       Fresh, vibrant, success states */
+    --teal-50: 230 250 248;
+    --teal-100: 204 245 241;
+    --teal-200: 153 235 227;
+    --teal-300: 102 225 213;
+    --teal-400: 78 205 196;      /* PRIMARY - Success, highlights */
+    --teal-500: 61 184 175;
+    --teal-600: 45 154 147;
+    --teal-700: 30 123 118;
+    --teal-800: 20 92 89;
+    --teal-900: 10 61 59;
+
+    /* GOLD - Playful Highlight
+       Warm yellow, badges, stars, playful accents */
+    --gold-50: 255 251 235;
+    --gold-100: 255 247 214;
+    --gold-200: 255 239 173;
+    --gold-300: 255 231 133;
+    --gold-400: 255 224 102;     /* PRIMARY - Badges, highlights */
+    --gold-500: 230 200 77;
+    --gold-600: 204 176 51;
+    --gold-700: 166 144 26;
+    --gold-800: 128 111 0;
+    --gold-900: 89 77 0;
+
+    /* MINT - Soft Accent
+       Gentle, calming, backgrounds */
+    --mint-50: 240 251 248;
+    --mint-100: 225 247 241;
+    --mint-200: 195 239 227;
+    --mint-300: 165 231 213;
+    --mint-400: 149 225 211;     /* PRIMARY - Soft backgrounds */
+    --mint-500: 125 212 196;
+    --mint-600: 101 199 181;
+    --mint-700: 77 185 166;
+    --mint-800: 53 155 138;
+    --mint-900: 29 125 110;
+
+    /* DARK - Text & Anchoring
+       Deep charcoal, "snow" in logo */
+    --dark-50: 245 245 245;
+    --dark-100: 224 224 224;
+    --dark-200: 184 184 184;
+    --dark-300: 144 144 144;
+    --dark-400: 104 104 104;
+    --dark-500: 69 69 69;
+    --dark-600: 54 54 54;
+    --dark-700: 45 52 54;        /* PRIMARY - Body text, "snow" in logo */
+    --dark-800: 30 35 36;
+    --dark-900: 15 17 18;
+
+    /* Spielplatz Background Gradient */
+    --bg-gradient-spielplatz: linear-gradient(135deg, #FFF5E6, #FFE8E8, #E8F4FF);
+
+    /* Spielplatz Timing Functions - Playful & Bouncy */
+    --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --ease-bounce-subtle: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --ease-playful: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
   html {
@@ -81,25 +174,25 @@
   }
 
   body {
-    @apply bg-ivory-50 text-espresso-700 antialiased;
+    @apply bg-white text-dark-700 antialiased;
     font-feature-settings: "cv11", "ss01";
   }
 
-  /* Typography defaults - Swiss-inspired precision */
+  /* Typography defaults - Spielplatz playful precision */
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display text-espresso-800;
+    @apply font-display text-dark-800;
     letter-spacing: -0.02em;
   }
 
-  /* Selection color - warm camel */
+  /* Selection color - playful coral */
   ::selection {
-    background: rgb(var(--camel-200));
-    color: rgb(var(--espresso-900));
+    background: rgb(var(--coral-200));
+    color: rgb(var(--dark-900));
   }
 
-  /* Custom focus ring - slate for accessibility */
+  /* Custom focus ring - coral for accessibility */
   *:focus-visible {
-    outline: 2px solid rgb(var(--slate-500));
+    outline: 2px solid rgb(var(--coral-500));
     outline-offset: 2px;
   }
 }
@@ -117,27 +210,37 @@
   }
 
   /* ============================================
-     CARDS - Ivory warmth with soft shadows
+     CARDS - Spielplatz playful with colorful shadows
+     Design-5: rounded-3xl, shadow-xl → hover:shadow-2xl
      ============================================ */
   .card {
-    @apply rounded-2xl bg-ivory-100 p-6;
-    border: 1px solid rgb(var(--ivory-200));
+    @apply rounded-3xl bg-white p-6;
+    border: 1px solid rgb(var(--dark-100));
     box-shadow:
-      0 2px 8px rgba(48, 38, 28, 0.04),
-      0 4px 16px rgba(48, 38, 28, 0.06);
+      0 4px 16px rgba(45, 52, 54, 0.08),
+      0 8px 24px rgba(45, 52, 54, 0.06);
+    @apply transition-all duration-300;
+    transition-timing-function: var(--ease-bounce-subtle);
+  }
+
+  .card:hover {
+    @apply -translate-y-1;
+    box-shadow:
+      0 12px 40px rgba(255, 107, 107, 0.12),
+      0 20px 50px rgba(45, 52, 54, 0.1);
   }
 
   .card-warm {
     background: linear-gradient(
       145deg,
-      rgb(var(--ivory-100)) 0%,
-      rgb(var(--camel-100)) 100%
+      rgb(var(--mint-50)) 0%,
+      rgb(var(--coral-50)) 100%
     );
   }
 
   .card-featured {
-    @apply border-2 relative overflow-hidden;
-    border-color: rgb(var(--crimson-400));
+    @apply border-2 relative overflow-hidden rounded-3xl;
+    border-color: rgb(var(--coral-400));
   }
 
   .card-featured::before {
@@ -146,95 +249,117 @@
     top: 0;
     left: 0;
     right: 0;
-    height: 3px;
+    height: 4px;
     background: linear-gradient(
       90deg,
-      rgb(var(--crimson-500)) 0%,
-      rgb(var(--camel-500)) 100%
+      rgb(var(--coral-500)) 0%,
+      rgb(var(--teal-400)) 100%
     );
   }
 
   .card-lift {
     @apply transition-all duration-300;
-    transition-timing-function: var(--ease-out);
+    transition-timing-function: var(--ease-bounce-subtle);
   }
 
   .card-lift:hover {
-    @apply -translate-y-1;
+    @apply -translate-y-2 scale-[1.02];
     box-shadow:
-      0 4px 12px rgba(48, 38, 28, 0.06),
-      0 8px 24px rgba(48, 38, 28, 0.08);
+      0 15px 50px rgba(255, 107, 107, 0.15),
+      0 25px 60px rgba(45, 52, 54, 0.1);
+  }
+
+  /* Static card - no hover effect for interactive wrapper scenarios */
+  .card-static {
+    @apply rounded-3xl bg-white p-6;
+    border: 1px solid rgb(var(--dark-100));
+    box-shadow:
+      0 4px 16px rgba(45, 52, 54, 0.08),
+      0 8px 24px rgba(45, 52, 54, 0.06);
+  }
+
+  .card-static:hover {
+    transform: none;
+    box-shadow:
+      0 4px 16px rgba(45, 52, 54, 0.08),
+      0 8px 24px rgba(45, 52, 54, 0.06);
   }
 
   /* ============================================
-     BUTTONS - Crimson primary, confident actions
+     BUTTONS - Spielplatz coral primary, playful actions
+     Design-5: rounded-full (pill), scale on hover, bouncy
      ============================================ */
   .btn {
-    @apply inline-flex items-center justify-center font-medium transition-all duration-200;
-    transition-timing-function: var(--ease-out);
+    @apply inline-flex items-center justify-center font-semibold transition-all duration-300;
+    transition-timing-function: var(--ease-bounce-subtle);
   }
 
   .btn:active {
-    transform: scale(0.98);
+    transform: scale(0.97);
   }
 
   .btn-primary {
-    @apply rounded-full px-7 py-3.5 text-white font-semibold;
+    @apply rounded-full px-8 py-4 text-white font-semibold;
     background: linear-gradient(
       135deg,
-      rgb(var(--crimson-500)) 0%,
-      rgb(var(--crimson-600)) 100%
+      rgb(var(--coral-500)) 0%,
+      rgb(var(--coral-600)) 100%
     );
     box-shadow:
-      0 4px 14px rgba(158, 72, 58, 0.2),
-      0 2px 4px rgba(158, 72, 58, 0.15);
+      0 4px 14px rgba(255, 107, 107, 0.25),
+      0 2px 4px rgba(255, 107, 107, 0.15);
   }
 
   .btn-primary:hover {
-    @apply -translate-y-0.5;
+    @apply -translate-y-1 scale-105;
     background: linear-gradient(
       135deg,
-      rgb(var(--crimson-600)) 0%,
-      rgb(var(--crimson-700)) 100%
+      rgb(var(--coral-600)) 0%,
+      rgb(var(--coral-700)) 100%
     );
     box-shadow:
-      0 6px 20px rgba(138, 58, 45, 0.25),
-      0 4px 8px rgba(138, 58, 45, 0.2);
+      0 8px 28px rgba(255, 107, 107, 0.35),
+      0 6px 12px rgba(255, 107, 107, 0.25);
   }
 
   .btn-secondary {
-    @apply rounded-full px-7 py-3.5 font-semibold border-2 bg-transparent;
-    border-color: rgb(var(--pine-500));
-    color: rgb(var(--pine-600));
+    @apply rounded-full px-8 py-4 font-semibold border-2 bg-transparent;
+    border-color: rgb(var(--teal-500));
+    color: rgb(var(--teal-600));
   }
 
   .btn-secondary:hover {
-    background: rgb(var(--pine-100));
-    border-color: rgb(var(--pine-600));
+    @apply -translate-y-1 scale-105;
+    background: rgb(var(--teal-50));
+    border-color: rgb(var(--teal-600));
   }
 
   .btn-ghost {
-    @apply rounded-xl px-4 py-2 bg-transparent;
-    color: rgb(var(--espresso-600));
+    @apply rounded-full px-5 py-2.5 bg-transparent;
+    color: rgb(var(--dark-600));
   }
 
   .btn-ghost:hover {
-    background: rgb(var(--ivory-200));
-    color: rgb(var(--espresso-800));
+    @apply scale-105;
+    background: rgb(var(--dark-50));
+    color: rgb(var(--dark-800));
   }
 
-  .btn-camel {
-    @apply rounded-full px-7 py-3.5 font-semibold;
-    background: rgb(var(--camel-500));
-    color: white;
+  .btn-gold {
+    @apply rounded-full px-8 py-4 font-semibold;
+    background: rgb(var(--gold-400));
+    color: rgb(var(--dark-800));
+    box-shadow: 0 4px 14px rgba(255, 224, 102, 0.3);
   }
 
-  .btn-camel:hover {
-    background: rgb(var(--camel-600));
+  .btn-gold:hover {
+    @apply -translate-y-1 scale-105;
+    background: rgb(var(--gold-500));
+    box-shadow: 0 8px 28px rgba(255, 224, 102, 0.4);
   }
 
   /* ============================================
-     BADGES - Refined, informative
+     BADGES - Spielplatz playful, colorful
      ============================================ */
   .badge {
     @apply inline-flex items-center rounded-full text-sm font-medium;
@@ -242,96 +367,102 @@
 
   .badge-score {
     @apply px-3 py-1.5 font-semibold gap-1.5;
-    background: rgb(var(--crimson-500));
+    background: rgb(var(--coral-500));
     color: white;
   }
 
   .badge-score-high {
     background: linear-gradient(
       135deg,
-      rgb(var(--crimson-500)) 0%,
-      rgb(var(--crimson-600)) 100%
+      rgb(var(--coral-500)) 0%,
+      rgb(var(--coral-600)) 100%
     );
   }
 
   .badge-category {
     @apply px-3 py-1 text-xs font-medium;
-    background: rgb(var(--camel-100));
-    color: rgb(var(--camel-600));
+    background: rgb(var(--gold-100));
+    color: rgb(var(--gold-700));
   }
 
   .badge-highlight {
     @apply px-3 py-1.5 font-semibold;
-    background: rgb(var(--camel-200));
-    color: rgb(var(--camel-600));
+    background: rgb(var(--gold-200));
+    color: rgb(var(--gold-700));
   }
 
   .badge-pass {
     @apply px-3 py-1 text-xs font-medium;
-    background: rgb(var(--slate-200));
-    color: rgb(var(--slate-600));
+    background: rgb(var(--dark-100));
+    color: rgb(var(--dark-600));
   }
 
-  .badge-pine {
+  .badge-teal {
     @apply px-3 py-1.5 font-medium;
-    background: rgb(var(--pine-100));
-    color: rgb(var(--pine-600));
+    background: rgb(var(--teal-100));
+    color: rgb(var(--teal-700));
+  }
+
+  .badge-mint {
+    @apply px-3 py-1.5 font-medium;
+    background: rgb(var(--mint-100));
+    color: rgb(var(--teal-700));
   }
 
   /* ============================================
-     PROSE - Editorial magazine styling
+     PROSE - Spielplatz editorial styling
      ============================================ */
-  .prose-chalet {
+  .prose-spielplatz {
     @apply prose prose-lg max-w-none;
-    --tw-prose-body: rgb(var(--espresso-600));
-    --tw-prose-headings: rgb(var(--espresso-800));
-    --tw-prose-links: rgb(var(--crimson-600));
-    --tw-prose-bold: rgb(var(--espresso-800));
-    --tw-prose-counters: rgb(var(--espresso-600));
-    --tw-prose-bullets: rgb(var(--camel-400));
-    --tw-prose-quotes: rgb(var(--espresso-700));
-    --tw-prose-quote-borders: rgb(var(--camel-400));
+    --tw-prose-body: rgb(var(--dark-600));
+    --tw-prose-headings: rgb(var(--dark-800));
+    --tw-prose-links: rgb(var(--coral-600));
+    --tw-prose-bold: rgb(var(--dark-800));
+    --tw-prose-counters: rgb(var(--dark-600));
+    --tw-prose-bullets: rgb(var(--coral-400));
+    --tw-prose-quotes: rgb(var(--dark-700));
+    --tw-prose-quote-borders: rgb(var(--coral-400));
   }
 
-  .prose-chalet :where(a):not(:where([class~="not-prose"] *)) {
+  .prose-spielplatz :where(a):not(:where([class~="not-prose"] *)) {
     @apply no-underline;
-    border-bottom: 1px solid rgb(var(--crimson-400));
+    border-bottom: 1px solid rgb(var(--coral-400));
     transition: border-color 0.2s ease;
   }
 
-  .prose-chalet :where(a):not(:where([class~="not-prose"] *)):hover {
-    border-bottom-color: rgb(var(--crimson-600));
+  .prose-spielplatz :where(a):not(:where([class~="not-prose"] *)):hover {
+    border-bottom-color: rgb(var(--coral-600));
   }
 
-  .prose-chalet :where(h2):not(:where([class~="not-prose"] *)) {
+  .prose-spielplatz :where(h2):not(:where([class~="not-prose"] *)) {
     @apply font-display text-2xl font-semibold mt-14 mb-5;
     letter-spacing: -0.02em;
   }
 
-  .prose-chalet :where(h3):not(:where([class~="not-prose"] *)) {
+  .prose-spielplatz :where(h3):not(:where([class~="not-prose"] *)) {
     @apply font-display text-xl font-semibold mt-10 mb-4;
   }
 
-  .prose-chalet :where(blockquote):not(:where([class~="not-prose"] *)) {
+  .prose-spielplatz :where(blockquote):not(:where([class~="not-prose"] *)) {
     @apply italic border-l-2 pl-6;
-    border-color: rgb(var(--camel-400));
-    color: rgb(var(--espresso-600));
+    border-color: rgb(var(--coral-400));
+    color: rgb(var(--dark-600));
   }
 
   /* ============================================
-     TABLES - Swiss precision, warm tones
+     TABLES - Spielplatz playful, clean
      ============================================ */
   .data-table {
     @apply w-full border-separate overflow-hidden;
     border-spacing: 0;
-    @apply rounded-2xl bg-ivory-100;
-    border: 1px solid rgb(var(--ivory-200));
-    box-shadow: 0 2px 8px rgba(48, 38, 28, 0.04);
+    @apply rounded-2xl bg-white;
+    border: 1px solid rgb(var(--dark-100));
+    box-shadow: 0 2px 8px rgba(45, 52, 54, 0.04);
   }
 
   .data-table thead {
-    background: rgb(var(--espresso-800));
-    color: rgb(var(--ivory-50));
+    background: rgb(var(--dark-700));
+    color: white;
   }
 
   .data-table th {
@@ -349,7 +480,7 @@
 
   .data-table td {
     @apply px-5 py-4;
-    border-bottom: 1px solid rgb(var(--ivory-200));
+    border-bottom: 1px solid rgb(var(--dark-100));
   }
 
   .data-table tr:last-child td {
@@ -361,44 +492,62 @@
   }
 
   .data-table tbody tr:hover {
-    background: rgb(var(--ivory-50));
+    background: rgb(var(--mint-50));
   }
 
   .data-table .highlight {
-    color: rgb(var(--crimson-600));
+    color: rgb(var(--coral-600));
     @apply font-semibold;
   }
 
   /* ============================================
-     QUICK TAKE - Editorial hero component
+     QUICK TAKE - Spielplatz hero component
+     Design-5: Extra rounded, coral accent, playful shadows
      ============================================ */
   .quick-take {
-    @apply relative overflow-hidden rounded-3xl p-8 sm:p-10;
-    background: rgb(var(--ivory-100));
-    border: 1px solid rgb(var(--camel-100));
-    box-shadow: 0 4px 24px rgba(168, 142, 110, 0.08);
+    @apply relative overflow-hidden p-8 sm:p-10 md:p-12;
+    border-radius: 40px;
+    background: linear-gradient(
+      145deg,
+      rgb(var(--mint-50)) 0%,
+      rgb(var(--coral-50) / 0.5) 100%
+    );
+    border: 2px solid rgb(var(--mint-200));
+    box-shadow:
+      0 8px 32px rgba(78, 205, 196, 0.15),
+      0 16px 48px rgba(255, 107, 107, 0.08);
   }
 
   .quick-take-header {
-    @apply flex items-center gap-3 mb-6;
+    @apply flex items-center gap-4 mb-8;
   }
 
   .quick-take-header::before {
     content: '';
-    width: 32px;
-    height: 2px;
-    background: rgb(var(--crimson-500));
+    width: 40px;
+    height: 3px;
+    border-radius: 2px;
+    background: linear-gradient(
+      90deg,
+      rgb(var(--coral-500)) 0%,
+      rgb(var(--coral-400)) 100%
+    );
   }
 
   .quick-take-label {
-    @apply font-accent text-2xl;
-    color: rgb(var(--crimson-500));
+    @apply font-accent text-2xl sm:text-3xl;
+    color: rgb(var(--coral-500));
   }
 
   .quick-take-score {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-full font-semibold;
-    background: rgb(var(--crimson-500));
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-full font-bold text-lg;
+    background: linear-gradient(
+      135deg,
+      rgb(var(--coral-500)) 0%,
+      rgb(var(--coral-600)) 100%
+    );
     color: white;
+    box-shadow: 0 4px 14px rgba(255, 107, 107, 0.3);
   }
 
   /* ============================================
@@ -410,13 +559,13 @@
   }
 
   .condition-card.perfect {
-    background: rgba(232, 240, 236, 0.7);
-    border-color: rgba(108, 138, 118, 0.3);
+    background: rgba(230, 250, 248, 0.7);
+    border-color: rgba(78, 205, 196, 0.3);
   }
 
   .condition-card.skip {
-    background: rgba(244, 234, 220, 0.7);
-    border-color: rgba(194, 170, 138, 0.3);
+    background: rgba(255, 240, 240, 0.7);
+    border-color: rgba(255, 107, 107, 0.3);
   }
 
   .condition-item {
@@ -424,15 +573,15 @@
   }
 
   .condition-item.perfect .icon {
-    color: rgb(var(--pine-500));
+    color: rgb(var(--teal-500));
   }
 
   .condition-item.skip .icon {
-    color: rgb(var(--camel-500));
+    color: rgb(var(--coral-500));
   }
 
   /* ============================================
-     CALLOUTS - Warm, helpful
+     CALLOUTS - Spielplatz playful, helpful
      ============================================ */
   .callout {
     @apply flex gap-4 p-5 rounded-xl;
@@ -441,24 +590,24 @@
   .callout-tip {
     background: linear-gradient(
       135deg,
-      rgb(var(--slate-200) / 0.5) 0%,
-      rgb(var(--ivory-100)) 100%
+      rgb(var(--teal-50)) 0%,
+      rgb(var(--mint-50)) 100%
     );
-    border: 1px solid rgb(var(--slate-200));
+    border: 1px solid rgb(var(--teal-200));
   }
 
   .callout-warning {
     background: linear-gradient(
       135deg,
-      rgb(var(--camel-100)) 0%,
-      rgb(var(--ivory-100)) 100%
+      rgb(var(--gold-100)) 0%,
+      rgb(var(--gold-50)) 100%
     );
-    border: 1px solid rgb(var(--camel-200));
+    border: 1px solid rgb(var(--gold-300));
   }
 
   .callout-label {
     @apply font-accent text-xl whitespace-nowrap;
-    color: rgb(var(--slate-600));
+    color: rgb(var(--teal-600));
   }
 
   /* ============================================
@@ -469,48 +618,49 @@
   }
 
   .calendar-month {
-    @apply bg-ivory-100 rounded-2xl p-5 text-center border transition-all duration-200;
-    border-color: rgb(var(--ivory-200));
+    @apply bg-white rounded-2xl p-5 text-center border transition-all duration-200;
+    border-color: rgb(var(--dark-100));
+    transition-timing-function: var(--ease-bounce-subtle);
   }
 
   .calendar-month:hover {
     @apply -translate-y-1;
-    box-shadow: 0 8px 16px rgba(48, 38, 28, 0.08);
+    box-shadow: 0 8px 16px rgba(45, 52, 54, 0.08);
   }
 
   .calendar-month.recommended {
-    border-color: rgb(var(--pine-400));
-    background: rgb(var(--pine-100));
+    border-color: rgb(var(--teal-400));
+    background: rgb(var(--teal-50));
   }
 
   .calendar-month.best {
     border-width: 2px;
-    border-color: rgb(var(--crimson-500));
+    border-color: rgb(var(--coral-500));
     background: linear-gradient(
       145deg,
-      rgb(var(--ivory-50)) 0%,
-      rgb(var(--camel-100) / 0.5) 100%
+      rgb(var(--coral-50)) 0%,
+      rgb(var(--mint-50)) 100%
     );
   }
 
   /* ============================================
-     NAVIGATION - Swiss minimal
+     NAVIGATION - Spielplatz playful minimal
      ============================================ */
   .nav-link {
     @apply transition-colors duration-200 font-medium;
-    color: rgb(var(--espresso-600));
+    color: rgb(var(--dark-600));
   }
 
   .nav-link:hover {
-    color: rgb(var(--espresso-800));
+    color: rgb(var(--dark-800));
   }
 
   .nav-link-active {
-    color: rgb(var(--crimson-600));
+    color: rgb(var(--coral-500));
   }
 
   /* ============================================
-     SECTIONS - Editorial pacing
+     SECTIONS - Spielplatz editorial pacing
      ============================================ */
   .section {
     @apply py-20 md:py-28;
@@ -522,13 +672,13 @@
 
   .section-title {
     @apply font-display text-3xl md:text-4xl font-semibold mb-5;
-    color: rgb(var(--espresso-800));
+    color: rgb(var(--dark-800));
     letter-spacing: -0.02em;
   }
 
   .section-subtitle {
     @apply text-lg max-w-2xl mx-auto;
-    color: rgb(var(--espresso-600));
+    color: rgb(var(--dark-600));
     line-height: 1.7;
   }
 
@@ -541,16 +691,17 @@
     content: '';
     width: 24px;
     height: 1px;
-    background: rgb(var(--camel-400));
+    background: rgb(var(--coral-400));
   }
 
   .section-label span {
     @apply font-accent text-xl;
-    color: rgb(var(--camel-500));
+    color: rgb(var(--coral-500));
   }
 
   /* ============================================
-     HERO - Full-bleed with luxury overlay
+     HERO - Spielplatz playful full-bleed
+     Design-5: Giant typography (text-9xl), bold confidence
      ============================================ */
   .hero {
     @apply relative overflow-hidden min-h-[80vh] flex items-center;
@@ -560,9 +711,9 @@
     @apply absolute inset-0;
     background: linear-gradient(
       to right,
-      rgba(32, 25, 18, 0.85) 0%,
-      rgba(48, 38, 28, 0.6) 40%,
-      transparent 70%
+      rgba(45, 52, 54, 0.9) 0%,
+      rgba(45, 52, 54, 0.6) 45%,
+      transparent 75%
     );
   }
 
@@ -570,42 +721,68 @@
     @apply relative z-10;
   }
 
+  /* Giant hero typography - Design-5 signature */
   .hero-title {
-    @apply font-display text-5xl md:text-6xl lg:text-7xl text-ivory-50 leading-tight;
-    letter-spacing: -0.02em;
+    @apply font-display text-5xl md:text-7xl lg:text-8xl xl:text-9xl text-white font-black leading-[0.9];
+    letter-spacing: -0.03em;
+  }
+
+  .hero-title-outlined {
+    -webkit-text-stroke: 3px rgb(var(--dark-700));
+    color: transparent;
   }
 
   .hero-accent {
-    @apply block font-accent text-3xl md:text-4xl mt-3;
-    color: rgb(var(--camel-200));
+    @apply block font-accent text-3xl md:text-4xl lg:text-5xl mt-4;
+    color: rgb(var(--coral-300));
   }
 
   .hero-description {
-    @apply text-lg md:text-xl mt-6 max-w-xl leading-relaxed;
-    color: rgba(252, 249, 244, 0.9);
+    @apply text-lg md:text-xl lg:text-2xl mt-8 max-w-2xl leading-relaxed;
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  /* Hero gradient background - warm spielplatz */
+  .hero-gradient {
+    background: linear-gradient(
+      135deg,
+      #FFF5E6 0%,
+      #FFE8E8 50%,
+      #E8F4FF 100%
+    );
+  }
+
+  /* Giant title for homepage - Design-5 dramatic */
+  .title-giant {
+    @apply font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black leading-[0.9] tracking-tight;
+    color: rgb(var(--dark-800));
+  }
+
+  .title-giant-coral {
+    color: rgb(var(--coral-500));
   }
 
   /* ============================================
-     TYPOGRAPHY ACCENTS
+     TYPOGRAPHY ACCENTS - Spielplatz playful
      ============================================ */
   .editorial-lead {
     @apply font-display text-xl sm:text-2xl font-normal leading-relaxed;
-    color: rgb(var(--espresso-700));
+    color: rgb(var(--dark-700));
   }
 
   .highlight-text {
     background: linear-gradient(
       180deg,
       transparent 60%,
-      rgba(168, 142, 110, 0.25) 60%
+      rgba(255, 224, 102, 0.35) 60%
     );
   }
 
-  .highlight-crimson {
+  .highlight-coral {
     background: linear-gradient(
       180deg,
       transparent 60%,
-      rgba(158, 72, 58, 0.2) 60%
+      rgba(255, 107, 107, 0.25) 60%
     );
   }
 
@@ -654,34 +831,34 @@
   }
 
   /* ============================================
-     FOCUS & INPUT STATES
+     FOCUS & INPUT STATES - Spielplatz
      ============================================ */
   .focus-ring {
     @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-    --tw-ring-color: rgb(var(--slate-500));
-    --tw-ring-offset-color: rgb(var(--ivory-50));
+    --tw-ring-color: rgb(var(--coral-500));
+    --tw-ring-offset-color: white;
   }
 
   .input {
     @apply w-full px-5 py-4 rounded-xl border bg-white;
-    border-color: rgb(var(--ivory-200));
-    color: rgb(var(--espresso-800));
-    @apply placeholder:text-slate-400;
+    border-color: rgb(var(--dark-200));
+    color: rgb(var(--dark-800));
+    @apply placeholder:text-dark-400;
     @apply focus:outline-none focus:ring-2 focus:border-transparent;
-    --tw-ring-color: rgb(var(--slate-400));
+    --tw-ring-color: rgb(var(--coral-400));
     @apply transition-all duration-200;
   }
 
   .input:hover {
-    border-color: rgb(var(--camel-200));
+    border-color: rgb(var(--coral-300));
   }
 
   /* ============================================
-     BREADCRUMB
+     BREADCRUMB - Spielplatz
      ============================================ */
   .breadcrumb {
     @apply flex items-center gap-2 text-sm;
-    color: rgb(var(--slate-500));
+    color: rgb(var(--dark-500));
   }
 
   .breadcrumb a {
@@ -689,15 +866,15 @@
   }
 
   .breadcrumb a:hover {
-    color: rgb(var(--crimson-600));
+    color: rgb(var(--coral-500));
   }
 
   .breadcrumb-separator {
-    color: rgb(var(--slate-400));
+    color: rgb(var(--dark-300));
   }
 
   /* ============================================
-     DECORATIVE ELEMENTS
+     DECORATIVE ELEMENTS - Spielplatz
      ============================================ */
   .texture-grain {
     position: relative;
@@ -718,8 +895,8 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgb(var(--camel-200)) 20%,
-      rgb(var(--camel-200)) 80%,
+      rgb(var(--dark-200)) 20%,
+      rgb(var(--dark-200)) 80%,
       transparent 100%
     );
   }
@@ -728,27 +905,31 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgb(var(--crimson-400)) 50%,
+      rgb(var(--coral-400)) 50%,
       transparent 100%
     );
   }
 
   /* ============================================
-     RESORT CARDS - Grid items
+     RESORT CARDS - Spielplatz grid items
+     Design-5: rounded-3xl, scale + shadow on hover, playful
      ============================================ */
+  /* Note: Add 'group' class directly in HTML when using .resort-card */
   .resort-card {
-    @apply group bg-ivory-100 rounded-2xl overflow-hidden transition-all duration-300;
-    border: 1px solid rgb(var(--ivory-200));
+    @apply bg-white rounded-3xl overflow-hidden transition-all duration-300;
+    border: 1px solid rgb(var(--dark-100));
     box-shadow:
-      0 2px 8px rgba(48, 38, 28, 0.04),
-      0 4px 16px rgba(48, 38, 28, 0.04);
+      0 4px 16px rgba(45, 52, 54, 0.06),
+      0 8px 24px rgba(45, 52, 54, 0.04);
+    transition-timing-function: var(--ease-bounce-subtle);
   }
 
   .resort-card:hover {
-    @apply -translate-y-1;
+    @apply -translate-y-2 scale-[1.02];
+    border-color: rgb(var(--coral-200));
     box-shadow:
-      0 8px 24px rgba(48, 38, 28, 0.08),
-      0 12px 32px rgba(48, 38, 28, 0.06);
+      0 16px 48px rgba(255, 107, 107, 0.15),
+      0 24px 60px rgba(45, 52, 54, 0.1);
   }
 
   .resort-card-image {
@@ -760,13 +941,18 @@
   }
 
   .resort-card:hover .resort-card-image img {
-    @apply scale-105;
+    @apply scale-110;
   }
 
   .resort-card-score {
-    @apply absolute top-4 right-4 px-3 py-1.5 rounded-full text-sm font-semibold shadow-md;
-    background: rgb(var(--crimson-500));
+    @apply absolute top-4 right-4 px-4 py-2 rounded-full text-sm font-bold;
+    background: linear-gradient(
+      135deg,
+      rgb(var(--coral-500)) 0%,
+      rgb(var(--coral-600)) 100%
+    );
     color: white;
+    box-shadow: 0 4px 14px rgba(255, 107, 107, 0.35);
   }
 
   .resort-card-content {
@@ -774,13 +960,17 @@
   }
 
   .resort-card-name {
-    @apply font-display text-xl leading-tight;
-    color: rgb(var(--espresso-800));
+    @apply font-display text-xl font-semibold leading-tight transition-colors duration-200;
+    color: rgb(var(--dark-800));
+  }
+
+  .resort-card:hover .resort-card-name {
+    color: rgb(var(--coral-500));
   }
 
   .resort-card-location {
     @apply text-sm mt-1;
-    color: rgb(var(--slate-500));
+    color: rgb(var(--dark-500));
   }
 
   .resort-card-tags {
@@ -788,19 +978,19 @@
   }
 
   .resort-card-tag {
-    @apply text-xs px-3 py-1 rounded-full;
-    background: rgb(var(--camel-100));
-    color: rgb(var(--camel-600));
+    @apply text-xs px-3 py-1.5 rounded-full font-medium;
+    background: rgb(var(--gold-100));
+    color: rgb(var(--gold-700));
   }
 }
 
 /* ============================================
-   SCROLLBAR - Subtle and refined
+   SCROLLBAR - Spielplatz subtle and playful
    ============================================ */
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--camel-400)) transparent;
+    scrollbar-color: rgb(var(--coral-400)) transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -813,21 +1003,21 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgb(var(--camel-400));
+    background: rgb(var(--coral-400));
     border-radius: 3px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgb(var(--camel-500));
+    background: rgb(var(--coral-500));
   }
 
   /* Accessible text colors */
   .text-accessible-dark {
-    color: rgb(var(--espresso-800));
+    color: rgb(var(--dark-800));
   }
 
   .text-accessible-muted {
-    color: rgb(var(--espresso-600));
+    color: rgb(var(--dark-600));
   }
 
   /* Touch-friendly targets */

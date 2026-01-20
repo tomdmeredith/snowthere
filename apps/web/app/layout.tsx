@@ -3,7 +3,7 @@ import { Plus_Jakarta_Sans, Fraunces, Caveat } from 'next/font/google'
 import Script from 'next/script'
 import './globals.css'
 
-// CHALET Design System Typography
+// SPIELPLATZ Design System Typography
 // Plus Jakarta Sans - Swiss-inspired geometry with rounded terminals (body text, UI)
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ['latin'],
@@ -88,7 +88,7 @@ export default function RootLayout({
           </>
         )}
       </head>
-      <body className="font-sans bg-ivory-50 text-espresso-800">
+      <body className="font-sans bg-white text-dark-800">
         <div className="min-h-screen flex flex-col">
           {children}
         </div>

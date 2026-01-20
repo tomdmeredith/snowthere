@@ -40,11 +40,11 @@ const difficultyColors: Record<string, { bg: string; text: string; label: string
   expert: { bg: 'bg-zinc-800', text: 'text-white', label: 'Expert', icon: '⬛⬛' },
 }
 
-// Quality badge styles
+// Quality badge styles - Spielplatz colors
 const qualityStyles: Record<string, { bg: string; text: string; label: string }> = {
-  full: { bg: 'bg-pine-100', text: 'text-pine-700', label: 'Full Coverage' },
-  partial: { bg: 'bg-slate-100', text: 'text-slate-700', label: 'Partial Data' },
-  minimal: { bg: 'bg-camel-100', text: 'text-camel-700', label: 'Limited Data' },
+  full: { bg: 'bg-teal-100', text: 'text-teal-700', label: 'Full Coverage' },
+  partial: { bg: 'bg-dark-100', text: 'text-dark-700', label: 'Partial Data' },
+  minimal: { bg: 'bg-gold-100', text: 'text-gold-700', label: 'Limited Data' },
   none: { bg: 'bg-stone-100', text: 'text-stone-600', label: 'No Map Data' },
 }
 
@@ -84,8 +84,8 @@ function DifficultyBar({ breakdown }: { breakdown: DifficultyBreakdown }) {
         {segments.map((seg) => (
           <div key={seg.difficulty} className="flex items-center gap-2">
             <span className="text-base">{seg.icon}</span>
-            <span className="text-sm text-espresso-600">
-              {seg.label}: <span className="font-medium text-espresso-800">{seg.count}</span>
+            <span className="text-sm text-dark-600">
+              {seg.label}: <span className="font-medium text-dark-800">{seg.count}</span>
             </span>
           </div>
         ))}
@@ -112,10 +112,10 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
     <section id="trail-map" className="space-y-6">
       {/* Section Header */}
       <div className="flex items-center gap-3">
-        <div className="p-2 rounded-xl bg-camel-100">
-          <Map className="w-5 h-5 text-camel-600" />
+        <div className="p-2 rounded-xl bg-gold-100">
+          <Map className="w-5 h-5 text-gold-600" />
         </div>
-        <h2 className="font-display text-2xl font-semibold text-espresso-900">
+        <h2 className="font-display text-2xl font-semibold text-dark-800">
           Trail Map
         </h2>
         {data && (
@@ -126,54 +126,54 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
       </div>
 
       {/* Main Content Card */}
-      <div className="card bg-ivory-50/80 border-ivory-200">
+      <div className="card bg-dark-50/80 border-dark-200">
         {hasData ? (
           <div className="space-y-6">
             {/* Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="text-center p-4 rounded-2xl bg-white/60">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <TrendingDown className="w-5 h-5 text-slate-600" />
+                  <TrendingDown className="w-5 h-5 text-dark-600" />
                 </div>
-                <div className="font-display text-2xl font-bold text-espresso-900">
+                <div className="font-display text-2xl font-bold text-dark-800">
                   {data.piste_count}
                 </div>
-                <div className="text-sm text-espresso-500">Marked Runs</div>
+                <div className="text-sm text-dark-500">Marked Runs</div>
               </div>
 
               <div className="text-center p-4 rounded-2xl bg-white/60">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <TrendingUp className="w-5 h-5 text-camel-600" />
+                  <TrendingUp className="w-5 h-5 text-gold-600" />
                 </div>
-                <div className="font-display text-2xl font-bold text-espresso-900">
+                <div className="font-display text-2xl font-bold text-dark-800">
                   {data.lift_count}
                 </div>
-                <div className="text-sm text-espresso-500">Lifts</div>
+                <div className="text-sm text-dark-500">Lifts</div>
               </div>
 
               {data.difficulty_breakdown && (
                 <>
                   <div className="text-center p-4 rounded-2xl bg-white/60">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <BarChart3 className="w-5 h-5 text-pine-600" />
+                      <BarChart3 className="w-5 h-5 text-teal-600" />
                     </div>
-                    <div className="font-display text-2xl font-bold text-espresso-900">
+                    <div className="font-display text-2xl font-bold text-dark-800">
                       {(data.difficulty_breakdown.novice || 0) + (data.difficulty_breakdown.easy || 0)}
                     </div>
-                    <div className="text-sm text-espresso-500">Beginner Runs</div>
+                    <div className="text-sm text-dark-500">Beginner Runs</div>
                   </div>
 
                   <div className="text-center p-4 rounded-2xl bg-white/60">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                      <Mountain className="w-5 h-5 text-camel-600" />
+                      <Mountain className="w-5 h-5 text-gold-600" />
                     </div>
-                    <div className="font-display text-2xl font-bold text-espresso-900">
+                    <div className="font-display text-2xl font-bold text-dark-800">
                       {Math.round(
                         ((data.difficulty_breakdown.novice || 0) + (data.difficulty_breakdown.easy || 0)) /
                         data.piste_count * 100
                       ) || 0}%
                     </div>
-                    <div className="text-sm text-espresso-500">Family Terrain</div>
+                    <div className="text-sm text-dark-500">Family Terrain</div>
                   </div>
                 </>
               )}
@@ -182,8 +182,8 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
             {/* Difficulty Breakdown */}
             {data.difficulty_breakdown && (
               <div className="p-5 rounded-2xl bg-white/60">
-                <h3 className="font-semibold text-espresso-800 mb-4 flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-espresso-500" />
+                <h3 className="font-semibold text-dark-800 mb-4 flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-dark-500" />
                   Terrain by Difficulty
                 </h3>
                 <DifficultyBar breakdown={data.difficulty_breakdown} />
@@ -196,7 +196,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
                 href={openSkiMapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-espresso-700 hover:bg-espresso-800 text-white font-medium transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-dark-700 hover:bg-dark-800 text-white font-medium transition-colors"
               >
                 <Map className="w-5 h-5" />
                 View Interactive Trail Map
@@ -208,7 +208,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
                   href={data.official_map_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-white hover:bg-ivory-100 text-espresso-700 font-medium border border-ivory-200 transition-colors"
+                  className="flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-white hover:bg-dark-50 text-dark-700 font-medium border border-dark-200 transition-colors"
                 >
                   Official Trail Map
                   <ExternalLink className="w-4 h-4 ml-1 opacity-70" />
@@ -217,7 +217,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
             </div>
 
             {/* Attribution */}
-            <p className="text-xs text-espresso-400 flex items-center gap-1">
+            <p className="text-xs text-dark-400 flex items-center gap-1">
               <Info className="w-3 h-3" />
               {data.osm_attribution || '© OpenStreetMap contributors, ODbL'}
             </p>
@@ -230,10 +230,10 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
                 <Mountain className="w-8 h-8 text-stone-400" />
               </div>
               <div>
-                <p className="font-medium text-espresso-700 mb-1">
+                <p className="font-medium text-dark-700 mb-1">
                   Trail map data not yet available
                 </p>
-                <p className="text-sm text-espresso-500">
+                <p className="text-sm text-dark-500">
                   Check the official resort website or OpenSkiMap for trail information.
                 </p>
               </div>
@@ -244,7 +244,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
                 href={openSkiMapUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-espresso-700 hover:bg-espresso-800 text-white font-medium transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-dark-700 hover:bg-dark-800 text-white font-medium transition-colors"
               >
                 <Map className="w-5 h-5" />
                 Search OpenSkiMap
@@ -255,7 +255,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
                 href={osmUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-ivory-100 text-espresso-700 font-medium border border-ivory-200 transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-dark-50 text-dark-700 font-medium border border-dark-200 transition-colors"
               >
                 View on OpenStreetMap
                 <ExternalLink className="w-4 h-4 ml-1 opacity-70" />
@@ -267,12 +267,12 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
 
       {/* Family Tip */}
       {hasData && data.difficulty_breakdown && (
-        <div className="p-4 rounded-2xl bg-pine-50/70 border border-pine-100">
+        <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-100">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-xl bg-pine-100 flex-shrink-0">
-              <Info className="w-4 h-4 text-pine-600" />
+            <div className="p-2 rounded-xl bg-teal-100 flex-shrink-0">
+              <Info className="w-4 h-4 text-teal-600" />
             </div>
-            <div className="text-sm text-pine-800">
+            <div className="text-sm text-teal-800">
               <span className="font-medium">Family Tip:</span>{' '}
               {(data.difficulty_breakdown.novice || 0) + (data.difficulty_breakdown.easy || 0) >= 10 ? (
                 <>

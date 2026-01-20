@@ -2,14 +2,18 @@
 
 This is the core execution logic that:
 1. Researches a resort using multiple APIs
-2. Generates content in instagram_mom voice
+2. Generates content in snowthere_guide voice
 3. Optimizes for GEO (tables, FAQs, schema)
 4. Stores in database
-5. Optionally publishes based on confidence
+5. Runs three-agent approval panel (TrustGuard, FamilyValue, VoiceCoach)
+6. Publishes if 2/3 majority approval, iterates up to 3 times
 
 Design Decisions:
 - Uses existing primitives directly (no MCP overhead)
-- Calculates confidence score from research quality
+- Three-agent approval panel replaces simple confidence thresholds
+- Diverse perspectives: accuracy (TrustGuard), completeness (FamilyValue), voice (VoiceCoach)
+- 2/3 majority vote for publication approval
+- Iterative improvement loop (max 3 iterations) before final decision
 - Logs all reasoning for observability
 - Handles errors gracefully with retry logic
 """
@@ -55,9 +59,12 @@ from shared.primitives import (
     ImageType,
     # UGC Photos (Google Places)
     fetch_and_store_ugc_photos,
+    # Approval Panel (Three-agent quality evaluation)
+    approval_loop,
+    format_loop_summary,
 )
 
-from .decision_maker import decide_to_publish, handle_error
+from .decision_maker import handle_error
 
 
 def slugify(name: str) -> str:
@@ -119,19 +126,25 @@ def run_resort_pipeline(
 
     Steps:
     1. Check budget
-    2. Research resort
-    3. Generate content
-    4. Store in database
-    5. Decide whether to publish
+    2. Research resort (Exa + SerpAPI + Tavily)
+    3. Fetch trail map data (OpenStreetMap)
+    4. Generate content (Claude in snowthere_guide voice)
+    5. Store in database
+    6. Generate images (Gemini → Glif → Replicate fallback)
+    7. Fetch UGC photos (Google Places)
+    8. Run three-agent approval panel (TrustGuard, FamilyValue, VoiceCoach)
+       - Requires 2/3 majority to approve
+       - Iterates up to 3 times, improving content based on feedback
+       - Publishes if approved, saves as draft otherwise
 
     Args:
         resort_name: Name of the resort
         country: Country the resort is in
         task_id: Optional task ID for audit logging
-        auto_publish: Whether to auto-publish if confidence is high
+        auto_publish: Whether to run approval panel and publish if approved
 
     Returns:
-        Pipeline result with status, confidence, and any errors
+        Pipeline result with status, approval panel history, and any errors
     """
     # Generate a run_id for tracking but don't use as task_id (foreign key constraint)
     run_id = task_id or str(uuid4())
@@ -623,46 +636,116 @@ def run_resort_pipeline(
         print(f"⚠️  UGC photos skipped for {resort_name}: {e}", file=sys.stderr)
 
     # =========================================================================
-    # STAGE 5: Publication Decision
+    # STAGE 5: Three-Agent Approval Panel
     # =========================================================================
     if auto_publish:
         try:
-            # Get content summary for quality check
-            content_summary = f"""
-Resort: {resort_name}, {country}
-Quick Take: {content.get('quick_take', '')[:500]}
-Sections: {', '.join(sections)}
-FAQs: {len(content.get('faqs', []))} questions
-            """
-
-            decision = decide_to_publish(
-                resort_name=resort_name,
-                content_summary=content_summary,
-                confidence_score=result.get("confidence", 0),
+            log_reasoning(
                 task_id=None,
+                agent_name="pipeline_runner",
+                action="start_approval_panel",
+                reasoning=f"Running three-agent approval panel for {resort_name}",
             )
 
-            if decision.get("should_publish"):
-                publish_resort(resort_id, None)  # run_id tracked in result metadata
+            # Build resort data for approval panel evaluation
+            resort_data = {
+                "name": resort_name,
+                "country": country,
+                "region": research_data.get("region", ""),
+                "family_score": research_data.get("family_metrics", {}).get("family_overall_score"),
+                "costs": research_data.get("costs", {}),
+                "family_metrics": research_data.get("family_metrics", {}),
+            }
+
+            # Run approval panel (TrustGuard + FamilyValue + VoiceCoach)
+            # This iterates up to 3 times, improving content based on feedback
+            approval_result = asyncio.run(approval_loop(
+                content=content,
+                sources=research_data.get("sources", []),
+                resort_data=resort_data,
+                voice_profile="snowthere_guide",
+                max_iterations=3,
+            ))
+
+            # Log approval panel cost (~$0.45-0.60 for 3 agents × up to 3 iterations)
+            panel_cost = 0.15 * approval_result.iterations  # ~$0.15 per panel run
+            log_cost("anthropic", panel_cost, None, {
+                "run_id": run_id,
+                "stage": "approval_panel",
+                "iterations": approval_result.iterations,
+            })
+
+            # Update content with improved version
+            if approval_result.final_content:
+                content = approval_result.final_content
+                # Re-save improved content to database
+                update_resort_content(resort_id, content)
+
+            if approval_result.approved:
+                publish_resort(resort_id, None)
                 result["status"] = "published"
-                result["stages"]["publish"] = {
-                    "status": "published",
-                    "reasoning": decision.get("reasoning"),
+                result["stages"]["approval_panel"] = {
+                    "status": "approved",
+                    "iterations": approval_result.iterations,
+                    "summary": format_loop_summary(approval_result),
                 }
+
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="approval_panel_approved",
+                    reasoning=f"Content approved after {approval_result.iterations} iteration(s). Publishing.",
+                    metadata={
+                        "iterations": approval_result.iterations,
+                        "panel_history": [
+                            {
+                                "approve_count": p.approve_count,
+                                "improve_count": p.improve_count,
+                                "reject_count": p.reject_count,
+                            }
+                            for p in approval_result.panel_history
+                        ],
+                    },
+                )
+
+                print(f"✓ Approval Panel: APPROVED after {approval_result.iterations} iteration(s)")
             else:
                 result["status"] = "draft"
-                result["stages"]["publish"] = {
-                    "status": "held_for_review",
-                    "reasoning": decision.get("reasoning"),
-                    "concerns": decision.get("concerns", []),
+                result["stages"]["approval_panel"] = {
+                    "status": "rejected",
+                    "iterations": approval_result.iterations,
+                    "final_issues": approval_result.final_issues,
+                    "summary": format_loop_summary(approval_result),
                 }
+
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="approval_panel_rejected",
+                    reasoning=f"Content not approved after {approval_result.iterations} iterations. Saving as draft.",
+                    metadata={
+                        "iterations": approval_result.iterations,
+                        "final_issues": approval_result.final_issues,
+                    },
+                )
+
+                print(f"⚠️  Approval Panel: REJECTED after {approval_result.iterations} iteration(s)")
+                print(f"   Issues: {', '.join(approval_result.final_issues[:3])}")
 
         except Exception as e:
             result["status"] = "draft"
-            result["stages"]["publish"] = {"status": "skipped", "error": str(e)}
+            result["stages"]["approval_panel"] = {"status": "error", "error": str(e)}
+            print(f"❌ Approval Panel failed for {resort_name}: {e}", file=sys.stderr)
+
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="approval_panel_error",
+                reasoning=f"Approval panel failed: {e}. Saving as draft.",
+            )
     else:
         result["status"] = "draft"
-        result["stages"]["publish"] = {"status": "skipped", "reason": "auto_publish=False"}
+        result["stages"]["approval_panel"] = {"status": "skipped", "reason": "auto_publish=False"}
 
     # =========================================================================
     # Complete

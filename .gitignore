@@ -50,3 +50,4 @@ coverage
 
 # Turbo
 .turbo
+supabase/.temp/

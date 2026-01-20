@@ -71,58 +71,72 @@ export function FamilyMetricsTable({ metrics }: FamilyMetricsTableProps) {
   ]
 
   return (
-    <section id="the-numbers" className="space-y-6">
-      {/* Editorial Header */}
-      <div className="flex items-center gap-3">
-        <div className="p-2.5 rounded-2xl bg-slate-100 border border-slate-200">
-          <BarChart3 className="w-5 h-5 text-slate-600" />
+    <section id="the-numbers" className="space-y-8">
+      {/* Editorial Header - Design-5 */}
+      <div className="flex items-center gap-4">
+        <div className="p-3 rounded-2xl bg-gradient-to-br from-dark-100 to-dark-50 border border-dark-200 shadow-card">
+          <BarChart3 className="w-6 h-6 text-dark-600" />
         </div>
         <div>
-          <div className="flex items-center gap-2">
-            <span className="h-px w-4 bg-slate-300" />
-            <h2 className="font-display text-2xl font-semibold text-espresso-900">
+          <div className="flex items-center gap-3">
+            <span className="h-1 w-6 bg-gradient-to-r from-coral-400 to-coral-500 rounded-full" />
+            <h2 className="font-display text-3xl font-bold text-dark-800">
               The Numbers
             </h2>
           </div>
-          <p className="text-sm text-espresso-500 mt-0.5">What families need to know</p>
+          <p className="text-dark-500 mt-1 font-medium">What families need to know</p>
         </div>
       </div>
 
-      {/* Soft card container */}
-      <div className="card bg-ivory-50/70 border-ivory-100 p-0 overflow-hidden">
+      {/* Design-5: Rounded card with shadow escalation */}
+      <div className="rounded-3xl bg-white border border-dark-100 shadow-card overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="bg-ivory-100/50">
-              <th className="text-left px-5 py-3.5 text-xs font-medium uppercase tracking-wide text-espresso-500">
+            <tr className="bg-gradient-to-r from-dark-100 to-dark-50">
+              <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                 Metric
               </th>
-              <th className="text-right px-5 py-3.5 text-xs font-medium uppercase tracking-wide text-espresso-500">
+              <th className="text-right px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                 Value
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-ivory-100">
+          <tbody className="divide-y divide-dark-100">
             {rows.map((row) => {
               const Icon = row.icon
               return (
                 <tr
                   key={row.label}
-                  className={`transition-colors ${row.highlight ? 'bg-crimson-50/50' : 'hover:bg-ivory-50'}`}
+                  className={`transition-all duration-300 ${
+                    row.highlight
+                      ? 'bg-gradient-to-r from-coral-50/80 to-coral-50/40'
+                      : 'hover:bg-mint-50/30'
+                  }`}
                 >
-                  <td className="px-5 py-4">
-                    <div className="flex items-center gap-3">
-                      <span className={`p-2 rounded-xl ${row.highlight ? 'bg-crimson-100' : 'bg-white'} shadow-sm`}>
-                        <Icon className={`w-4 h-4 ${row.highlight ? 'text-crimson-600' : 'text-espresso-400'}`} />
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-4">
+                      <span className={`p-2.5 rounded-xl transition-all duration-300 ${
+                        row.highlight
+                          ? 'bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral'
+                          : 'bg-white shadow-card group-hover:shadow-card-hover'
+                      }`}>
+                        <Icon className={`w-5 h-5 ${row.highlight ? 'text-coral-600' : 'text-dark-400'}`} />
                       </span>
-                      <span className="font-medium text-espresso-800">{row.label}</span>
+                      <span className={`font-semibold ${row.highlight ? 'text-dark-800' : 'text-dark-700'}`}>
+                        {row.label}
+                      </span>
                     </div>
                   </td>
-                  <td className="text-right px-5 py-4">
-                    <span className={row.highlight ? 'font-semibold text-lg text-crimson-700' : 'text-espresso-700'}>
+                  <td className="text-right px-6 py-5">
+                    <span className={
+                      row.highlight
+                        ? 'inline-flex items-center gap-1 px-4 py-1.5 rounded-full bg-gradient-to-r from-coral-500 to-coral-600 text-white font-bold text-lg shadow-coral'
+                        : 'font-semibold text-dark-700'
+                    }>
                       {row.value}
                     </span>
                     {row.subvalue && (
-                      <span className="block text-xs text-espresso-400 mt-0.5">
+                      <span className="block text-sm text-dark-400 mt-1 font-medium">
                         {row.subvalue}
                       </span>
                     )}

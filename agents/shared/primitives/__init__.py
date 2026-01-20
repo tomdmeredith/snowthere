@@ -208,6 +208,29 @@ from .ugc_photos import (
     classify_photo_with_vision,
 )
 
+# Approval Panel primitives (Three-agent quality evaluation)
+from .approval import (
+    # Data classes
+    EvaluationResult,
+    PanelResult,
+    ApprovalLoopResult,
+    # Atomic evaluation primitives
+    evaluate_trust,
+    evaluate_completeness,
+    evaluate_voice,
+    # Orchestration
+    run_approval_panel,
+    # Content improvement
+    improve_content,
+    # Full loop
+    approval_loop,
+    # Utilities
+    format_panel_summary,
+    format_loop_summary,
+    # Constants
+    REQUIRED_SECTIONS,
+)
+
 # Linking primitives (Similar resorts, internal links)
 from .linking import (
     # Constants
@@ -422,4 +445,23 @@ __all__ = [
     # Linking - Utilities
     "get_shared_features",
     "delete_stale_similarities",
+    # Approval Panel - Data classes
+    "EvaluationResult",
+    "PanelResult",
+    "ApprovalLoopResult",
+    # Approval Panel - Atomic evaluation primitives
+    "evaluate_trust",
+    "evaluate_completeness",
+    "evaluate_voice",
+    # Approval Panel - Orchestration
+    "run_approval_panel",
+    # Approval Panel - Content improvement
+    "improve_content",
+    # Approval Panel - Full loop
+    "approval_loop",
+    # Approval Panel - Utilities
+    "format_panel_summary",
+    "format_loop_summary",
+    # Approval Panel - Constants
+    "REQUIRED_SECTIONS",
 ]

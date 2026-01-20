@@ -10,51 +10,53 @@ interface QuickTakeProps {
 export function QuickTake({ content, perfectIf, skipIf, familyScore }: QuickTakeProps) {
   return (
     <section id="quick-take" className="space-y-8">
-      {/* Main Quick Take Card - CHALET editorial design */}
-      <div className="relative overflow-hidden rounded-3xl p-8 sm:p-10 bg-gradient-to-br from-espresso-700 via-espresso-800 to-espresso-900">
-        {/* Decorative gradient overlays */}
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-camel-400/10 to-transparent pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-slate-400/8 to-transparent pointer-events-none" />
+      {/* Main Quick Take Card - Design-5 playful editorial */}
+      <div className="relative overflow-hidden p-8 sm:p-12 bg-gradient-to-br from-dark-700 via-dark-800 to-dark-900 shadow-2xl" style={{ borderRadius: '40px' }}>
+        {/* Decorative gradient overlays - Design-5 playful accents */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-coral-400/15 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-1/3 h-1/2 bg-gradient-to-tr from-teal-400/10 to-transparent pointer-events-none" />
+        <div className="absolute top-8 right-8 w-20 h-20 bg-coral-400/20 rounded-full blur-2xl" />
+        <div className="absolute bottom-8 left-8 w-16 h-16 bg-teal-400/15 rounded-full blur-2xl" />
 
         <div className="relative z-10">
-          {/* Header with score */}
-          <div className="flex items-center justify-between gap-4 mb-6">
-            <div className="flex items-center gap-2">
-              <span className="h-px w-6 bg-crimson-400/60" />
-              <span className="font-accent text-xl sm:text-2xl text-camel-200">
+          {/* Header with score - Design-5 pill badge */}
+          <div className="flex items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-3">
+              <span className="h-1 w-8 bg-gradient-to-r from-coral-400 to-coral-500 rounded-full" />
+              <span className="font-accent text-2xl sm:text-3xl text-gold-200">
                 The Quick Take
               </span>
             </div>
 
             {familyScore && (
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/15">
-                <Sparkles className="w-4 h-4 text-camel-200" />
-                <span className="font-semibold text-ivory-100">
+              <div className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-coral-500/20 to-coral-600/20 backdrop-blur-sm border border-coral-300/30 shadow-coral">
+                <Sparkles className="w-5 h-5 text-gold-200" />
+                <span className="font-bold text-lg text-white">
                   {familyScore}/10
                 </span>
-                <span className="text-sm text-ivory-200/70">family score</span>
+                <span className="text-sm text-white/70 font-medium">family score</span>
               </div>
             )}
           </div>
 
-          {/* Content */}
+          {/* Content - Design-5 better typography */}
           <div
-            className="text-lg leading-relaxed text-ivory-100/90 [&>p]:mb-4 [&>p:last-child]:mb-0 [&>strong]:text-ivory-50 [&>strong]:font-semibold"
+            className="text-lg sm:text-xl leading-relaxed text-white/90 [&>p]:mb-5 [&>p:last-child]:mb-0 [&>strong]:text-white [&>strong]:font-semibold"
             dangerouslySetInnerHTML={{ __html: content }}
           />
         </div>
       </div>
 
-      {/* Perfect If / Skip If Cards - CHALET pine/camel design */}
+      {/* Perfect If / Skip If Cards - Design-5 playful cards with shadows */}
       {(perfectIf.length > 0 || skipIf.length > 0) && (
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-6 sm:grid-cols-2">
           {perfectIf.length > 0 && (
-            <div className="card bg-pine-50/70 border-pine-100">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="p-2 rounded-xl bg-pine-100">
-                  <CheckCircle className="w-5 h-5 text-pine-600" />
+            <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-teal-50 to-mint-50/70 border border-teal-200 shadow-teal">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-400 to-teal-500 shadow-teal">
+                  <CheckCircle className="w-5 h-5 text-white" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-pine-800">
+                <h3 className="font-display text-xl font-bold text-teal-800">
                   Perfect if...
                 </h3>
               </div>
@@ -62,10 +64,10 @@ export function QuickTake({ content, perfectIf, skipIf, familyScore }: QuickTake
                 {perfectIf.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-white/60"
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-white/80 border border-teal-100 hover:bg-white hover:shadow-card transition-all duration-300"
                   >
-                    <CheckCircle className="w-4 h-4 text-pine-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-espresso-700 text-sm leading-relaxed">{item}</span>
+                    <CheckCircle className="w-5 h-5 text-teal-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-dark-700 leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
@@ -73,12 +75,12 @@ export function QuickTake({ content, perfectIf, skipIf, familyScore }: QuickTake
           )}
 
           {skipIf.length > 0 && (
-            <div className="card bg-camel-50/70 border-camel-100">
-              <div className="flex items-center gap-2 mb-5">
-                <div className="p-2 rounded-xl bg-camel-100">
-                  <AlertCircle className="w-5 h-5 text-camel-600" />
+            <div className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-gold-50 to-gold-100/50 border border-gold-200 shadow-gold">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-400 to-gold-500 shadow-gold">
+                  <AlertCircle className="w-5 h-5 text-dark-700" />
                 </div>
-                <h3 className="font-display text-lg font-semibold text-camel-700">
+                <h3 className="font-display text-xl font-bold text-gold-700">
                   Maybe skip if...
                 </h3>
               </div>
@@ -86,10 +88,10 @@ export function QuickTake({ content, perfectIf, skipIf, familyScore }: QuickTake
                 {skipIf.map((item, i) => (
                   <li
                     key={i}
-                    className="flex items-start gap-3 p-3 rounded-xl bg-white/60"
+                    className="flex items-start gap-3 p-4 rounded-2xl bg-white/80 border border-gold-100 hover:bg-white hover:shadow-card transition-all duration-300"
                   >
-                    <AlertCircle className="w-4 h-4 text-camel-500 mt-0.5 flex-shrink-0" />
-                    <span className="text-espresso-700 text-sm leading-relaxed">{item}</span>
+                    <AlertCircle className="w-5 h-5 text-gold-500 mt-0.5 flex-shrink-0" />
+                    <span className="text-dark-700 leading-relaxed">{item}</span>
                   </li>
                 ))}
               </ul>
