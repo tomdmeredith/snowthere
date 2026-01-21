@@ -240,6 +240,19 @@ def run_resort_pipeline(
 
         result["stages"]["research"] = {"status": "complete", "confidence": confidence}
 
+        # Extract coordinates for better Google Places and trail map lookups
+        from shared.primitives.research import extract_coordinates
+        coords = asyncio.run(extract_coordinates(resort_name, country))
+        if coords:
+            research_data["latitude"], research_data["longitude"] = coords
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="coordinates_extracted",
+                reasoning=f"Extracted coordinates: {coords[0]:.4f}, {coords[1]:.4f}",
+                metadata={"lat": coords[0], "lon": coords[1]},
+            )
+
     except Exception as e:
         error_decision = handle_error(e, resort_name, "research", None)
         result["status"] = "failed"
@@ -472,11 +485,10 @@ def run_resort_pipeline(
                     print(f"⚠️  Warning: Failed to save calendar month {month_data.get('month')} for {resort_name}", file=sys.stderr)
 
         # Update trail map data if available
-        # NOTE: Disabled until migration 004_trail_map_data.sql is applied to production
-        # if trail_map_data:
-        #     trail_map_result = update_resort(resort_id, {"trail_map_data": trail_map_data})
-        #     if not trail_map_result:
-        #         print(f"⚠️  Warning: Failed to save trail map data for {resort_name}", file=sys.stderr)
+        if trail_map_data:
+            trail_map_result = update_resort(resort_id, {"trail_map_data": trail_map_data})
+            if not trail_map_result:
+                print(f"⚠️  Warning: Failed to save trail map data for {resort_name}", file=sys.stderr)
 
         result["resort_id"] = resort_id
         result["stages"]["storage"] = {"status": "complete", "resort_id": resort_id}
@@ -636,7 +648,11 @@ def run_resort_pipeline(
         print(f"⚠️  UGC photos skipped for {resort_name}: {e}", file=sys.stderr)
 
     # =========================================================================
-    # STAGE 5: Three-Agent Approval Panel
+    # STAGE 5: Three-Agent Approval Panel (Publish-First Model)
+    # =========================================================================
+    # Philosophy: Publish early, improve continuously (agent-native approach)
+    # The approval panel provides quality signals but doesn't gate publication.
+    # If there are concerns, we still publish but queue for continuous improvement.
     # =========================================================================
     if auto_publish:
         try:
@@ -644,7 +660,7 @@ def run_resort_pipeline(
                 task_id=None,
                 agent_name="pipeline_runner",
                 action="start_approval_panel",
-                reasoning=f"Running three-agent approval panel for {resort_name}",
+                reasoning=f"Running three-agent approval panel for {resort_name} (publish-first model)",
             )
 
             # Build resort data for approval panel evaluation
@@ -681,9 +697,11 @@ def run_resort_pipeline(
                 # Re-save improved content to database
                 update_resort_content(resort_id, content)
 
+            # PUBLISH-FIRST: Always publish - approval panel informs, doesn't gate
+            publish_resort(resort_id, None)
+            result["status"] = "published"
+
             if approval_result.approved:
-                publish_resort(resort_id, None)
-                result["status"] = "published"
                 result["stages"]["approval_panel"] = {
                     "status": "approved",
                     "iterations": approval_result.iterations,
@@ -694,7 +712,7 @@ def run_resort_pipeline(
                     task_id=None,
                     agent_name="pipeline_runner",
                     action="approval_panel_approved",
-                    reasoning=f"Content approved after {approval_result.iterations} iteration(s). Publishing.",
+                    reasoning=f"Content approved after {approval_result.iterations} iteration(s). Published.",
                     metadata={
                         "iterations": approval_result.iterations,
                         "panel_history": [
@@ -710,38 +728,74 @@ def run_resort_pipeline(
 
                 print(f"✓ Approval Panel: APPROVED after {approval_result.iterations} iteration(s)")
             else:
-                result["status"] = "draft"
+                # PUBLISH-FIRST: Still publish, but queue for continuous improvement
                 result["stages"]["approval_panel"] = {
-                    "status": "rejected",
+                    "status": "published_with_issues",
                     "iterations": approval_result.iterations,
                     "final_issues": approval_result.final_issues,
                     "summary": format_loop_summary(approval_result),
                 }
 
+                # Queue for quality improvement (continuous improvement model)
+                try:
+                    queue_task(
+                        task_type="quality_improvement",
+                        resort_name=resort_name,
+                        country=country,
+                        payload={
+                            "resort_id": resort_id,
+                            "issues": approval_result.final_issues,
+                            "priority": "high" if approval_result.iterations == 3 else "medium",
+                            "sources": research_data.get("sources", [])[:10],  # Include top sources for re-evaluation
+                        },
+                    )
+
+                    log_reasoning(
+                        task_id=None,
+                        agent_name="pipeline_runner",
+                        action="queued_for_improvement",
+                        reasoning=f"Published but queued for improvement: {len(approval_result.final_issues)} issues",
+                        metadata={
+                            "resort_id": resort_id,
+                            "issues_count": len(approval_result.final_issues),
+                            "priority": "high" if approval_result.iterations == 3 else "medium",
+                        },
+                    )
+                except Exception as queue_error:
+                    # Non-critical if queue fails - still published
+                    print(f"⚠️  Failed to queue for improvement: {queue_error}", file=sys.stderr)
+
                 log_reasoning(
                     task_id=None,
                     agent_name="pipeline_runner",
-                    action="approval_panel_rejected",
-                    reasoning=f"Content not approved after {approval_result.iterations} iterations. Saving as draft.",
+                    action="published_with_issues",
+                    reasoning=f"Content published with issues after {approval_result.iterations} iterations. Queued for improvement.",
                     metadata={
                         "iterations": approval_result.iterations,
                         "final_issues": approval_result.final_issues,
                     },
                 )
 
-                print(f"⚠️  Approval Panel: REJECTED after {approval_result.iterations} iteration(s)")
-                print(f"   Issues: {', '.join(approval_result.final_issues[:3])}")
+                print(f"✓ Published with issues after {approval_result.iterations} iteration(s)")
+                print(f"   Queued for improvement: {', '.join(approval_result.final_issues[:3])}")
 
         except Exception as e:
-            result["status"] = "draft"
-            result["stages"]["approval_panel"] = {"status": "error", "error": str(e)}
-            print(f"❌ Approval Panel failed for {resort_name}: {e}", file=sys.stderr)
+            # On approval panel error, still try to publish (content is valid, panel failed)
+            try:
+                publish_resort(resort_id, None)
+                result["status"] = "published"
+                result["stages"]["approval_panel"] = {"status": "error_but_published", "error": str(e)}
+                print(f"⚠️  Approval Panel failed but content published for {resort_name}: {e}", file=sys.stderr)
+            except Exception as pub_error:
+                result["status"] = "draft"
+                result["stages"]["approval_panel"] = {"status": "error", "error": str(e), "publish_error": str(pub_error)}
+                print(f"❌ Approval Panel and publish both failed for {resort_name}: {e}", file=sys.stderr)
 
             log_reasoning(
                 task_id=None,
                 agent_name="pipeline_runner",
                 action="approval_panel_error",
-                reasoning=f"Approval panel failed: {e}. Saving as draft.",
+                reasoning=f"Approval panel failed: {e}. Attempted publish: {result['status']}.",
             )
     else:
         result["status"] = "draft"

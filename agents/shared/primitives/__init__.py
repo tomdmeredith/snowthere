@@ -19,6 +19,8 @@ from .research import (
     tavily_search,
     search_resort_info,
     scrape_url,
+    flatten_sources,
+    extract_coordinates,
 )
 
 # Content primitives
@@ -267,6 +269,8 @@ __all__ = [
     "tavily_search",
     "search_resort_info",
     "scrape_url",
+    "flatten_sources",
+    "extract_coordinates",
     # Content
     "write_section",
     "generate_faq",

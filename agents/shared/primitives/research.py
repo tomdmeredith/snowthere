@@ -238,7 +238,55 @@ async def search_resort_info(
         "errors": [str(r) for r in results if isinstance(r, Exception)],
     }
 
+    # Flatten sources for approval panel
+    organized["sources"] = flatten_sources(organized)
+
     return organized
+
+
+def flatten_sources(research_data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Flatten SearchResult objects from categorized research into unified sources list.
+
+    The approval panel needs a flat list of sources to verify facts.
+    This extracts SearchResult objects from all categories into a unified format.
+
+    Args:
+        research_data: Organized research data from search_resort_info()
+
+    Returns:
+        List of source dicts with title, url, snippet, source, category
+    """
+    sources = []
+    seen_urls: set[str] = set()
+
+    # Standard list categories
+    for category in ["family_reviews", "official_info", "lodging"]:
+        for result in research_data.get(category, []):
+            if isinstance(result, SearchResult) and result.url not in seen_urls:
+                sources.append({
+                    "title": result.title,
+                    "url": result.url,
+                    "snippet": result.snippet,
+                    "source": result.source,
+                    "category": category,
+                })
+                seen_urls.add(result.url)
+
+    # Handle ski_school dict structure (from Tavily)
+    ski_school = research_data.get("ski_school", {})
+    if isinstance(ski_school, dict):
+        for result in ski_school.get("results", []):
+            if isinstance(result, SearchResult) and result.url not in seen_urls:
+                sources.append({
+                    "title": result.title,
+                    "url": result.url,
+                    "snippet": result.snippet,
+                    "source": result.source,
+                    "category": "ski_school",
+                })
+                seen_urls.add(result.url)
+
+    return sources
 
 
 async def scrape_url(url: str, timeout: int = 30) -> str | None:
@@ -270,3 +318,45 @@ async def scrape_url(url: str, timeout: int = 30) -> str | None:
 
         except httpx.HTTPError:
             return None
+
+
+async def extract_coordinates(
+    resort_name: str,
+    country: str,
+) -> tuple[float, float] | None:
+    """Extract coordinates for a ski resort using Nominatim (OpenStreetMap).
+
+    This is free and requires no API key. Used to improve Google Places
+    search accuracy and trail map lookups.
+
+    Args:
+        resort_name: Name of the ski resort
+        country: Country where resort is located
+
+    Returns:
+        Tuple of (latitude, longitude) or None if not found
+    """
+    # Respect Nominatim rate limit (1 request/second)
+    await asyncio.sleep(1.1)
+
+    async with httpx.AsyncClient(timeout=30) as client:
+        try:
+            response = await client.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "q": f"{resort_name} ski resort, {country}",
+                    "format": "json",
+                    "limit": 1,
+                },
+                headers={"User-Agent": "Snowthere/1.0 (family-ski-directory)"},
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            if data:
+                return (float(data[0]["lat"]), float(data[0]["lon"]))
+
+        except (httpx.HTTPError, KeyError, IndexError, ValueError) as e:
+            print(f"Coordinate extraction failed for {resort_name}: {e}")
+
+    return None

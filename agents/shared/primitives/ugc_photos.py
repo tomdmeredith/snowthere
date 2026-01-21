@@ -69,7 +69,14 @@ async def find_place_id(
     longitude: Optional[float] = None,
 ) -> Optional[str]:
     """
-    Find the Google Places ID for a ski resort.
+    Find the Google Places ID for a ski resort using multiple strategies.
+
+    Uses a probabilistic approach - tries multiple query formats and strategies
+    to maximize chances of finding the correct place.
+
+    Strategies:
+    1. Nearby search with coordinates (most accurate if coords available)
+    2. Text search with multiple query formats
 
     Args:
         resort_name: Name of the ski resort
@@ -86,34 +93,62 @@ async def find_place_id(
         return None
 
     async with httpx.AsyncClient(timeout=30.0) as client:
-        # Build search query
-        query = f"{resort_name} ski resort {country}"
-
-        params = {
-            "input": query,
-            "inputtype": "textquery",
-            "fields": "place_id,name,formatted_address,geometry",
-            "key": api_key,
-        }
-
-        # Add location bias if coordinates provided
+        # Strategy 1: Nearby search with coordinates (most accurate)
         if latitude and longitude:
-            params["locationbias"] = f"point:{latitude},{longitude}"
+            for keyword in [resort_name, f"{resort_name} ski", f"{resort_name} mountain"]:
+                try:
+                    response = await client.get(
+                        "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
+                        params={
+                            "location": f"{latitude},{longitude}",
+                            "radius": 10000,  # 10km radius
+                            "keyword": keyword,
+                            "key": api_key,
+                        },
+                    )
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get("status") == "OK" and data.get("results"):
+                            return data["results"][0].get("place_id")
+                except httpx.HTTPError:
+                    continue
 
-        response = await client.get(
-            "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
-            params=params,
-        )
+        # Strategy 2: Text search with multiple query formats
+        queries = [
+            f"{resort_name} ski resort {country}",
+            f"{resort_name} ski area {country}",
+            f"{resort_name} skiing {country}",
+            f"{resort_name} mountain {country}",
+            resort_name,  # Simple name as fallback
+        ]
 
-        if response.status_code != 200:
-            return None
+        for query in queries:
+            try:
+                params = {
+                    "input": query,
+                    "inputtype": "textquery",
+                    "fields": "place_id,name,formatted_address,geometry",
+                    "key": api_key,
+                }
 
-        data = response.json()
+                # Add location bias if coordinates provided
+                if latitude and longitude:
+                    params["locationbias"] = f"circle:10000@{latitude},{longitude}"
 
-        if data.get("status") == "OK" and data.get("candidates"):
-            return data["candidates"][0].get("place_id")
+                response = await client.get(
+                    "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
+                    params=params,
+                )
 
-        return None
+                if response.status_code == 200:
+                    data = response.json()
+                    if data.get("status") == "OK" and data.get("candidates"):
+                        return data["candidates"][0].get("place_id")
+
+            except httpx.HTTPError:
+                continue
+
+        return None  # All strategies failed
 
 
 async def get_place_details(place_id: str) -> Optional[dict]:

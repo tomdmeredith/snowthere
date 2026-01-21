@@ -174,6 +174,60 @@ def get_queue_work_items(limit: int = 5) -> list[dict[str, Any]]:
         return []
 
 
+def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
+    """Get resorts queued for quality improvement.
+
+    These are resorts that were published with the publish-first model
+    but had concerns from the approval panel.
+
+    Args:
+        limit: Maximum items to return
+
+    Returns:
+        List of resort dicts needing quality improvement
+    """
+    try:
+        # Query the content_queue for quality_improvement tasks
+        supabase = get_supabase_client()
+
+        result = supabase.table("content_queue")\
+            .select("*")\
+            .eq("task_type", "quality_improvement")\
+            .eq("status", "pending")\
+            .order("created_at", desc=False)\
+            .limit(limit)\
+            .execute()
+
+        items = []
+        for task in result.data:
+            payload = task.get("payload", {})
+            issues = payload.get("issues", [])
+            priority = payload.get("priority", "medium")
+
+            items.append({
+                "name": task.get("resort_name"),
+                "country": task.get("country"),
+                "reasoning": f"Quality improvement ({priority}): {issues[0] if issues else 'Issues identified'}",
+                "source": "quality_improvement",
+                "task_id": task.get("id"),
+                "resort_id": payload.get("resort_id"),
+                "issues": issues,
+                "priority": priority,
+            })
+
+        return items
+
+    except Exception as e:
+        log_reasoning(
+            task_id=None,
+            agent_name="orchestrator",
+            action="get_quality_items_error",
+            reasoning=f"Failed to get quality improvement items: {e}",
+            metadata={"error": str(e)},
+        )
+        return []
+
+
 def get_work_items_mixed(
     max_items: int = 4,
     discovery_pct: float = 0.30,
@@ -215,11 +269,14 @@ def get_work_items_mixed(
         items.extend(discovery_items)
         sources_used["discovery"] = len(discovery_items)
 
-    # 2. Quality issues (future: integrate with QualityAgent)
-    # TODO: Add quality_issues when QualityAgent audit output is stored
-    # quality_items = get_quality_issues(limit=quality_count)
-    # items.extend(quality_items)
-    sources_used["quality"] = 0
+    # 2. Quality improvement items (from publish-first model)
+    # These are resorts that were published but had approval panel concerns
+    if quality_count > 0:
+        quality_items = get_quality_improvement_items(limit=quality_count)
+        items.extend(quality_items)
+        sources_used["quality"] = len(quality_items)
+    else:
+        sources_used["quality"] = 0
 
     # 3. Stale content refresh
     if stale_count > 0:
