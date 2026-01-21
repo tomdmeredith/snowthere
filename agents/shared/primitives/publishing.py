@@ -261,14 +261,16 @@ def revalidate_page(path: str) -> dict[str, Any]:
     if not path.startswith("/"):
         path = "/" + path
 
-    # Construct revalidation URL with query parameters
+    # Construct revalidation URL
     revalidate_url = f"{vercel_url.rstrip('/')}/api/revalidate"
 
     try:
         with httpx.Client(timeout=30.0) as client:
+            # Send JSON body (endpoint expects body, not query params)
             response = client.post(
                 revalidate_url,
-                params={"secret": revalidate_token, "path": path},
+                json={"secret": revalidate_token, "path": path},
+                headers={"Content-Type": "application/json"},
             )
 
             if response.status_code == 200:
