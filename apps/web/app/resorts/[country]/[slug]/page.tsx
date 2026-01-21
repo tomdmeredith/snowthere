@@ -11,8 +11,12 @@ import { FamilyMetricsTable } from '@/components/resort/FamilyMetricsTable'
 import { CostTable } from '@/components/resort/CostTable'
 import { SkiCalendar } from '@/components/resort/SkiCalendar'
 import { FAQSection } from '@/components/resort/FAQSection'
-import { AIDisclosure, AIDisclaimerFooter } from '@/components/resort/AIDisclosure'
 import { TrailMap } from '@/components/resort/TrailMap'
+import { LastUpdated } from '@/components/resort/LastUpdated'
+import { HeroImage } from '@/components/resort/HeroImage'
+import { TerrainBreakdown } from '@/components/resort/TerrainBreakdown'
+import { ContentRenderer } from '@/components/resort/ContentRenderer'
+import { QuickScoreSummary } from '@/components/resort/QuickScoreSummary'
 import { SimilarResorts } from '@/components/resort/SimilarResorts'
 import {
   ChevronRight,
@@ -23,11 +27,10 @@ import {
   Home,
   Ticket,
   Mountain,
-  Coffee,
-  MessageSquare,
   ArrowRight,
   Sparkles,
   Map,
+  MessageSquare,
 } from 'lucide-react'
 
 interface Props {
@@ -51,7 +54,8 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
       passes:resort_passes(
         access_type,
         pass:ski_passes(*)
-      )
+      ),
+      images:resort_images(*)
     `)
     .eq('slug', slug)
     .eq('country', countryName)
@@ -85,6 +89,7 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
       ...p.pass,
       access_type: p.access_type,
     })),
+    images: resortData.images || [],
   }
 
   return transformedResort
@@ -315,8 +320,59 @@ export default async function ResortPage({ params }: Props) {
   const costs = resort.costs
   const faqs = content?.faqs as { question: string; answer: string }[] | null
 
+  // Find hero and atmosphere images
+  const images = (resort as any).images || []
+  const heroImage = images.find((img: any) => img.image_type === 'hero')
+  const atmosphereImage = images.find((img: any) => img.image_type === 'atmosphere')
+
+  // Build SkiResort schema for SEO/GEO
+  const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
+  const skiResortSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'SkiResort',
+    name: resort.name,
+    description: content?.quick_take
+      ? String(content.quick_take).replace(/<[^>]+>/g, '').slice(0, 200)
+      : `Family ski resort in ${resort.country}`,
+    url: `${BASE_URL}/resorts/${countrySlug}/${resort.slug}`,
+    address: {
+      '@type': 'PostalAddress',
+      addressRegion: resort.region || undefined,
+      addressCountry: resort.country,
+    },
+    geo: resort.latitude && resort.longitude ? {
+      '@type': 'GeoCoordinates',
+      latitude: resort.latitude,
+      longitude: resort.longitude,
+    } : undefined,
+    aggregateRating: metrics?.family_overall_score ? {
+      '@type': 'AggregateRating',
+      ratingValue: metrics.family_overall_score,
+      bestRating: 10,
+      worstRating: 1,
+      ratingCount: 1,
+    } : undefined,
+    priceRange: costs?.estimated_family_daily
+      ? costs.estimated_family_daily < 400 ? '$'
+        : costs.estimated_family_daily < 600 ? '$$'
+        : costs.estimated_family_daily < 900 ? '$$$'
+        : '$$$$'
+      : undefined,
+    amenityFeature: [
+      metrics?.has_childcare ? { '@type': 'LocationFeatureSpecification', name: 'Childcare', value: true } : null,
+      metrics?.ski_school_min_age != null ? { '@type': 'LocationFeatureSpecification', name: 'Ski School', value: true } : null,
+      metrics?.has_magic_carpet ? { '@type': 'LocationFeatureSpecification', name: 'Magic Carpet', value: true } : null,
+    ].filter(Boolean),
+  }
+
   return (
     <main className="min-h-screen bg-white">
+      {/* SkiResort Schema for SEO/GEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(skiResortSchema) }}
+      />
+
       {/* Navigation */}
       <Navbar />
 
@@ -356,6 +412,21 @@ export default async function ResortPage({ params }: Props) {
         </div>
       </nav>
 
+      {/* Hero Image - Shows when image exists */}
+      {heroImage && (
+        <div className="container-page py-8">
+          <HeroImage
+            imageUrl={heroImage.image_url}
+            altText={heroImage.alt_text || `${resort.name} ski resort`}
+            resortName={resort.name}
+            country={resort.country}
+            familyScore={metrics?.family_overall_score ?? undefined}
+            atmosphereUrl={atmosphereImage?.image_url}
+            source={heroImage.source}
+          />
+        </div>
+      )}
+
       {/* Hero Header - Design-5 Warm Gradient */}
       <header className="relative py-20 sm:py-28 overflow-hidden">
         {/* Design-5: "Sunset on snow" warm gradient background */}
@@ -370,7 +441,7 @@ export default async function ResortPage({ params }: Props) {
             <div className="flex items-center gap-2 text-dark-500 mb-4">
               <MapPin className="w-4 h-4" />
               <span className="text-sm font-medium">
-                {resort.region}, {resort.country}
+                {resort.region ? `${resort.region}, ${resort.country}` : resort.country}
               </span>
             </div>
 
@@ -401,7 +472,7 @@ export default async function ResortPage({ params }: Props) {
 
             {/* Handwritten tagline - Design-5 */}
             <p className="mt-8 font-accent text-2xl sm:text-3xl text-teal-600 max-w-xl">
-              Everything you need to plan your family ski trip
+              {(content?.tagline as string) || 'Everything you need to plan your family ski trip'}
             </p>
           </div>
         </div>
@@ -412,6 +483,11 @@ export default async function ResortPage({ params }: Props) {
         <div className="grid gap-12 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-16">
+            {/* Last Updated */}
+            {(resort.last_refreshed || resort.updated_at) && (
+              <LastUpdated date={resort.last_refreshed || resort.updated_at} />
+            )}
+
             {/* Quick Take */}
             {content?.quick_take && (
               <div className="animate-in animate-in-2">
@@ -423,6 +499,17 @@ export default async function ResortPage({ params }: Props) {
               </div>
             )}
 
+            {/* Quick Score Summary */}
+            {metrics && (
+              <QuickScoreSummary
+                familyScore={metrics.family_overall_score}
+                bestAgeMin={metrics.best_age_min}
+                bestAgeMax={metrics.best_age_max}
+                perfectIf={metrics.perfect_if || []}
+                skipIf={metrics.skip_if || []}
+              />
+            )}
+
             {/* The Numbers Table */}
             {metrics && (
               <div className="animate-in animate-in-3">
@@ -430,60 +517,47 @@ export default async function ResortPage({ params }: Props) {
               </div>
             )}
 
+            {/* Terrain Breakdown Visual */}
+            {metrics?.terrain_beginner_pct != null &&
+              metrics?.terrain_intermediate_pct != null &&
+              metrics?.terrain_advanced_pct != null && (
+                <TerrainBreakdown
+                  beginner={metrics.terrain_beginner_pct}
+                  intermediate={metrics.terrain_intermediate_pct}
+                  advanced={metrics.terrain_advanced_pct}
+                />
+              )}
+
             {/* Getting There */}
             {content?.getting_there && (
               <section id="getting-there">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
-                    <Plane className="w-6 h-6 text-gold-600" />
-                  </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
-                    <span>✈️</span>
-                    <span>Getting There</span>
-                  </h2>
-                </div>
-                <div
-                  className="prose-family"
-                  dangerouslySetInnerHTML={createSanitizedHTML(content.getting_there)}
-                />
+                <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
+                  <span>✈️</span>
+                  <span>Getting There</span>
+                </h2>
+                <ContentRenderer html={content.getting_there} />
               </section>
             )}
 
             {/* Where to Stay */}
             {content?.where_to_stay && (
               <section id="where-to-stay">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-100 to-mint-100 shadow-teal">
-                    <Home className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
-                    <span>🏠</span>
-                    <span>Where to Stay</span>
-                  </h2>
-                </div>
-                <div
-                  className="prose-family"
-                  dangerouslySetInnerHTML={createSanitizedHTML(content.where_to_stay)}
-                />
+                <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
+                  <span>🏠</span>
+                  <span>Where to Stay</span>
+                </h2>
+                <ContentRenderer html={content.where_to_stay} />
               </section>
             )}
 
             {/* Lift Tickets & Passes */}
             {content?.lift_tickets && (
               <section id="lift-tickets">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral">
-                    <Ticket className="w-6 h-6 text-coral-600" />
-                  </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
-                    <span>🎟️</span>
-                    <span>Lift Tickets & Passes</span>
-                  </h2>
-                </div>
-                <div
-                  className="prose-family"
-                  dangerouslySetInnerHTML={createSanitizedHTML(content.lift_tickets)}
-                />
+                <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
+                  <span>🎟️</span>
+                  <span>Lift Tickets & Passes</span>
+                </h2>
+                <ContentRenderer html={content.lift_tickets} />
                 {resort.passes.length > 0 && (
                   <div className="mt-8">
                     <h3 className="font-display font-semibold text-dark-800 mb-4">
@@ -513,19 +587,11 @@ export default async function ResortPage({ params }: Props) {
             {/* On the Mountain */}
             {content?.on_mountain && (
               <section id="on-mountain">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-100 to-mint-100 shadow-teal">
-                    <Mountain className="w-6 h-6 text-teal-600" />
-                  </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
-                    <span>⛷️</span>
-                    <span>On the Mountain</span>
-                  </h2>
-                </div>
-                <div
-                  className="prose-family"
-                  dangerouslySetInnerHTML={createSanitizedHTML(content.on_mountain)}
-                />
+                <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
+                  <span>⛷️</span>
+                  <span>On the Mountain</span>
+                </h2>
+                <ContentRenderer html={content.on_mountain} />
               </section>
             )}
 
@@ -541,19 +607,11 @@ export default async function ResortPage({ params }: Props) {
             {/* Off the Mountain */}
             {content?.off_mountain && (
               <section id="off-mountain">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
-                    <Coffee className="w-6 h-6 text-gold-600" />
-                  </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
-                    <span>☕</span>
-                    <span>Off the Mountain</span>
-                  </h2>
-                </div>
-                <div
-                  className="prose-family"
-                  dangerouslySetInnerHTML={createSanitizedHTML(content.off_mountain)}
-                />
+                <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
+                  <span>☕</span>
+                  <span>Off the Mountain</span>
+                </h2>
+                <ContentRenderer html={content.off_mountain} />
               </section>
             )}
 
@@ -565,27 +623,16 @@ export default async function ResortPage({ params }: Props) {
             {/* Parent Reviews */}
             {content?.parent_reviews_summary && (
               <section id="reviews">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-3 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral">
-                    <MessageSquare className="w-6 h-6 text-coral-600" />
-                  </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
-                    <span>💬</span>
-                    <span>What Parents Say</span>
-                  </h2>
-                </div>
-                <div
-                  className="prose-family"
-                  dangerouslySetInnerHTML={createSanitizedHTML(content.parent_reviews_summary)}
-                />
+                <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
+                  <span>💬</span>
+                  <span>What Parents Say</span>
+                </h2>
+                <ContentRenderer html={content.parent_reviews_summary} />
               </section>
             )}
 
             {/* FAQ */}
             {faqs && faqs.length > 0 && <FAQSection faqs={faqs} />}
-
-            {/* AI Disclosure */}
-            <AIDisclosure className="mt-16" />
           </div>
 
           {/* Sidebar */}

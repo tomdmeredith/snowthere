@@ -1,5 +1,5 @@
 import { ResortCosts } from '@/lib/database.types'
-import { Ticket, Home, UtensilsCrossed, Calculator, Sparkles } from 'lucide-react'
+import { Calculator, Sparkles } from 'lucide-react'
 
 interface CostTableProps {
   costs: ResortCosts
@@ -15,131 +15,150 @@ const formatCurrency = (amount: number | null, currency: string) => {
   }).format(amount)
 }
 
+function getPriceTier(dailyEstimate: number | null): { tier: string; label: string } {
+  if (!dailyEstimate) return { tier: '$$', label: 'Mid-range' }
+  if (dailyEstimate < 400) return { tier: '$', label: 'Budget-friendly' }
+  if (dailyEstimate < 600) return { tier: '$$', label: 'Mid-range' }
+  if (dailyEstimate < 900) return { tier: '$$$', label: 'Premium' }
+  return { tier: '$$$$', label: 'Luxury' }
+}
+
 export function CostTable({ costs }: CostTableProps) {
   const currency = costs.currency || 'USD'
+  const priceTier = getPriceTier(costs.estimated_family_daily)
 
   return (
-    <section id="costs" className="space-y-6">
-      {/* Editorial Header - Design-5 */}
-      <div className="flex items-center gap-3">
-        <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
-          <Calculator className="w-5 h-5 text-gold-600" />
-        </div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="h-1 w-5 bg-gradient-to-r from-gold-400 to-gold-500 rounded-full" />
-            <h2 className="font-display text-xl font-bold text-dark-800">
-              Cost Breakdown
-            </h2>
+    <section id="costs" className="space-y-5">
+      {/* Header with Price Tier */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-gold-100 to-gold-50">
+            <Calculator className="w-5 h-5 text-gold-600" />
           </div>
-          <p className="text-sm text-dark-500 mt-1 font-medium">Real prices for family budgeting</p>
+          <h2 className="font-display text-lg font-bold text-dark-800">
+            Cost Breakdown
+          </h2>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gold-100 rounded-full">
+          <span className="font-bold text-gold-700">{priceTier.tier}</span>
+          <span className="text-xs text-gold-600">{priceTier.label}</span>
         </div>
       </div>
 
-      {/* Design-5: Card with playful styling */}
-      <div className="rounded-3xl bg-gradient-to-br from-gold-50/80 to-gold-100/30 border border-gold-200 shadow-gold p-6 space-y-6">
-        {/* Lift Tickets */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-xs font-bold text-gold-700 uppercase tracking-wide">
-            <Ticket className="w-4 h-4" />
-            Lift Tickets
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-2xl p-5 text-center shadow-card border border-gold-100 hover:shadow-card-hover hover:scale-[1.02] transition-all duration-300">
-              <span className="block text-xs text-dark-400 mb-2 font-medium">Adult</span>
-              <span className="font-bold text-xl text-dark-800">
+      {/* Semantic Table for 96% AI Parse Rate */}
+      <div className="rounded-2xl bg-white border border-dark-100 overflow-hidden">
+        <table className="w-full text-sm">
+          <caption className="sr-only">
+            Cost breakdown for family ski trip
+          </caption>
+          <thead>
+            <tr className="bg-dark-50 border-b border-dark-100">
+              <th className="text-left py-3 px-4 font-semibold text-dark-600">Category</th>
+              <th className="text-right py-3 px-4 font-semibold text-dark-600">Price</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-dark-100">
+            {/* Lift Tickets Section */}
+            <tr className="bg-gold-50/50">
+              <td colSpan={2} className="py-2 px-4 text-xs font-bold text-gold-700 uppercase tracking-wider">
+                🎟️ Lift Tickets
+              </td>
+            </tr>
+            <tr className="hover:bg-dark-50 transition-colors">
+              <td className="py-3 px-4 text-dark-700">Adult (daily)</td>
+              <td className="py-3 px-4 text-right font-semibold text-dark-800">
                 {formatCurrency(costs.lift_adult_daily, currency)}
-              </span>
-              <span className="text-xs text-dark-400">/day</span>
-            </div>
-            <div className="bg-white rounded-2xl p-5 text-center shadow-card border border-gold-100 hover:shadow-card-hover hover:scale-[1.02] transition-all duration-300">
-              <span className="block text-xs text-dark-400 mb-2 font-medium">Child</span>
-              <span className="font-bold text-xl text-dark-800">
+              </td>
+            </tr>
+            <tr className="hover:bg-dark-50 transition-colors">
+              <td className="py-3 px-4 text-dark-700">Child (daily)</td>
+              <td className="py-3 px-4 text-right font-semibold text-dark-800">
                 {formatCurrency(costs.lift_child_daily, currency)}
-              </span>
-              <span className="text-xs text-dark-400">/day</span>
-            </div>
-          </div>
-        </div>
+              </td>
+            </tr>
+            {costs.lift_family_daily && (
+              <tr className="hover:bg-dark-50 transition-colors">
+                <td className="py-3 px-4 text-dark-700">Family pack (daily)</td>
+                <td className="py-3 px-4 text-right font-semibold text-dark-800">
+                  {formatCurrency(costs.lift_family_daily, currency)}
+                </td>
+              </tr>
+            )}
 
-        {/* Lodging */}
-        <div className="space-y-3 pt-2">
-          <div className="flex items-center gap-2 text-xs font-bold text-dark-600 uppercase tracking-wide">
-            <Home className="w-4 h-4" />
-            Lodging
-          </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center bg-white rounded-2xl p-4 shadow-card border border-dark-100 hover:shadow-card-hover transition-all duration-300">
-              <span className="text-sm text-dark-600 font-medium">Budget</span>
-              <span className="font-semibold text-dark-800">
-                {formatCurrency(costs.lodging_budget_nightly, currency)}<span className="text-xs text-dark-400 ml-1">/night</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center bg-white rounded-2xl p-4 shadow-card border-2 border-gold-300 hover:shadow-gold transition-all duration-300">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-dark-700 font-medium">Mid-Range</span>
-                <span className="text-xs font-semibold text-gold-700 bg-gold-200 px-2.5 py-1 rounded-full">Popular</span>
-              </div>
-              <span className="font-semibold text-dark-800">
-                {formatCurrency(costs.lodging_mid_nightly, currency)}<span className="text-xs text-dark-400 ml-1">/night</span>
-              </span>
-            </div>
-            <div className="flex justify-between items-center bg-white rounded-2xl p-4 shadow-card border border-dark-100 hover:shadow-card-hover transition-all duration-300">
-              <span className="text-sm text-dark-600 font-medium">Luxury</span>
-              <span className="font-semibold text-dark-800">
-                {formatCurrency(costs.lodging_luxury_nightly, currency)}<span className="text-xs text-dark-400 ml-1">/night</span>
-              </span>
-            </div>
-          </div>
-        </div>
+            {/* Lodging Section */}
+            <tr className="bg-teal-50/50">
+              <td colSpan={2} className="py-2 px-4 text-xs font-bold text-teal-700 uppercase tracking-wider">
+                🏠 Lodging (nightly)
+              </td>
+            </tr>
+            <tr className="hover:bg-dark-50 transition-colors">
+              <td className="py-3 px-4 text-dark-700">Budget</td>
+              <td className="py-3 px-4 text-right font-semibold text-dark-800">
+                {formatCurrency(costs.lodging_budget_nightly, currency)}
+              </td>
+            </tr>
+            <tr className="hover:bg-dark-50 transition-colors bg-gold-50/30">
+              <td className="py-3 px-4 text-dark-700">
+                Mid-range
+                <span className="ml-2 text-xs bg-gold-200 text-gold-700 px-2 py-0.5 rounded-full">Popular</span>
+              </td>
+              <td className="py-3 px-4 text-right font-semibold text-dark-800">
+                {formatCurrency(costs.lodging_mid_nightly, currency)}
+              </td>
+            </tr>
+            <tr className="hover:bg-dark-50 transition-colors">
+              <td className="py-3 px-4 text-dark-700">Luxury</td>
+              <td className="py-3 px-4 text-right font-semibold text-dark-800">
+                {formatCurrency(costs.lodging_luxury_nightly, currency)}
+              </td>
+            </tr>
 
-        {/* Meals */}
-        {costs.meal_family_avg && (
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center gap-2 text-xs font-bold text-teal-700 uppercase tracking-wide">
-              <UtensilsCrossed className="w-4 h-4" />
-              Meals
-            </div>
-            <div className="flex justify-between items-center bg-white rounded-2xl p-4 shadow-card border border-teal-100 hover:shadow-teal transition-all duration-300">
-              <span className="text-sm text-dark-600 font-medium">Family of 4 avg</span>
-              <span className="font-semibold text-dark-800">
-                {formatCurrency(costs.meal_family_avg, currency)}<span className="text-xs text-dark-400 ml-1">/day</span>
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* Total Estimate - Design-5 playful dark card */}
-        {costs.estimated_family_daily && (
-          <div className="mt-2 pt-6 border-t border-gold-200">
-            <div className="relative overflow-hidden bg-gradient-to-br from-dark-700 via-dark-800 to-dark-900 text-white rounded-3xl p-6 shadow-2xl">
-              {/* Decorative elements */}
-              <div className="absolute top-3 right-3 w-16 h-16 bg-coral-400/20 rounded-full blur-2xl" />
-              <div className="absolute bottom-3 left-3 w-12 h-12 bg-gold-400/15 rounded-full blur-2xl" />
-
-              <div className="relative z-10 flex justify-between items-center">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <Sparkles className="w-5 h-5 text-gold-300" />
-                    <span className="text-white font-semibold">
-                      Family of 4 Estimate
-                    </span>
-                  </div>
-                  <span className="text-sm text-white/70">
-                    Lifts + mid-range lodging + meals
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="font-display font-black text-3xl sm:text-4xl text-white">
-                    {formatCurrency(costs.estimated_family_daily, currency)}
-                  </span>
-                  <span className="text-lg font-normal text-white/60">/day</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+            {/* Meals Section */}
+            {costs.meal_family_avg && (
+              <>
+                <tr className="bg-coral-50/50">
+                  <td colSpan={2} className="py-2 px-4 text-xs font-bold text-coral-700 uppercase tracking-wider">
+                    🍽️ Meals
+                  </td>
+                </tr>
+                <tr className="hover:bg-dark-50 transition-colors">
+                  <td className="py-3 px-4 text-dark-700">Family of 4 (daily avg)</td>
+                  <td className="py-3 px-4 text-right font-semibold text-dark-800">
+                    {formatCurrency(costs.meal_family_avg, currency)}
+                  </td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
       </div>
+
+      {/* Total Estimate Card */}
+      {costs.estimated_family_daily && (
+        <div className="relative overflow-hidden bg-gradient-to-br from-dark-700 via-dark-800 to-dark-900 text-white rounded-2xl p-5">
+          {/* Decorative elements */}
+          <div className="absolute top-2 right-2 w-12 h-12 bg-coral-400/20 rounded-full blur-xl" />
+          <div className="absolute bottom-2 left-2 w-10 h-10 bg-gold-400/15 rounded-full blur-xl" />
+
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="w-4 h-4 text-gold-300" />
+              <span className="text-sm font-medium text-white/80">
+                Family of 4 Daily Estimate
+              </span>
+            </div>
+            <div className="flex items-baseline gap-1">
+              <span className="font-display font-black text-3xl text-white">
+                {formatCurrency(costs.estimated_family_daily, currency)}
+              </span>
+              <span className="text-white/50">/day</span>
+            </div>
+            <p className="text-xs text-white/50 mt-2">
+              Includes lifts, mid-range lodging, and meals
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

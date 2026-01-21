@@ -247,6 +247,61 @@ Output HTML formatted content.
     return message.content[0].text
 
 
+async def generate_tagline(
+    resort_name: str,
+    country: str,
+    context: dict[str, Any],
+    voice_profile: str = "instagram_mom",
+) -> str:
+    """
+    Generate a unique 8-12 word tagline capturing resort personality.
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        context: Research data and resort info
+        voice_profile: Voice profile to use
+
+    Returns:
+        Tagline string (8-12 words)
+    """
+    profile = get_voice_profile(voice_profile)
+    client = get_claude_client()
+
+    system_prompt = f"""Generate a single tagline for a family ski resort guide.
+
+VOICE: {profile.name} - {profile.description}
+
+The tagline should:
+- Be 8-12 words
+- Capture the unique personality/vibe of this resort
+- Feel warm and conversational (like a friend giving advice)
+- NOT be generic (avoid "everything you need" type phrases)
+- Highlight what makes this resort special for families
+
+Examples of good taglines:
+- "Where little ones learn to love the snow"
+- "European charm without the European prices"
+- "The gentle giant that makes skiing feel easy"
+- "Big mountain thrills with a soft landing"
+
+Output ONLY the tagline, nothing else."""
+
+    message = client.messages.create(
+        model=settings.default_model,
+        max_tokens=50,
+        system=system_prompt,
+        messages=[
+            {
+                "role": "user",
+                "content": f"Generate a unique tagline for {resort_name}, {country}.\n\nKey characteristics:\n{_format_context(context)}",
+            }
+        ],
+    )
+
+    return message.content[0].text.strip().strip('"')
+
+
 async def generate_seo_meta(
     resort_name: str,
     country: str,

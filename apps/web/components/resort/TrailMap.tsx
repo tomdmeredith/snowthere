@@ -106,6 +106,8 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
     : `https://www.openstreetmap.org/search?query=${encodeURIComponent(`${resortName} ski resort ${country}`)}`
 
   const hasData = data && data.quality !== 'none'
+  const hasOsmData = hasData && data.piste_count > 0
+  const hasOnlyOfficialLink = hasData && data.piste_count === 0 && data.official_map_url
   const qualityStyle = qualityStyles[data?.quality || 'none']
 
   return (
@@ -127,7 +129,47 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
 
       {/* Main Content Card */}
       <div className="card bg-dark-50/80 border-dark-200">
-        {hasData ? (
+        {hasOnlyOfficialLink ? (
+          /* Official link only - no OSM data */
+          <div className="text-center py-8 space-y-6">
+            <div className="flex flex-col items-center gap-4">
+              <div className="p-4 rounded-2xl bg-teal-100">
+                <Map className="w-8 h-8 text-teal-600" />
+              </div>
+              <div>
+                <p className="font-medium text-dark-700 mb-1">
+                  Official Trail Map Available
+                </p>
+                <p className="text-sm text-dark-500">
+                  View the official trail map from {resortName}.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href={data.official_map_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 rounded-xl bg-coral-500 hover:bg-coral-600 text-white font-semibold transition-colors shadow-coral"
+              >
+                <Map className="w-5 h-5" />
+                View Trail Map
+                <ExternalLink className="w-4 h-4 ml-1 opacity-70" />
+              </a>
+
+              <a
+                href={openSkiMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white hover:bg-dark-50 text-dark-700 font-medium border border-dark-200 transition-colors"
+              >
+                Search OpenSkiMap
+                <ExternalLink className="w-4 h-4 ml-1 opacity-70" />
+              </a>
+            </div>
+          </div>
+        ) : hasOsmData ? (
           <div className="space-y-6">
             {/* Stats Row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -266,7 +308,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
       </div>
 
       {/* Family Tip */}
-      {hasData && data.difficulty_breakdown && (
+      {hasOsmData && data.difficulty_breakdown && (
         <div className="p-4 rounded-2xl bg-teal-50/70 border border-teal-100">
           <div className="flex items-start gap-3">
             <div className="p-2 rounded-xl bg-teal-100 flex-shrink-0">

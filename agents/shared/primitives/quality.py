@@ -634,3 +634,516 @@ def batch_issues_for_fix(
             remainder.append(issue)
 
     return batch, remainder
+
+
+# =============================================================================
+# PERFECT PAGE CHECKLIST
+# =============================================================================
+# Agent-native quality system for resort page excellence.
+# Each check returns pass/fail and feeds into approval panel decisions.
+
+
+PERFECT_PAGE_CHECKLIST = {
+    "content": [
+        ("quick_take_length", "150-300 words", "Quick Take is optimal length for scanning"),
+        ("tagline_exists", "Has unique tagline", "Resort has a distinctive 8-12 word tagline"),
+        ("no_em_dashes", "No em/en-dashes", "Uses commas/periods instead of dashes"),
+        ("no_llm_markers", "No LLM markers", "No 'Additionally', 'Furthermore', 'It's worth noting'"),
+        ("has_pro_tips", "Has pro tips", "Content includes actionable 'Pro tip:' items"),
+    ],
+    "media": [
+        ("has_hero_image", "Has hero image", "Resort has a hero or atmosphere image"),
+        ("has_trail_map", "Has trail map", "Has trail map data OR official URL fallback"),
+        ("has_terrain_data", "Has terrain %s", "Has beginner/intermediate/advanced percentages"),
+    ],
+    "data": [
+        ("has_lift_prices", "Has lift prices", "Has adult and child daily lift ticket prices"),
+        ("has_family_score", "Has family score", "Has overall family friendliness score"),
+        ("has_perfect_if", "Has Perfect If", "Has 3+ 'Perfect if' items"),
+        ("has_skip_if", "Has Skip If", "Has 1+ 'Skip if' items"),
+    ],
+    "links": [
+        ("has_official_link", "Has official link", "Has official resort website link"),
+        ("has_outbound_links", "Has useful links", "Has curated outbound links for families"),
+    ],
+}
+
+
+# LLM markers to detect in content
+LLM_MARKERS = [
+    "additionally",
+    "furthermore",
+    "moreover",
+    "it's worth noting",
+    "it is worth noting",
+    "it's important to note",
+    "subsequently",
+]
+
+
+@dataclass
+class CheckResult:
+    """Result of a single checklist item check."""
+    check_id: str
+    label: str
+    description: str
+    passed: bool
+    details: str = ""
+
+
+@dataclass
+class PageQualityScore:
+    """Overall quality score for a resort page."""
+    resort_id: str
+    resort_name: str
+    total_checks: int
+    passed_checks: int
+    score_pct: float
+    results_by_category: dict[str, list[CheckResult]]
+    failing_checks: list[CheckResult]
+    timestamp: datetime = field(default_factory=datetime.utcnow)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "resort_id": self.resort_id,
+            "resort_name": self.resort_name,
+            "total_checks": self.total_checks,
+            "passed_checks": self.passed_checks,
+            "score_pct": self.score_pct,
+            "results_by_category": {
+                cat: [{"check_id": r.check_id, "passed": r.passed, "details": r.details}
+                      for r in results]
+                for cat, results in self.results_by_category.items()
+            },
+            "failing_checks": [r.check_id for r in self.failing_checks],
+            "timestamp": self.timestamp.isoformat(),
+        }
+
+
+def _count_words(text: str | None) -> int:
+    """Count words in text, handling None and HTML."""
+    if not text:
+        return 0
+    # Strip HTML tags for word count
+    import re
+    clean = re.sub(r'<[^>]+>', ' ', text)
+    return len(clean.split())
+
+
+def _check_content_for_markers(text: str | None, markers: list[str]) -> list[str]:
+    """Check if text contains any of the given markers (case-insensitive)."""
+    if not text:
+        return []
+    text_lower = text.lower()
+    found = []
+    for marker in markers:
+        if marker.lower() in text_lower:
+            found.append(marker)
+    return found
+
+
+def _check_for_dashes(text: str | None) -> bool:
+    """Check if text contains em-dashes or en-dashes."""
+    if not text:
+        return False
+    # Em-dash: — (U+2014), En-dash: – (U+2013)
+    return "—" in text or "–" in text
+
+
+def score_resort_page(resort_id: str) -> PageQualityScore | None:
+    """
+    Score a resort page against the Perfect Page Checklist.
+
+    Runs all checks and returns a comprehensive quality score.
+
+    Args:
+        resort_id: UUID of the resort to score
+
+    Returns:
+        PageQualityScore with all check results, or None if resort not found
+    """
+    client = get_supabase_client()
+
+    # Fetch all data needed for checks
+    resort_response = (
+        client.table("resorts")
+        .select("id, name, slug")
+        .eq("id", resort_id)
+        .single()
+        .execute()
+    )
+
+    if not resort_response.data:
+        return None
+
+    resort = resort_response.data
+    resort_name = resort["name"]
+
+    # Get content
+    content_response = (
+        client.table("resort_content")
+        .select("*")
+        .eq("resort_id", resort_id)
+        .maybeSingle()
+        .execute()
+    )
+    content = content_response.data or {}
+
+    # Get family metrics
+    metrics_response = (
+        client.table("resort_family_metrics")
+        .select("*")
+        .eq("resort_id", resort_id)
+        .maybeSingle()
+        .execute()
+    )
+    metrics = metrics_response.data or {}
+
+    # Get costs
+    costs_response = (
+        client.table("resort_costs")
+        .select("*")
+        .eq("resort_id", resort_id)
+        .maybeSingle()
+        .execute()
+    )
+    costs = costs_response.data or {}
+
+    # Get trail map
+    trail_map_response = (
+        client.table("resort_trail_maps")
+        .select("*")
+        .eq("resort_id", resort_id)
+        .maybeSingle()
+        .execute()
+    )
+    trail_map = trail_map_response.data or {}
+
+    # Get images
+    images_response = (
+        client.table("resort_images")
+        .select("*")
+        .eq("resort_id", resort_id)
+        .execute()
+    )
+    images = images_response.data or []
+
+    # Get links
+    links_response = (
+        client.table("resort_links")
+        .select("*")
+        .eq("resort_id", resort_id)
+        .execute()
+    )
+    links = links_response.data or []
+
+    # Run all checks
+    results_by_category: dict[str, list[CheckResult]] = {}
+
+    # CONTENT CHECKS
+    content_results = []
+
+    # quick_take_length
+    quick_take = content.get("quick_take", "")
+    word_count = _count_words(quick_take)
+    passed = 150 <= word_count <= 300
+    content_results.append(CheckResult(
+        check_id="quick_take_length",
+        label="150-300 words",
+        description="Quick Take is optimal length for scanning",
+        passed=passed,
+        details=f"{word_count} words" + (" (too short)" if word_count < 150 else " (too long)" if word_count > 300 else ""),
+    ))
+
+    # tagline_exists
+    tagline = content.get("tagline", "")
+    passed = bool(tagline and len(tagline.strip()) >= 20)
+    content_results.append(CheckResult(
+        check_id="tagline_exists",
+        label="Has unique tagline",
+        description="Resort has a distinctive 8-12 word tagline",
+        passed=passed,
+        details=tagline[:50] + "..." if len(tagline) > 50 else tagline if tagline else "No tagline",
+    ))
+
+    # no_em_dashes - check all content fields
+    all_content = " ".join([
+        content.get("quick_take", ""),
+        content.get("getting_there", ""),
+        content.get("where_to_stay", ""),
+        content.get("on_mountain", ""),
+        content.get("off_mountain", ""),
+    ])
+    has_dashes = _check_for_dashes(all_content)
+    content_results.append(CheckResult(
+        check_id="no_em_dashes",
+        label="No em/en-dashes",
+        description="Uses commas/periods instead of dashes",
+        passed=not has_dashes,
+        details="Contains em/en-dashes" if has_dashes else "Clean",
+    ))
+
+    # no_llm_markers
+    found_markers = _check_content_for_markers(all_content, LLM_MARKERS)
+    content_results.append(CheckResult(
+        check_id="no_llm_markers",
+        label="No LLM markers",
+        description="No 'Additionally', 'Furthermore', 'It's worth noting'",
+        passed=len(found_markers) == 0,
+        details=f"Found: {', '.join(found_markers)}" if found_markers else "Clean",
+    ))
+
+    # has_pro_tips
+    has_tips = "pro tip" in all_content.lower() or "pro-tip" in all_content.lower()
+    content_results.append(CheckResult(
+        check_id="has_pro_tips",
+        label="Has pro tips",
+        description="Content includes actionable 'Pro tip:' items",
+        passed=has_tips,
+        details="Has pro tips" if has_tips else "No pro tips found",
+    ))
+
+    results_by_category["content"] = content_results
+
+    # MEDIA CHECKS
+    media_results = []
+
+    # has_hero_image
+    hero_images = [img for img in images if img.get("image_type") in ("hero", "atmosphere")]
+    media_results.append(CheckResult(
+        check_id="has_hero_image",
+        label="Has hero image",
+        description="Resort has a hero or atmosphere image",
+        passed=len(hero_images) > 0,
+        details=f"{len(hero_images)} hero/atmosphere images" if hero_images else "No hero image",
+    ))
+
+    # has_trail_map
+    has_map = bool(trail_map.get("geojson")) or bool(trail_map.get("official_map_url"))
+    media_results.append(CheckResult(
+        check_id="has_trail_map",
+        label="Has trail map",
+        description="Has trail map data OR official URL fallback",
+        passed=has_map,
+        details="Has trail map" if has_map else "No trail map data",
+    ))
+
+    # has_terrain_data
+    has_terrain = all([
+        metrics.get("terrain_beginner_pct") is not None,
+        metrics.get("terrain_intermediate_pct") is not None,
+        metrics.get("terrain_advanced_pct") is not None,
+    ])
+    media_results.append(CheckResult(
+        check_id="has_terrain_data",
+        label="Has terrain %s",
+        description="Has beginner/intermediate/advanced percentages",
+        passed=has_terrain,
+        details="Has terrain breakdown" if has_terrain else "Missing terrain data",
+    ))
+
+    results_by_category["media"] = media_results
+
+    # DATA CHECKS
+    data_results = []
+
+    # has_lift_prices
+    has_prices = bool(costs.get("lift_adult_daily")) and bool(costs.get("lift_child_daily"))
+    data_results.append(CheckResult(
+        check_id="has_lift_prices",
+        label="Has lift prices",
+        description="Has adult and child daily lift ticket prices",
+        passed=has_prices,
+        details="Has lift prices" if has_prices else "Missing lift prices",
+    ))
+
+    # has_family_score
+    has_score = metrics.get("family_score") is not None
+    data_results.append(CheckResult(
+        check_id="has_family_score",
+        label="Has family score",
+        description="Has overall family friendliness score",
+        passed=has_score,
+        details=f"Score: {metrics.get('family_score')}/10" if has_score else "No family score",
+    ))
+
+    # has_perfect_if
+    perfect_if = content.get("perfect_if") or []
+    if isinstance(perfect_if, str):
+        import json
+        try:
+            perfect_if = json.loads(perfect_if)
+        except:
+            perfect_if = []
+    has_perfect = len(perfect_if) >= 3
+    data_results.append(CheckResult(
+        check_id="has_perfect_if",
+        label="Has Perfect If",
+        description="Has 3+ 'Perfect if' items",
+        passed=has_perfect,
+        details=f"{len(perfect_if)} items" if perfect_if else "No Perfect If items",
+    ))
+
+    # has_skip_if
+    skip_if = content.get("skip_if") or []
+    if isinstance(skip_if, str):
+        import json
+        try:
+            skip_if = json.loads(skip_if)
+        except:
+            skip_if = []
+    has_skip = len(skip_if) >= 1
+    data_results.append(CheckResult(
+        check_id="has_skip_if",
+        label="Has Skip If",
+        description="Has 1+ 'Skip if' items",
+        passed=has_skip,
+        details=f"{len(skip_if)} items" if skip_if else "No Skip If items",
+    ))
+
+    results_by_category["data"] = data_results
+
+    # LINKS CHECKS
+    links_results = []
+
+    # has_official_link
+    official_links = [l for l in links if l.get("category") == "official"]
+    links_results.append(CheckResult(
+        check_id="has_official_link",
+        label="Has official link",
+        description="Has official resort website link",
+        passed=len(official_links) > 0,
+        details="Has official website" if official_links else "No official link",
+    ))
+
+    # has_outbound_links
+    links_results.append(CheckResult(
+        check_id="has_outbound_links",
+        label="Has useful links",
+        description="Has curated outbound links for families",
+        passed=len(links) >= 3,
+        details=f"{len(links)} links" if links else "No outbound links",
+    ))
+
+    results_by_category["links"] = links_results
+
+    # Calculate totals
+    all_results = [r for results in results_by_category.values() for r in results]
+    total_checks = len(all_results)
+    passed_checks = sum(1 for r in all_results if r.passed)
+    score_pct = (passed_checks / total_checks * 100) if total_checks > 0 else 0
+    failing_checks = [r for r in all_results if not r.passed]
+
+    return PageQualityScore(
+        resort_id=resort_id,
+        resort_name=resort_name,
+        total_checks=total_checks,
+        passed_checks=passed_checks,
+        score_pct=score_pct,
+        results_by_category=results_by_category,
+        failing_checks=failing_checks,
+    )
+
+
+def get_resorts_below_quality_threshold(
+    threshold_pct: float = 80.0,
+    status: str = "published",
+    limit: int = 50,
+) -> list[dict]:
+    """
+    Get resorts that score below the quality threshold.
+
+    Args:
+        threshold_pct: Minimum acceptable quality percentage
+        status: Filter by resort status
+        limit: Maximum results
+
+    Returns:
+        List of resort dicts with quality scores
+    """
+    client = get_supabase_client()
+
+    # Get all resorts
+    response = (
+        client.table("resorts")
+        .select("id, name, slug, status")
+        .eq("status", status)
+        .limit(limit)
+        .execute()
+    )
+
+    results = []
+    for resort in (response.data or []):
+        score = score_resort_page(resort["id"])
+        if score and score.score_pct < threshold_pct:
+            results.append({
+                **resort,
+                "quality_score": score.score_pct,
+                "failing_checks": [r.check_id for r in score.failing_checks],
+                "passed": score.passed_checks,
+                "total": score.total_checks,
+            })
+
+    # Sort by quality score (worst first)
+    results.sort(key=lambda x: x["quality_score"])
+
+    return results
+
+
+async def queue_quality_improvements(
+    resort_id: str,
+    score: PageQualityScore,
+    priority: str = "normal",
+) -> list[str]:
+    """
+    Queue improvement tasks for failing quality checks.
+
+    Args:
+        resort_id: UUID of the resort
+        score: Quality score with failing checks
+        priority: Task priority
+
+    Returns:
+        List of queued task IDs
+    """
+    from .system import queue_task
+
+    task_ids = []
+
+    for check in score.failing_checks:
+        # Map check_id to appropriate task type
+        task_type_map = {
+            "quick_take_length": "regenerate_quick_take",
+            "tagline_exists": "generate_tagline",
+            "no_em_dashes": "clean_content_dashes",
+            "no_llm_markers": "clean_content_markers",
+            "has_pro_tips": "add_pro_tips",
+            "has_hero_image": "find_hero_image",
+            "has_trail_map": "fetch_trail_map",
+            "has_terrain_data": "research_terrain",
+            "has_lift_prices": "research_prices",
+            "has_family_score": "calculate_family_score",
+            "has_perfect_if": "generate_perfect_if",
+            "has_skip_if": "generate_skip_if",
+            "has_official_link": "find_official_link",
+            "has_outbound_links": "curate_links",
+        }
+
+        task_type = task_type_map.get(check.check_id, "review")
+
+        task_id = await queue_task(
+            resort_id=resort_id,
+            task_type=task_type,
+            priority=priority,
+            metadata={
+                "check_id": check.check_id,
+                "check_label": check.label,
+                "details": check.details,
+                "from_quality_audit": True,
+            },
+        )
+
+        if task_id:
+            task_ids.append(task_id)
+
+    return task_ids

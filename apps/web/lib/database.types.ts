@@ -68,6 +68,9 @@ export interface Database {
           has_terrain_park_kids: boolean | null
           perfect_if: string[] | null
           skip_if: string[] | null
+          terrain_beginner_pct: number | null
+          terrain_intermediate_pct: number | null
+          terrain_advanced_pct: number | null
         }
         Insert: {
           resort_id: string
@@ -83,6 +86,9 @@ export interface Database {
           has_terrain_park_kids?: boolean | null
           perfect_if?: string[] | null
           skip_if?: string[] | null
+          terrain_beginner_pct?: number | null
+          terrain_intermediate_pct?: number | null
+          terrain_advanced_pct?: number | null
         }
         Update: {
           resort_id?: string
@@ -98,6 +104,9 @@ export interface Database {
           has_terrain_park_kids?: boolean | null
           perfect_if?: string[] | null
           skip_if?: string[] | null
+          terrain_beginner_pct?: number | null
+          terrain_intermediate_pct?: number | null
+          terrain_advanced_pct?: number | null
         }
       }
       resort_content: {
@@ -114,6 +123,7 @@ export interface Database {
           llms_txt: string | null
           seo_meta: Json | null
           content_version: number
+          tagline: string | null
         }
         Insert: {
           resort_id: string
@@ -128,6 +138,7 @@ export interface Database {
           llms_txt?: string | null
           seo_meta?: Json | null
           content_version?: number
+          tagline?: string | null
         }
         Update: {
           resort_id?: string
@@ -142,6 +153,7 @@ export interface Database {
           llms_txt?: string | null
           seo_meta?: Json | null
           content_version?: number
+          tagline?: string | null
         }
       }
       resort_costs: {
@@ -180,6 +192,50 @@ export interface Database {
           lodging_luxury_nightly?: number | null
           meal_family_avg?: number | null
           estimated_family_daily?: number | null
+        }
+      }
+      resort_images: {
+        Row: {
+          id: string
+          resort_id: string
+          image_type: 'hero' | 'atmosphere' | 'activity' | 'landscape' | 'trail_map' | 'ugc'
+          image_url: string
+          source: 'gemini' | 'glif' | 'replicate' | 'official' | 'google_places' | 'osm'
+          prompt: string | null
+          alt_text: string | null
+          width: number | null
+          height: number | null
+          file_size: number | null
+          mime_type: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          resort_id: string
+          image_type: 'hero' | 'atmosphere' | 'activity' | 'landscape' | 'trail_map' | 'ugc'
+          image_url: string
+          source: 'gemini' | 'glif' | 'replicate' | 'official' | 'google_places' | 'osm'
+          prompt?: string | null
+          alt_text?: string | null
+          width?: number | null
+          height?: number | null
+          file_size?: number | null
+          mime_type?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          resort_id?: string
+          image_type?: 'hero' | 'atmosphere' | 'activity' | 'landscape' | 'trail_map' | 'ugc'
+          image_url?: string
+          source?: 'gemini' | 'glif' | 'replicate' | 'official' | 'google_places' | 'osm'
+          prompt?: string | null
+          alt_text?: string | null
+          width?: number | null
+          height?: number | null
+          file_size?: number | null
+          mime_type?: string | null
+          created_at?: string
         }
       }
       ski_quality_calendar: {
@@ -309,6 +365,7 @@ export type ResortContent = Database['public']['Tables']['resort_content']['Row'
 export type ResortCosts = Database['public']['Tables']['resort_costs']['Row']
 export type SkiQualityCalendar = Database['public']['Tables']['ski_quality_calendar']['Row']
 export type SkiPass = Database['public']['Tables']['ski_passes']['Row']
+export type ResortImage = Database['public']['Tables']['resort_images']['Row']
 
 // Full resort with all relations
 export interface ResortWithDetails extends Resort {
@@ -317,4 +374,5 @@ export interface ResortWithDetails extends Resort {
   costs: ResortCosts | null
   calendar: SkiQualityCalendar[]
   passes: (SkiPass & { access_type: string | null })[]
+  images?: ResortImage[]
 }

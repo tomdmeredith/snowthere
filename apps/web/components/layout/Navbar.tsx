@@ -9,7 +9,6 @@ const NAV_LINKS = [
   { href: '/resorts', label: 'Resorts' },
   { href: '/guides', label: 'Guides' },
   { href: '/quiz', label: 'Quiz' },
-  { href: '/about', label: 'About' },
 ]
 
 export function Navbar() {

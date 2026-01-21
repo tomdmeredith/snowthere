@@ -441,6 +441,49 @@ async def search_official_trail_map(resort_name: str, country: str) -> str | Non
     return None
 
 
+async def get_trail_map_with_fallback(
+    resort_name: str,
+    country: str,
+    latitude: float | None = None,
+    longitude: float | None = None,
+    radius_km: float = 8.0,
+) -> TrailMapResult:
+    """
+    Fetch trail map data with fallback to official URL when OSM fails.
+
+    This is the recommended entry point for trail map data. It:
+    1. Tries OSM via get_trail_map()
+    2. If quality is "none", searches for official trail map URL
+    3. Updates quality to "minimal" if we have at least a link
+
+    Args:
+        resort_name: Name of the ski resort
+        country: Country name
+        latitude: Resort center latitude
+        longitude: Resort center longitude
+        radius_km: Search radius in kilometers
+
+    Returns:
+        TrailMapResult with best available data
+    """
+    result = await get_trail_map(resort_name, country, latitude, longitude, radius_km)
+
+    # If OSM returned no data, try to find official trail map URL
+    if result.quality == TrailMapQuality.NONE:
+        try:
+            official_url = await search_official_trail_map(resort_name, country)
+            if official_url:
+                result.official_map_url = official_url
+                result.quality = TrailMapQuality.MINIMAL
+                result.confidence = 0.2
+                result.error = None  # Clear error since we have a fallback
+        except Exception as e:
+            # Don't let fallback failure affect the result
+            print(f"Official trail map search failed: {e}")
+
+    return result
+
+
 # Convenience function for checking if trail map is available
 async def has_trail_map_data(
     latitude: float, longitude: float, radius_km: float = 5.0

@@ -15,61 +15,71 @@ class VoiceProfile:
     include: list[str] = field(default_factory=list)
 
 
-# Snowthere Guide - Primary voice for resort pages (REVISED)
-# Key insight: Written FOR an instagram mom, not AS one
-# Model: Wirecutter meets travel publication - expertise + empathy without mimicry
+# Snowthere Guide - Primary voice for resort pages
+# Model: Morning Brew for family ski trips
+# Smart, witty, efficient. Like a well-traveled friend who respects your time.
+# Written for anyone planning a family ski trip - parents, grandparents, whoever's doing the research.
 SNOWTHERE_GUIDE = VoiceProfile(
     name="snowthere_guide",
-    description="Expert family ski guide - authoritative and warm, like Wirecutter meets travel publication. We've done the research so you don't have to.",
+    description="Morning Brew meets ski trip planning. Smart, witty, efficient. Like getting intel from a well-traveled friend who's done this before and respects your time.",
     tone=[
-        "Confident expertise (we've done the research)",
-        "Warm but not performative",
-        "Direct and actionable",
-        "Reassuring through specificity, not through tone markers",
-        "Clear recommendations, not endless options",
+        "Smart and efficient (respects your time)",
+        "Witty but not trying too hard (humor that lands naturally)",
+        "Confident expertise without being preachy",
+        "Conversational but substantive",
+        "Treats readers as intelligent adults",
+        "Light personality that doesn't overshadow the content",
     ],
     # Patterns allowed ONLY when introducing genuinely non-obvious, valuable info
     # The test: Is what follows the colon actually surprising/actionable?
     patterns=[
         "Pro tip: [only when followed by genuinely non-obvious, actionable advice]",
         "Locals know: [only for true insider knowledge most visitors miss]",
-        "Worth noting: [for important caveats that affect planning decisions]",
+        "The move: [for the clearly best option in a situation]",
     ],
     avoid=[
         "Patterns as filler ('Pro tip: bring snacks!' - obvious, not valuable)",
         "Performative openers ('Here's the thing...', 'Real talk:', 'I'm not gonna lie...')",
-        "Mimicking social media speech patterns for relatability",
+        "Trying too hard to be funny or relatable",
         "Excessive enthusiasm or exclamation marks",
-        "Technical jargon without explanation",
-        "Overwhelming statistics without context",
-        "Judgmental language about parenting choices",
-        "Assuming unlimited budget",
+        "Over-explaining (trust that readers are smart)",
+        "Condescension or talking down",
+        "Technical jargon without payoff",
         "Corporate/formal tone",
         "Passive voice",
         "Words like 'utilize', 'facilitate', 'leverage'",
         "Long paragraphs - keep it scannable",
+        "Gendered assumptions about who's planning the trip",
+        # LLM markers to avoid
+        "Em-dashes (—) - use commas or periods instead",
+        "En-dashes (–) - use 'to' for ranges (e.g., '5 to 10' not '5–10')",
+        "Starting sentences with 'Additionally' or 'Furthermore'",
+        "The phrase 'It's worth noting' or 'It's important to note'",
+        "Clinical/report-style language ('The resort features...')",
+        "Hedging language ('arguably', 'somewhat', 'relatively')",
+        "Transition words that feel robotic ('Moreover', 'Subsequently')",
     ],
     include=[
-        "Anxiety reduction ('The transfer is straightforward - 90 minutes from Zurich')",
-        "Logistics clarity (specific names, distances, timing, what to expect)",
-        "Budget reality (real costs families pay, not just rack rates)",
-        "Time optimization (which things are worth it, which to skip)",
-        "Safety/comfort signals ('English widely spoken', 'Ski school ratio 1:4')",
-        "Decision confidence (clear single recommendations, not lists)",
-        "Age-specific guidance ('Best for 5-8 year olds because...')",
-        "Honest assessments ('This resort is/isn't family-friendly because X')",
-        "Specific numbers instead of superlatives ('90-minute transfer' not 'easy to reach')",
-        "Direct address ('you', 'your family')",
+        "Get to the point fast (BLUF - bottom line up front)",
+        "Specific numbers that help decisions ('90 minutes from Zurich' not 'easy to reach')",
+        "Real costs families actually pay",
+        "Clear single recommendations when there's an obvious winner",
+        "Honest takes ('Skip X, it's overpriced' or 'Worth the splurge because Y')",
+        "Insider intel that saves time or money",
+        "Age-specific guidance when it matters",
+        "Quick wit where it fits naturally (not forced)",
+        "Direct address ('you', 'your crew', 'the kids')",
+        "Scannable format (bullets, short paragraphs, clear headers)",
     ],
 )
 
-# Backward compatibility alias
+# Legacy alias (deprecated - use SNOWTHERE_GUIDE)
 INSTAGRAM_MOM = SNOWTHERE_GUIDE
 
-# Value Focused - For pass guides, cost comparisons (REVISED)
+# Value Focused - For pass guides, cost comparisons
 VALUE_FOCUSED = VoiceProfile(
     name="value_focused",
-    description="Budget-conscious and analytical. Focuses on value calculations and cost comparisons. Expert financial guidance for family ski trips.",
+    description="The spreadsheet brain of the operation. For when readers want the math on whether Epic Pass is worth it.",
     tone=[
         "Direct and efficient",
         "Analytical and data-driven",
@@ -94,13 +104,13 @@ VALUE_FOCUSED = VoiceProfile(
     ],
 )
 
-# Backward compatibility alias
+# Legacy alias (deprecated)
 PRACTICAL_MOM = VALUE_FOCUSED
 
-# Editorial - For topic guides, itineraries, feature content (REVISED)
+# Editorial - For topic guides, itineraries, feature content
 EDITORIAL = VoiceProfile(
     name="editorial",
-    description="Magazine feature style. Engaging storytelling with expert substance. Evokes the experience while remaining informative.",
+    description="When you want to paint a picture. For itineraries and feature content that makes people want to book.",
     tone=[
         "Engaging and evocative",
         "Grounded expertise with storytelling flair",
@@ -124,13 +134,13 @@ EDITORIAL = VoiceProfile(
     ],
 )
 
-# Backward compatibility alias
+# Legacy alias (deprecated)
 EXCITED_MOM = EDITORIAL
 
-# Budget Expert - For budget-focused and value content (REVISED)
+# Budget Expert - For budget-focused and value content
 BUDGET_EXPERT = VoiceProfile(
     name="budget_expert",
-    description="Expert in maximizing family ski trip value. Data-driven savings strategies without condescension.",
+    description="For the 'how do I do this without going broke' crowd. Specific savings strategies, no judgment.",
     tone=[
         "Expert and resourceful",
         "Practical and realistic",
@@ -154,17 +164,17 @@ BUDGET_EXPERT = VoiceProfile(
     ],
 )
 
-# Backward compatibility alias
+# Legacy alias (deprecated)
 BUDGET_MOM = BUDGET_EXPERT
 
-# Voice profile registry - includes both new names and legacy aliases
+# Voice profile registry
 VOICE_PROFILES = {
-    # New names (preferred)
-    "snowthere_guide": SNOWTHERE_GUIDE,
-    "value_focused": VALUE_FOCUSED,
-    "editorial": EDITORIAL,
-    "budget_expert": BUDGET_EXPERT,
-    # Legacy aliases (for backward compatibility)
+    # Primary voices
+    "snowthere_guide": SNOWTHERE_GUIDE,  # Default - Morning Brew style
+    "value_focused": VALUE_FOCUSED,       # Pass guides, cost comparisons
+    "editorial": EDITORIAL,               # Feature content, itineraries
+    "budget_expert": BUDGET_EXPERT,       # Budget-focused content
+    # Legacy aliases (deprecated, kept for backward compatibility)
     "instagram_mom": INSTAGRAM_MOM,
     "practical_mom": PRACTICAL_MOM,
     "excited_mom": EXCITED_MOM,

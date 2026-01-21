@@ -69,6 +69,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${plusJakarta.variable} ${fraunces.variable} ${caveat.variable}`}>
       <head>
+        {/* Skier emoji favicon */}
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎿</text></svg>" />
         {/* Google Analytics is loaded via CookieConsent component after user consent */}
       </head>
       <body className="font-sans bg-white text-dark-800">
