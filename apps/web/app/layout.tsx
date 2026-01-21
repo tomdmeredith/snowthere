@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Fraunces, Caveat } from 'next/font/google'
-import Script from 'next/script'
 import './globals.css'
+import { CookieConsent } from '@/components/CookieConsent'
 
 // SPIELPLATZ Design System Typography
 // Plus Jakarta Sans - Swiss-inspired geometry with rounded terminals (body text, UI)
@@ -66,32 +66,16 @@ export default function RootLayout({
 }: {
   children: React.ReactNode
 }) {
-  const gaId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID
-
   return (
     <html lang="en" className={`${plusJakarta.variable} ${fraunces.variable} ${caveat.variable}`}>
       <head>
-        {gaId && (
-          <>
-            <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
-              strategy="afterInteractive"
-            />
-            <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${gaId}');
-              `}
-            </Script>
-          </>
-        )}
+        {/* Google Analytics is loaded via CookieConsent component after user consent */}
       </head>
       <body className="font-sans bg-white text-dark-800">
         <div className="min-h-screen flex flex-col">
           {children}
         </div>
+        <CookieConsent />
       </body>
     </html>
   )

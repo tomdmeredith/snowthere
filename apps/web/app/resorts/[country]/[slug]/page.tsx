@@ -3,11 +3,15 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { ResortWithDetails } from '@/lib/database.types'
+import { createSanitizedHTML } from '@/lib/sanitize'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/home/Footer'
 import { QuickTake } from '@/components/resort/QuickTake'
 import { FamilyMetricsTable } from '@/components/resort/FamilyMetricsTable'
 import { CostTable } from '@/components/resort/CostTable'
 import { SkiCalendar } from '@/components/resort/SkiCalendar'
 import { FAQSection } from '@/components/resort/FAQSection'
+import { AIDisclosure, AIDisclaimerFooter } from '@/components/resort/AIDisclosure'
 import { TrailMap } from '@/components/resort/TrailMap'
 import { SimilarResorts } from '@/components/resort/SimilarResorts'
 import {
@@ -313,6 +317,9 @@ export default async function ResortPage({ params }: Props) {
 
   return (
     <main className="min-h-screen bg-white">
+      {/* Navigation */}
+      <Navbar />
+
       {/* Breadcrumb */}
       <nav className="bg-dark-50 py-4 border-b border-dark-100">
         <div className="container-page">
@@ -385,7 +392,7 @@ export default async function ResortPage({ params }: Props) {
                   <div className="flex items-center gap-2 px-4 py-2 bg-teal-100 text-teal-700 rounded-full font-medium">
                     <Users className="w-4 h-4" />
                     <span>
-                      Best for ages {metrics.best_age_min}–{metrics.best_age_max}
+                      Best for ages {metrics.best_age_min} to {metrics.best_age_max}
                     </span>
                   </div>
                 )}
@@ -430,13 +437,14 @@ export default async function ResortPage({ params }: Props) {
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
                     <Plane className="w-6 h-6 text-gold-600" />
                   </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800">
-                    Getting There
+                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
+                    <span>✈️</span>
+                    <span>Getting There</span>
                   </h2>
                 </div>
                 <div
                   className="prose-family"
-                  dangerouslySetInnerHTML={{ __html: content.getting_there }}
+                  dangerouslySetInnerHTML={createSanitizedHTML(content.getting_there)}
                 />
               </section>
             )}
@@ -448,13 +456,14 @@ export default async function ResortPage({ params }: Props) {
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-100 to-mint-100 shadow-teal">
                     <Home className="w-6 h-6 text-teal-600" />
                   </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800">
-                    Where to Stay
+                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
+                    <span>🏠</span>
+                    <span>Where to Stay</span>
                   </h2>
                 </div>
                 <div
                   className="prose-family"
-                  dangerouslySetInnerHTML={{ __html: content.where_to_stay }}
+                  dangerouslySetInnerHTML={createSanitizedHTML(content.where_to_stay)}
                 />
               </section>
             )}
@@ -466,13 +475,14 @@ export default async function ResortPage({ params }: Props) {
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral">
                     <Ticket className="w-6 h-6 text-coral-600" />
                   </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800">
-                    Lift Tickets & Passes
+                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
+                    <span>🎟️</span>
+                    <span>Lift Tickets & Passes</span>
                   </h2>
                 </div>
                 <div
                   className="prose-family"
-                  dangerouslySetInnerHTML={{ __html: content.lift_tickets }}
+                  dangerouslySetInnerHTML={createSanitizedHTML(content.lift_tickets)}
                 />
                 {resort.passes.length > 0 && (
                   <div className="mt-8">
@@ -507,13 +517,14 @@ export default async function ResortPage({ params }: Props) {
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-teal-100 to-mint-100 shadow-teal">
                     <Mountain className="w-6 h-6 text-teal-600" />
                   </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800">
-                    On the Mountain
+                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
+                    <span>⛷️</span>
+                    <span>On the Mountain</span>
                   </h2>
                 </div>
                 <div
                   className="prose-family"
-                  dangerouslySetInnerHTML={{ __html: content.on_mountain }}
+                  dangerouslySetInnerHTML={createSanitizedHTML(content.on_mountain)}
                 />
               </section>
             )}
@@ -534,13 +545,14 @@ export default async function ResortPage({ params }: Props) {
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-gold-100 to-gold-50 shadow-gold">
                     <Coffee className="w-6 h-6 text-gold-600" />
                   </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800">
-                    Off the Mountain
+                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
+                    <span>☕</span>
+                    <span>Off the Mountain</span>
                   </h2>
                 </div>
                 <div
                   className="prose-family"
-                  dangerouslySetInnerHTML={{ __html: content.off_mountain }}
+                  dangerouslySetInnerHTML={createSanitizedHTML(content.off_mountain)}
                 />
               </section>
             )}
@@ -557,21 +569,23 @@ export default async function ResortPage({ params }: Props) {
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-coral-100 to-coral-50 shadow-coral">
                     <MessageSquare className="w-6 h-6 text-coral-600" />
                   </div>
-                  <h2 className="font-display text-3xl font-bold text-dark-800">
-                    What Parents Say
+                  <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3">
+                    <span>💬</span>
+                    <span>What Parents Say</span>
                   </h2>
                 </div>
                 <div
                   className="prose-family"
-                  dangerouslySetInnerHTML={{
-                    __html: content.parent_reviews_summary,
-                  }}
+                  dangerouslySetInnerHTML={createSanitizedHTML(content.parent_reviews_summary)}
                 />
               </section>
             )}
 
             {/* FAQ */}
             {faqs && faqs.length > 0 && <FAQSection faqs={faqs} />}
+
+            {/* AI Disclosure */}
+            <AIDisclosure className="mt-16" />
           </div>
 
           {/* Sidebar */}
@@ -697,6 +711,9 @@ export default async function ResortPage({ params }: Props) {
           </div>
         </section>
       )}
+
+      {/* Footer */}
+      <Footer />
     </main>
   )
 }

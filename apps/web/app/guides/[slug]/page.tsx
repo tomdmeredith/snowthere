@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Map, CheckSquare, CreditCard, Snowflake, Calendar, Clock, User } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { createSanitizedHTML } from '@/lib/sanitize'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 
@@ -99,7 +100,7 @@ function GuideSection({ section }: { section: GuideContent['sections'][0] }) {
           )}
           <div
             className="text-gray-600 leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: section.content || '' }}
+            dangerouslySetInnerHTML={createSanitizedHTML(section.content || '')}
           />
         </div>
       )

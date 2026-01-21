@@ -1,4 +1,5 @@
 import { CheckCircle, AlertCircle, Sparkles } from 'lucide-react'
+import { createSanitizedHTML } from '@/lib/sanitize'
 
 interface QuickTakeProps {
   content: string
@@ -42,7 +43,7 @@ export function QuickTake({ content, perfectIf, skipIf, familyScore }: QuickTake
           {/* Content - Design-5 better typography */}
           <div
             className="text-lg sm:text-xl leading-relaxed text-white/90 [&>p]:mb-5 [&>p:last-child]:mb-0 [&>strong]:text-white [&>strong]:font-semibold"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={createSanitizedHTML(content)}
           />
         </div>
       </div>

@@ -450,6 +450,89 @@
   }
 
   /* ============================================
+     PROSE FAMILY - Resort page content styling
+     Spielplatz-aligned, scannable, family-friendly
+     ============================================ */
+  .prose-family {
+    @apply prose prose-lg max-w-none;
+    --tw-prose-body: rgb(var(--dark-600));
+    --tw-prose-headings: rgb(var(--dark-800));
+    --tw-prose-links: rgb(var(--coral-600));
+    --tw-prose-bold: rgb(var(--dark-800));
+    --tw-prose-counters: rgb(var(--dark-600));
+    --tw-prose-bullets: rgb(var(--teal-400));
+    --tw-prose-quotes: rgb(var(--dark-700));
+    --tw-prose-quote-borders: rgb(var(--teal-400));
+  }
+
+  .prose-family :where(p):not(:where([class~="not-prose"] *)) {
+    @apply text-dark-600 leading-relaxed;
+    margin-bottom: 1.25em;
+  }
+
+  .prose-family :where(strong):not(:where([class~="not-prose"] *)) {
+    @apply text-dark-800 font-semibold;
+  }
+
+  .prose-family :where(a):not(:where([class~="not-prose"] *)) {
+    @apply text-coral-600 no-underline;
+    border-bottom: 1px solid rgb(var(--coral-300));
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+
+  .prose-family :where(a):not(:where([class~="not-prose"] *)):hover {
+    @apply text-coral-700;
+    border-bottom-color: rgb(var(--coral-600));
+  }
+
+  .prose-family :where(h3):not(:where([class~="not-prose"] *)) {
+    @apply font-display text-xl font-bold text-dark-800 mt-8 mb-4;
+    letter-spacing: -0.02em;
+  }
+
+  .prose-family :where(h4):not(:where([class~="not-prose"] *)) {
+    @apply font-display text-lg font-semibold text-dark-800 mt-6 mb-3;
+  }
+
+  .prose-family :where(ul):not(:where([class~="not-prose"] *)) {
+    @apply my-4 space-y-2;
+  }
+
+  .prose-family :where(li):not(:where([class~="not-prose"] *)) {
+    @apply text-dark-600 leading-relaxed pl-1;
+  }
+
+  .prose-family :where(li):not(:where([class~="not-prose"] *))::marker {
+    color: rgb(var(--teal-400));
+  }
+
+  .prose-family :where(blockquote):not(:where([class~="not-prose"] *)) {
+    @apply bg-mint-50 border-l-4 border-teal-400 pl-6 py-4 pr-4 rounded-r-xl italic;
+    color: rgb(var(--dark-600));
+  }
+
+  /* Tables in prose-family */
+  .prose-family :where(table):not(:where([class~="not-prose"] *)) {
+    @apply w-full rounded-xl overflow-hidden border border-dark-100 my-6;
+  }
+
+  .prose-family :where(thead):not(:where([class~="not-prose"] *)) {
+    @apply bg-dark-700 text-white;
+  }
+
+  .prose-family :where(th):not(:where([class~="not-prose"] *)) {
+    @apply px-4 py-3 text-left text-sm font-semibold;
+  }
+
+  .prose-family :where(td):not(:where([class~="not-prose"] *)) {
+    @apply px-4 py-3 border-t border-dark-100;
+  }
+
+  .prose-family :where(tbody tr):not(:where([class~="not-prose"] *)):hover {
+    @apply bg-mint-50;
+  }
+
+  /* ============================================
      TABLES - Spielplatz playful, clean
      ============================================ */
   .data-table {
@@ -819,6 +902,27 @@
 
   .animate-float {
     animation: float 6s ease-in-out infinite;
+  }
+
+  /* Bounce animation for emojis */
+  @keyframes bounce-emoji {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+
+  .animate-bounce-emoji {
+    animation: bounce-emoji 2s ease-in-out infinite;
+  }
+
+  /* Text stroke utility for outlined text */
+  .text-stroke {
+    -webkit-text-stroke: 3px currentColor;
+    paint-order: stroke fill;
+  }
+
+  .text-stroke-dark {
+    -webkit-text-stroke: 3px rgb(var(--dark-700));
+    color: transparent;
   }
 
   @keyframes shimmer {

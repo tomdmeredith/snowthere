@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import { ChevronLeft, ChevronRight, Camera, Users, X } from 'lucide-react'
+import { createSanitizedHTML } from '@/lib/sanitize'
 
 interface UGCPhoto {
   url: string
@@ -292,9 +293,7 @@ function Lightbox({
         <div className="absolute bottom-4 right-4">
           <div
             className="text-[10px] text-white/60"
-            dangerouslySetInnerHTML={{
-              __html: photo.attributions.join(' '),
-            }}
+            dangerouslySetInnerHTML={createSanitizedHTML(photo.attributions.join(' '))}
           />
         </div>
       )}

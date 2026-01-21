@@ -1,15 +1,11 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Shield } from 'lucide-react'
 import { useState } from 'react'
+import Link from 'next/link'
 
-// Declare gtag for TypeScript
-declare global {
-  interface Window {
-    gtag?: (command: string, action: string, params?: Record<string, unknown>) => void
-  }
-}
+// gtag is declared in CookieConsent.tsx - no need to redeclare
 
 export function Newsletter() {
   const [email, setEmail] = useState('')
@@ -101,10 +97,22 @@ export function Newsletter() {
                 </form>
               )}
 
-              {/* Trust text */}
-              <p className="mt-6 text-white/70 text-sm">
-                Join 5,000+ ski families. Unsubscribe anytime.
-              </p>
+              {/* Privacy notice - CAN-SPAM compliance */}
+              <div className="mt-6 space-y-2">
+                <p className="text-white/70 text-sm">
+                  Join ski families getting monthly tips. Unsubscribe anytime.
+                </p>
+                <p className="text-white/50 text-xs flex items-center justify-center gap-1.5">
+                  <Shield className="w-3 h-3" />
+                  <span>
+                    By subscribing, you agree to our{' '}
+                    <Link href="/privacy" className="underline hover:text-white/70">
+                      Privacy Policy
+                    </Link>
+                    . We respect your inbox.
+                  </span>
+                </p>
+              </div>
             </div>
           </motion.div>
         </div>

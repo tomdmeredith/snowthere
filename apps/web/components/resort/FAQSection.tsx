@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, MessageCircleQuestion } from 'lucide-react'
+import { createSanitizedHTML, sanitizeJSON } from '@/lib/sanitize'
 
 interface FAQ {
   question: string
@@ -50,7 +51,7 @@ export function FAQSection({ faqs }: FAQSectionProps) {
       {/* Schema.org structured data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJSON(faqSchema) }}
       />
 
       {/* Design-5: Playful accordion cards */}
@@ -96,7 +97,7 @@ export function FAQSection({ faqs }: FAQSectionProps) {
                   <div className="px-6 pb-6 pt-2 border-t border-teal-200 mx-4 mb-2">
                     <div
                       className="text-dark-600 leading-relaxed [&>p]:mb-3 [&>p:last-child]:mb-0 [&>ul]:list-disc [&>ul]:pl-5 [&>ul]:space-y-2 [&>ul]:text-dark-600 [&>strong]:text-dark-700 [&>strong]:font-semibold"
-                      dangerouslySetInnerHTML={{ __html: faq.answer }}
+                      dangerouslySetInnerHTML={createSanitizedHTML(faq.answer)}
                     />
                   </div>
                 </div>
