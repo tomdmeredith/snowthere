@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { Button, Badge, ScoreBadge } from '@/components/ui'
+import { Navbar } from '@/components/layout/Navbar'
 import {
   ChevronRight,
   Mountain,
@@ -175,8 +176,10 @@ export default async function ResortsPage({
   const countries = Object.keys(grouped).sort()
 
   return (
-    <main className="min-h-screen bg-white">
-      {/* Breadcrumb */}
+    <>
+      <Navbar />
+      <main className="min-h-screen bg-white">
+        {/* Breadcrumb */}
       <nav className="bg-dark-50 py-4 border-b border-dark-100">
         <div className="container-page">
           <ol className="breadcrumb">
@@ -426,6 +429,7 @@ export default async function ResortsPage({
           </div>
         </div>
       </footer>
-    </main>
+      </main>
+    </>
   )
 }

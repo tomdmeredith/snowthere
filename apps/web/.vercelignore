@@ -1,0 +1,14 @@
+# Exclude agents directory (deployed separately on Railway)
+agents/
+
+# Exclude Supabase migrations (applied separately)
+supabase/
+
+# Exclude specs and documentation
+specs/
+*.md
+!README.md
+
+# Exclude development files
+.env.local
+.env.development

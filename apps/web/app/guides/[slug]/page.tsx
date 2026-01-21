@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, BookOpen, Map, CheckSquare, CreditCard, Snowflake, Calendar, Clock, User } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/home/Footer'
 
 // Guide type configuration
 const GUIDE_TYPE_CONFIG: Record<
@@ -269,9 +271,11 @@ export default async function GuidePage({
     : null
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">
-      {/* Header */}
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50">
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">
+        {/* Back link header */}
+        <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <div className="container mx-auto px-4 py-4">
           <Link
             href="/guides"
@@ -377,6 +381,8 @@ export default async function GuidePage({
           </div>
         </div>
       </section>
-    </div>
+      </div>
+      <Footer />
+    </>
   )
 }

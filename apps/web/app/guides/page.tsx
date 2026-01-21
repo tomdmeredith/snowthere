@@ -2,6 +2,8 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { BookOpen, Map, CheckSquare, CreditCard, Snowflake, Calendar } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/home/Footer'
 
 export const metadata: Metadata = {
   title: 'Family Ski Guides | Snowthere',
@@ -114,8 +116,10 @@ export default async function GuidesPage() {
   }, {} as Record<string, Guide[]>)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">
-      {/* Hero Section */}
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">
+        {/* Hero Section */}
       <section className="relative py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className="text-center max-w-3xl mx-auto">
@@ -210,6 +214,8 @@ export default async function GuidesPage() {
           </div>
         </div>
       </section>
-    </div>
+      </div>
+      <Footer />
+    </>
   )
 }
