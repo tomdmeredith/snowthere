@@ -329,6 +329,9 @@ async def extract_coordinates(
     This is free and requires no API key. Used to improve Google Places
     search accuracy and trail map lookups.
 
+    Uses a fallback strategy with multiple query formats since "ski resort"
+    in the query often returns no results.
+
     Args:
         resort_name: Name of the ski resort
         country: Country where resort is located
@@ -336,27 +339,36 @@ async def extract_coordinates(
     Returns:
         Tuple of (latitude, longitude) or None if not found
     """
-    # Respect Nominatim rate limit (1 request/second)
-    await asyncio.sleep(1.1)
+    # Try multiple query formats (more specific to less specific)
+    queries = [
+        f"{resort_name}, {country}",           # Most reliable
+        f"{resort_name} {country}",            # No comma
+        resort_name,                            # Just the name
+        f"{resort_name} ski resort, {country}", # Original (sometimes works)
+    ]
 
     async with httpx.AsyncClient(timeout=30) as client:
-        try:
-            response = await client.get(
-                "https://nominatim.openstreetmap.org/search",
-                params={
-                    "q": f"{resort_name} ski resort, {country}",
-                    "format": "json",
-                    "limit": 1,
-                },
-                headers={"User-Agent": "Snowthere/1.0 (family-ski-directory)"},
-            )
-            response.raise_for_status()
-            data = response.json()
+        for query in queries:
+            # Respect Nominatim rate limit (1 request/second)
+            await asyncio.sleep(1.1)
 
-            if data:
-                return (float(data[0]["lat"]), float(data[0]["lon"]))
+            try:
+                response = await client.get(
+                    "https://nominatim.openstreetmap.org/search",
+                    params={
+                        "q": query,
+                        "format": "json",
+                        "limit": 1,
+                    },
+                    headers={"User-Agent": "Snowthere/1.0 (family-ski-directory)"},
+                )
+                response.raise_for_status()
+                data = response.json()
 
-        except (httpx.HTTPError, KeyError, IndexError, ValueError) as e:
-            print(f"Coordinate extraction failed for {resort_name}: {e}")
+                if data:
+                    return (float(data[0]["lat"]), float(data[0]["lon"]))
+
+            except (httpx.HTTPError, KeyError, IndexError, ValueError):
+                continue
 
     return None
