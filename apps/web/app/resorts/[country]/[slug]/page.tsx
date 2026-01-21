@@ -298,7 +298,7 @@ export async function generateStaticParams() {
   }))
 }
 
-export const revalidate = 3600 // Revalidate every hour
+export const revalidate = 3600 // Revalidate every hour (ISR)
 
 export default async function ResortPage({ params }: Props) {
   const resort = await getResort(params.country, params.slug)
