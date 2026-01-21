@@ -10,7 +10,7 @@ watchPatterns = ["*.py", "**/*.py", "requirements.txt"]
 numReplicas = 1
 
 # Start command for the cron job
-startCommand = "python cron.py"
+startCommand = "python cron.py --run-discovery --use-mixed-selection"
 
 # Healthcheck disabled for cron jobs (they run and exit)
 healthcheckPath = ""

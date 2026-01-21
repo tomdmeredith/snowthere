@@ -16,4 +16,4 @@ cmds = [
 # No build step needed for Python
 
 [start]
-cmd = "/opt/venv/bin/python cron.py"
+cmd = "/opt/venv/bin/python cron.py --run-discovery --use-mixed-selection"
