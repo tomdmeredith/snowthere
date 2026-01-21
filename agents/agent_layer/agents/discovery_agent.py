@@ -50,7 +50,6 @@ from shared.primitives.discovery import (
     find_region_coverage_gaps,
     calculate_opportunity_score,
     save_discovery_candidate,
-    get_existing_candidates,
     get_covered_resorts,
     run_keyword_discovery,
     run_gap_discovery,
