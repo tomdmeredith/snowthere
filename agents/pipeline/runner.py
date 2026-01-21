@@ -740,12 +740,12 @@ def run_resort_pipeline(
                 try:
                     queue_task(
                         task_type="quality_improvement",
-                        resort_name=resort_name,
-                        country=country,
-                        payload={
-                            "resort_id": resort_id,
+                        resort_id=resort_id,
+                        priority=8 if approval_result.iterations == 3 else 6,  # high: 8, medium: 6
+                        metadata={
+                            "resort_name": resort_name,
+                            "country": country,
                             "issues": approval_result.final_issues,
-                            "priority": "high" if approval_result.iterations == 3 else "medium",
                             "sources": research_data.get("sources", [])[:10],  # Include top sources for re-evaluation
                         },
                     )
@@ -758,7 +758,7 @@ def run_resort_pipeline(
                         metadata={
                             "resort_id": resort_id,
                             "issues_count": len(approval_result.final_issues),
-                            "priority": "high" if approval_result.iterations == 3 else "medium",
+                            "priority": 8 if approval_result.iterations == 3 else 6,
                         },
                     )
                 except Exception as queue_error:

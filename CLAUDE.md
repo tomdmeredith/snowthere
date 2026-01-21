@@ -1,7 +1,7 @@
 # Family Ski Directory - Agent Handoff Document
 
 > Last Updated: 2026-01-20
-> Current Round: 4 (Production Launch)
+> Current Round: 5 (Compliance & Polish)
 
 ## Quick Context
 
@@ -136,19 +136,20 @@ family-ski-directory/
 - [x] CAN-SPAM compliance for newsletter
 - [x] Delete test resorts for fresh pipeline start
 
-### Round 4: Production Launch (Current)
-> Deploy to production, run first autonomous batch
+### Round 4: Production Launch ✅
+> Deploy to production, configure monitoring
 
-- [ ] Create Supabase project in cloud + run migrations
-- [ ] Add environment variables to .env
-- [ ] Test pipeline locally (`python cron.py --dry-run`)
-- [ ] Deploy agents to Railway with cron schedule
-- [ ] Vercel deployment with ISR
+- [x] Supabase project in cloud (Snowthere, 23 tables)
+- [x] Environment variables configured (Railway, Vercel)
+- [x] Deploy agents to Railway with cron schedule (creative-spontaneity)
+- [x] Vercel deployment with ISR (www.snowthere.com)
+- [x] Google Search Console setup + sitemap
+- [x] Google Analytics setup + link to GSC
 - [ ] Newsletter signup API integration
 - [ ] Run first automated batch (10-20 resorts)
 - [ ] Monitor and iterate
 
-### Round 5: Compliance & Polish (Next)
+### Round 5: Compliance & Polish (Current)
 > Monitoring, accessibility, final polish
 
 - [ ] Cron failure alerts
@@ -428,6 +429,67 @@ The pipeline approach is simpler for autonomous operation.
 | `apps/web/app/privacy/page.tsx` | Privacy policy page |
 | `apps/web/app/terms/page.tsx` | Terms of service page |
 | `apps/web/vercel.json` | Security headers configuration |
+
+---
+
+## Infrastructure (Updated 2026-01-20)
+
+### Production Services
+
+| Service | Project | URL/Details |
+|---------|---------|-------------|
+| **Vercel** | snowthere | www.snowthere.com |
+| **Supabase** | Snowthere | Tomme Inc org, AWS us-east-2, 23 tables |
+| **Railway** | creative-spontaneity | Active cron job (daily pipeline) |
+
+### Railway Projects
+
+| Project | Status | Purpose |
+|---------|--------|---------|
+| `creative-spontaneity` | **Active** | Daily cron job running autonomous pipeline |
+| `snowthere-agents` | Standby | Correctly named, needs cron schedule configured |
+| `soothing-delight` | Separate | Different project (not snowthere) |
+
+**Note:** `creative-spontaneity` currently has the active cron schedule. Consider migrating to `snowthere-agents` for clearer naming, or continue using `creative-spontaneity` as the production runner.
+
+### Environment Variables (Railway)
+
+```
+ANTHROPIC_API_KEY      # Claude API
+BRAVE_API_KEY          # Brave search
+DAILY_BUDGET_LIMIT     # Cost controls
+EXA_API_KEY            # Exa semantic search
+SUPABASE_SERVICE_KEY   # Database admin access
+SUPABASE_URL           # Database connection
+TAVILY_API_KEY         # Tavily research
+VERCEL_REVALIDATE_TOKEN # ISR revalidation
+VERCEL_URL             # Production URL for revalidation
+```
+
+### Vercel Configuration
+
+- **Project ID:** `prj_1jp0HFzGtliyw3oTk0gzFKGUSOZi`
+- **Org:** `team_aAMyNKXNmAj9tT0XjLNydTh2` (tom-merediths-projects)
+- **Framework:** Next.js with ISR
+- **Security Headers:** CSP, HSTS, X-Frame-Options (see `vercel.json`)
+
+### Google Tools (Configured 2026-01-20)
+
+| Tool | Property | Status |
+|------|----------|--------|
+| **Search Console** | sc-domain:snowthere.com | Verified, sitemap submitted |
+| **Analytics** | Snowthere (GA4) | Active, linked to Search Console |
+
+**Google Search Console:**
+- Domain verified: snowthere.com
+- Sitemap: https://www.snowthere.com/sitemap.xml (2 pages discovered)
+- Linked to Google Analytics
+
+**Google Analytics (GA4):**
+- Property: Snowthere
+- Stream: Snowthere Website (https://snowthere.com)
+- Stream ID: 13316125178
+- Linked to Search Console for organic search data
 
 ---
 

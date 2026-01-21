@@ -191,26 +191,34 @@ def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
         supabase = get_supabase_client()
 
         result = supabase.table("content_queue")\
-            .select("*")\
+            .select("*, resorts(name, country)")\
             .eq("task_type", "quality_improvement")\
             .eq("status", "pending")\
+            .order("priority", desc=True)\
             .order("created_at", desc=False)\
             .limit(limit)\
             .execute()
 
         items = []
         for task in result.data:
-            payload = task.get("payload", {})
-            issues = payload.get("issues", [])
-            priority = payload.get("priority", "medium")
+            metadata = task.get("metadata", {})
+            issues = metadata.get("issues", [])
+            priority = task.get("priority", 5)
+
+            # Get resort info from join or metadata fallback
+            resort_info = task.get("resorts", {}) or {}
+            resort_name = resort_info.get("name") or metadata.get("resort_name", "Unknown")
+            country = resort_info.get("country") or metadata.get("country", "Unknown")
+
+            priority_label = "high" if priority >= 7 else "medium" if priority >= 4 else "low"
 
             items.append({
-                "name": task.get("resort_name"),
-                "country": task.get("country"),
-                "reasoning": f"Quality improvement ({priority}): {issues[0] if issues else 'Issues identified'}",
+                "name": resort_name,
+                "country": country,
+                "reasoning": f"Quality improvement ({priority_label}): {issues[0] if issues else 'Issues identified'}",
                 "source": "quality_improvement",
                 "task_id": task.get("id"),
-                "resort_id": payload.get("resort_id"),
+                "resort_id": task.get("resort_id"),
                 "issues": issues,
                 "priority": priority,
             })
