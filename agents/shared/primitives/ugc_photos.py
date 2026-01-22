@@ -90,6 +90,7 @@ async def find_place_id(
     # Use dedicated Places API key, fall back to generic Google key
     api_key = settings.google_places_api_key or settings.google_api_key
     if not api_key:
+        print("⚠️  GOOGLE_PLACES_API_KEY not configured - skipping UGC photo lookup")
         return None
 
     async with httpx.AsyncClient(timeout=30.0) as client:
@@ -114,11 +115,14 @@ async def find_place_id(
                     continue
 
         # Strategy 2: Text search with multiple query formats
+        # Include variations for international resorts
         queries = [
             f"{resort_name} ski resort {country}",
             f"{resort_name} ski area {country}",
             f"{resort_name} skiing {country}",
+            f"{resort_name} {country}",  # Simple: "La Plagne France"
             f"{resort_name} mountain {country}",
+            f"{resort_name} ski",  # Without country for well-known resorts
             resort_name,  # Simple name as fallback
         ]
 

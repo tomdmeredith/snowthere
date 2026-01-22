@@ -176,7 +176,7 @@ def get_queue_work_items(limit: int = 5) -> list[dict[str, Any]]:
         return []
 
 
-def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
+def get_quality_improvement_items(limit: int = 5, max_attempts: int = 5) -> list[dict[str, Any]]:
     """Get resorts queued for quality improvement.
 
     These are resorts that were published with the publish-first model
@@ -184,6 +184,7 @@ def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
 
     Args:
         limit: Maximum items to return
+        max_attempts: Skip items that have been tried this many times
 
     Returns:
         List of resort dicts needing quality improvement
@@ -196,6 +197,7 @@ def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
             .select("*, resorts(name, country)")\
             .eq("task_type", "quality_improvement")\
             .eq("status", "pending")\
+            .lt("attempts", max_attempts)\
             .order("priority", desc=True)\
             .order("created_at", desc=False)\
             .limit(limit)\
@@ -206,6 +208,7 @@ def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
             metadata = task.get("metadata", {})
             issues = metadata.get("issues", [])
             priority = task.get("priority", 5)
+            attempts = task.get("attempts", 0)
 
             # Get resort info from join or metadata fallback
             resort_info = task.get("resorts", {}) or {}
@@ -213,16 +216,18 @@ def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
             country = resort_info.get("country") or metadata.get("country", "Unknown")
 
             priority_label = "high" if priority >= 7 else "medium" if priority >= 4 else "low"
+            attempts_info = f" (attempt {attempts + 1})" if attempts > 0 else ""
 
             items.append({
                 "name": resort_name,
                 "country": country,
-                "reasoning": f"Quality improvement ({priority_label}): {issues[0] if issues else 'Issues identified'}",
+                "reasoning": f"Quality improvement ({priority_label}){attempts_info}: {issues[0] if issues else 'Issues identified'}",
                 "source": "quality_improvement",
                 "task_id": task.get("id"),
                 "resort_id": task.get("resort_id"),
                 "issues": issues,
                 "priority": priority,
+                "attempts": attempts,
             })
 
         return items
@@ -236,6 +241,131 @@ def get_quality_improvement_items(limit: int = 5) -> list[dict[str, Any]]:
             metadata={"error": str(e)},
         )
         return []
+
+
+def escalate_stuck_quality_items(max_attempts: int = 5) -> dict[str, Any]:
+    """Escalate quality items that have hit max attempts to needs_review status.
+
+    This prevents quality items from being silently skipped forever.
+    Items marked as needs_review should be manually reviewed.
+
+    Args:
+        max_attempts: Items with this many or more attempts get escalated
+
+    Returns:
+        Summary of escalated items
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Find items that have hit max attempts
+        result = supabase.table("content_queue")\
+            .select("id, resort_id, metadata")\
+            .eq("task_type", "quality_improvement")\
+            .eq("status", "pending")\
+            .gte("attempts", max_attempts)\
+            .execute()
+
+        if not result.data:
+            return {"escalated": 0, "items": []}
+
+        escalated = []
+        for task in result.data:
+            # Update status to needs_review
+            supabase.table("content_queue")\
+                .update({
+                    "status": "needs_review",
+                    "metadata": {
+                        **task.get("metadata", {}),
+                        "escalated_at": datetime.utcnow().isoformat(),
+                        "escalation_reason": f"Reached {max_attempts} attempts without resolution",
+                    },
+                })\
+                .eq("id", task["id"])\
+                .execute()
+
+            escalated.append({
+                "task_id": task["id"],
+                "resort_id": task.get("resort_id"),
+            })
+
+            log_reasoning(
+                task_id=task["id"],
+                agent_name="orchestrator",
+                action="quality_item_escalated",
+                reasoning=f"Quality item escalated to needs_review after {max_attempts} attempts",
+                metadata={"task_id": task["id"], "resort_id": task.get("resort_id")},
+            )
+
+        return {"escalated": len(escalated), "items": escalated}
+
+    except Exception as e:
+        log_reasoning(
+            task_id=None,
+            agent_name="orchestrator",
+            action="escalation_error",
+            reasoning=f"Failed to escalate stuck quality items: {e}",
+            metadata={"error": str(e)},
+        )
+        return {"escalated": 0, "error": str(e)}
+
+
+def get_quality_metrics() -> dict[str, Any]:
+    """Get current quality queue metrics for the daily digest.
+
+    Returns:
+        Dict with counts of pending, stuck, needs_review, and resolved items
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Count pending quality items
+        pending_result = supabase.table("content_queue")\
+            .select("id", count="exact")\
+            .eq("task_type", "quality_improvement")\
+            .eq("status", "pending")\
+            .execute()
+
+        # Count items with 2+ attempts (struggling)
+        struggling_result = supabase.table("content_queue")\
+            .select("id", count="exact")\
+            .eq("task_type", "quality_improvement")\
+            .eq("status", "pending")\
+            .gte("attempts", 2)\
+            .execute()
+
+        # Count items needing review
+        review_result = supabase.table("content_queue")\
+            .select("id", count="exact")\
+            .eq("task_type", "quality_improvement")\
+            .eq("status", "needs_review")\
+            .execute()
+
+        # Count resolved today
+        today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+        resolved_result = supabase.table("content_queue")\
+            .select("id", count="exact")\
+            .eq("task_type", "quality_improvement")\
+            .eq("status", "completed")\
+            .gte("updated_at", today_start.isoformat())\
+            .execute()
+
+        return {
+            "pending": pending_result.count or 0,
+            "struggling": struggling_result.count or 0,  # 2+ attempts
+            "needs_review": review_result.count or 0,
+            "resolved_today": resolved_result.count or 0,
+        }
+
+    except Exception as e:
+        log_reasoning(
+            task_id=None,
+            agent_name="orchestrator",
+            action="quality_metrics_error",
+            reasoning=f"Failed to get quality metrics: {e}",
+            metadata={"error": str(e)},
+        )
+        return {"error": str(e)}
 
 
 def get_work_items_mixed(
@@ -562,6 +692,19 @@ def run_daily_pipeline(
         metadata={"run_id": run_id, "daily_spend": daily_spend, "remaining": remaining_budget},
     )
 
+    # =========================================================================
+    # STEP 1.1: Escalate Stuck Quality Items
+    # =========================================================================
+    escalation_result = escalate_stuck_quality_items(max_attempts=5)
+    if escalation_result.get("escalated", 0) > 0:
+        log_reasoning(
+            task_id=None,
+            agent_name="orchestrator",
+            action="quality_items_escalated",
+            reasoning=f"Escalated {escalation_result['escalated']} stuck quality items to needs_review",
+            metadata={"run_id": run_id, "escalated": escalation_result},
+        )
+
     # Need at least $1.50 for one resort
     if remaining_budget < 1.5:
         digest["status"] = "budget_exhausted"
@@ -836,6 +979,9 @@ def run_daily_pipeline(
         src = r.get("source", "unknown")
         source_counts[src] = source_counts.get(src, 0) + 1
 
+    # Get quality queue metrics
+    quality_metrics = get_quality_metrics()
+
     digest["summary"] = {
         "total_attempted": total_attempted,
         "published": published_count,
@@ -846,6 +992,7 @@ def run_daily_pipeline(
         "selection_method": "mixed" if use_mixed_selection else "claude",
         "source_breakdown": source_counts,
         "selection_reasoning": selection_reasoning,
+        "quality_queue": quality_metrics,
     }
 
     # Log with appropriate severity

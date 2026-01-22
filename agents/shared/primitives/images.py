@@ -569,10 +569,10 @@ async def generate_image_with_fallback(
             if result.success:
                 # Log the cost
                 log_cost(
-                    api=name,
-                    operation="image_generation",
-                    cost=result.cost,
+                    api_name=f"image_{name}",
+                    amount_usd=result.cost,
                     metadata={
+                        "operation": "image_generation",
                         "prompt": prompt[:100],
                         "aspect_ratio": aspect_ratio.value,
                     },
