@@ -1,7 +1,7 @@
 # Family Ski Directory - Agent Handoff Document
 
-> Last Updated: 2026-01-20
-> Current Round: 5 (Compliance & Polish)
+> Last Updated: 2026-01-22
+> Current Round: 5.1 (Agent-Native Scalability)
 
 ## Quick Context
 
@@ -149,13 +149,36 @@ family-ski-directory/
 - [ ] Run first automated batch (10-20 resorts)
 - [ ] Monitor and iterate
 
-### Round 5: Compliance & Polish (Current)
+### Round 5: Compliance & Polish
 > Monitoring, accessibility, final polish
 
 - [ ] Cron failure alerts
 - [ ] Accessibility audit (WCAG 2.1 AA)
 - [ ] Trademark notices for ski pass logos
 - [ ] Performance optimization (Core Web Vitals)
+
+### Round 5.1: Agent-Native Scalability ✅ (Current - Completed 2026-01-22)
+> Scale duplicate detection to 3000+ resorts, improve UGC photo reliability
+
+**Problem Solved:** Decision maker was putting ALL resort names in Claude's prompt (~22,500 tokens at 3000 resorts). This doesn't scale and violated agent-native principles.
+
+- [x] New primitives: `check_resort_exists()`, `find_similar_resorts()`, `count_resorts()`, `get_country_coverage_summary()`
+- [x] Discovery primitive: `check_discovery_candidate_exists()`
+- [x] Intelligence primitive: `validate_resort_selection()` with `ResortValidationResult`
+- [x] Refactored `decision_maker.py` to two-phase validation (Claude suggests → DB validates)
+- [x] Context reduced from ~22,500 tokens to ~310 tokens (99% reduction)
+- [x] Name variant matching (St./Sankt/Saint fuzzy matching)
+- [x] UGC place_id caching (saves API calls after first lookup)
+- [x] Transliteration support via `unidecode` for international names
+- [x] Country name variants (Schweiz, Österreich, etc.)
+- [x] Database migrations: 014 (image metadata), 015 (google_place_id)
+- [x] Google Places API research: coordinates-first, Text Search (New) API preferred
+
+**Key Learnings:**
+- Agent-native principle: Primitives should be atomic; agents query them, not receive massive lists
+- Two-phase validation: Claude suggests freely, database validates after
+- Google Places: Place IDs can be cached indefinitely, photos cannot
+- Transliteration graceful fallback ensures production stability
 
 ### Round 6: Homepage Redesign (Future)
 > Implement chosen design from concepts
