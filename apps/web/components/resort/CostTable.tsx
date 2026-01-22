@@ -53,8 +53,8 @@ export function CostTable({ costs }: CostTableProps) {
           </caption>
           <thead>
             <tr className="bg-dark-50 border-b border-dark-100">
-              <th className="text-left py-3 px-4 font-semibold text-dark-600">Category</th>
-              <th className="text-right py-3 px-4 font-semibold text-dark-600">Price</th>
+              <th scope="col" className="text-left py-3 px-4 font-semibold text-dark-600">Category</th>
+              <th scope="col" className="text-right py-3 px-4 font-semibold text-dark-600">Price</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-dark-100">

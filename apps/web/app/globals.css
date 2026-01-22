@@ -195,6 +195,23 @@
     outline: 2px solid rgb(var(--coral-500));
     outline-offset: 2px;
   }
+
+  /* Prefers-reduced-motion support (WCAG 2.3.3) */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Prevent layout shift from scrollbar appearing/disappearing */
+  html {
+    scrollbar-gutter: stable;
+  }
 }
 
 @layer components {

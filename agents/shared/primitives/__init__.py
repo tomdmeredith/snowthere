@@ -108,6 +108,13 @@ from .system import (
     clear_completed_tasks,
 )
 
+# Alerts primitives
+from .alerts import (
+    send_slack_alert,
+    alert_pipeline_error,
+    alert_pipeline_summary,
+)
+
 # Intelligence primitives (Agent Native reasoning)
 from .intelligence import (
     # Data quality
@@ -354,6 +361,10 @@ __all__ = [
     "list_queue",
     "get_queue_stats",
     "clear_completed_tasks",
+    # Alerts
+    "send_slack_alert",
+    "alert_pipeline_error",
+    "alert_pipeline_summary",
     # Intelligence - Data quality
     "assess_data_quality",
     "QualityAssessment",

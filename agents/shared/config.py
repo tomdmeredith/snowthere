@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     daily_budget_usd: float = 5.00  # Alias for compatibility
     alert_email: str | None = None
 
+    # Slack Alerts
+    slack_webhook_url: str | None = None  # Incoming webhook for cron alerts
+
     # Agent Settings
     default_model: str = "claude-sonnet-4-20250514"  # Fast decisions
     content_model: str = "claude-opus-4-5-20251101"  # Quality content

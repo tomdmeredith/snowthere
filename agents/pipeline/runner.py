@@ -418,6 +418,14 @@ def run_resort_pipeline(
         )
 
     except Exception as e:
+        # Explicitly log the content generation error before calling handle_error
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="content_generation_failed",
+            reasoning=f"Content generation failed for {resort_name}: {type(e).__name__}: {e}",
+            metadata={"error_type": type(e).__name__, "error_message": str(e)},
+        )
         error_decision = handle_error(e, resort_name, "content_generation", None)
         result["status"] = "failed"
         result["error"] = f"Content generation failed: {e}"

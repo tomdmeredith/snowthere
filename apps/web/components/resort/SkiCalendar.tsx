@@ -189,28 +189,28 @@ export function SkiCalendar({ calendar }: SkiCalendarProps) {
           <table className="w-full">
             <thead>
               <tr className="bg-gradient-to-r from-dark-100 to-dark-50">
-                <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
+                <th scope="col" className="text-left px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                   Month
                 </th>
-                <th className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
+                <th scope="col" className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                   <div className="flex items-center justify-center gap-2">
                     <Snowflake className="w-4 h-4 text-teal-500" />
                     Snow
                   </div>
                 </th>
-                <th className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
+                <th scope="col" className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                   <div className="flex items-center justify-center gap-2">
                     <Users className="w-4 h-4 text-gold-500" />
                     Crowds
                   </div>
                 </th>
-                <th className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
+                <th scope="col" className="text-center px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                   <div className="flex items-center justify-center gap-2">
                     <Star className="w-4 h-4 text-coral-500" />
                     Family Score
                   </div>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
+                <th scope="col" className="text-left px-6 py-4 text-xs font-bold uppercase tracking-wider text-dark-600">
                   Notes
                 </th>
               </tr>

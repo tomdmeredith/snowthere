@@ -157,16 +157,21 @@ export function AgeSelector({
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-6"
       >
-        <h2 className="font-display text-2xl md:text-3xl text-dark-700 mb-2">
+        <h2 id="age-selector-title" className="font-display text-2xl md:text-3xl text-dark-700 mb-2">
           How old are your little shredders?
         </h2>
-        <p className="text-dark-500 text-sm">
+        <p id="age-selector-desc" className="text-dark-500 text-sm">
           Select all that apply - we&apos;ll find the perfect fit!
         </p>
       </motion.div>
 
       {/* Age Bubbles Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div
+        role="group"
+        aria-labelledby="age-selector-title"
+        aria-describedby="age-selector-desc"
+        className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"
+      >
         {AGE_OPTIONS.map((option, index) => (
           <AgeBubble
             key={option.id}

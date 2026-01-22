@@ -207,20 +207,29 @@ export function CookieConsent() {
                 <div className="p-4 rounded-2xl bg-dark-50 border border-dark-100">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold text-dark-800">Analytics Cookies</h4>
-                      <p className="text-sm text-dark-500 mt-1">
+                      <h4 id="analytics-label" className="font-semibold text-dark-800">Analytics Cookies</h4>
+                      <p id="analytics-desc" className="text-sm text-dark-500 mt-1">
                         Help us understand how visitors use our site (Google Analytics).
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preferences.analytics}
-                        onChange={(e) => setPreferences({ ...preferences, analytics: e.target.checked })}
-                        className="sr-only peer"
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={preferences.analytics}
+                      aria-labelledby="analytics-label"
+                      aria-describedby="analytics-desc"
+                      onClick={() => setPreferences({ ...preferences, analytics: !preferences.analytics })}
+                      className={`relative inline-flex items-center cursor-pointer w-11 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                        preferences.analytics ? 'bg-teal-500' : 'bg-dark-200'
+                      }`}
+                    >
+                      <span className="sr-only">Enable analytics cookies</span>
+                      <span
+                        className={`absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5 transition-transform ${
+                          preferences.analytics ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                       />
-                      <div className="w-11 h-6 bg-dark-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                    </label>
+                    </button>
                   </div>
                 </div>
 
@@ -228,20 +237,29 @@ export function CookieConsent() {
                 <div className="p-4 rounded-2xl bg-dark-50 border border-dark-100">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h4 className="font-semibold text-dark-800">Marketing Cookies</h4>
-                      <p className="text-sm text-dark-500 mt-1">
+                      <h4 id="marketing-label" className="font-semibold text-dark-800">Marketing Cookies</h4>
+                      <p id="marketing-desc" className="text-sm text-dark-500 mt-1">
                         Used for personalized advertising (currently not in use).
                       </p>
                     </div>
-                    <label className="relative inline-flex items-center cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={preferences.marketing}
-                        onChange={(e) => setPreferences({ ...preferences, marketing: e.target.checked })}
-                        className="sr-only peer"
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={preferences.marketing}
+                      aria-labelledby="marketing-label"
+                      aria-describedby="marketing-desc"
+                      onClick={() => setPreferences({ ...preferences, marketing: !preferences.marketing })}
+                      className={`relative inline-flex items-center cursor-pointer w-11 h-6 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 ${
+                        preferences.marketing ? 'bg-teal-500' : 'bg-dark-200'
+                      }`}
+                    >
+                      <span className="sr-only">Enable marketing cookies</span>
+                      <span
+                        className={`absolute top-[2px] left-[2px] bg-white rounded-full h-5 w-5 transition-transform ${
+                          preferences.marketing ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                       />
-                      <div className="w-11 h-6 bg-dark-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal-500"></div>
-                    </label>
+                    </button>
                   </div>
                 </div>
               </div>

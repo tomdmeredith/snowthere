@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 }
 
 export default function TermsPage() {
-  const lastUpdated = 'January 20, 2026'
+  const lastUpdated = 'January 22, 2026'
 
   return (
     <main className="min-h-screen bg-white">
@@ -167,12 +167,35 @@ export default function TermsPage() {
               The following are trademarks of their respective owners, and Snowthere is not
               affiliated with, endorsed by, or sponsored by these companies:
             </p>
+
+            <h3 className="font-display text-lg font-semibold text-dark-700 mt-6 mb-3">Multi-Resort Passes</h3>
             <ul className="space-y-2 text-dark-600">
-              <li><strong>Epic Pass</strong> is a trademark of Vail Resorts, Inc.</li>
-              <li><strong>Ikon Pass</strong> is a trademark of Alterra Mountain Company.</li>
+              <li><strong>Epic Pass</strong> and <strong>Epic Local Pass</strong> are trademarks of Vail Resorts, Inc.</li>
+              <li><strong>Ikon Pass</strong> and <strong>Ikon Base Pass</strong> are trademarks of Alterra Mountain Company.</li>
               <li><strong>Mountain Collective</strong> is a trademark of Mountain Collective, LLC.</li>
+              <li><strong>Indy Pass</strong> is a trademark of Indy Pass, LLC.</li>
             </ul>
-            <p className="text-dark-600 mt-4">
+
+            <h3 className="font-display text-lg font-semibold text-dark-700 mt-6 mb-3">European Regional Passes</h3>
+            <ul className="space-y-2 text-dark-600">
+              <li><strong>Dolomiti Superski</strong> is a trademark of Dolomiti Superski Consortium.</li>
+              <li><strong>Portes du Soleil</strong> is a trademark of Association Portes du Soleil.</li>
+              <li><strong>Les 3 Vallées</strong> is a trademark of SETAM / Les 3 Vallées.</li>
+              <li><strong>Paradiski</strong> is a trademark of Compagnie des Alpes.</li>
+              <li><strong>4 Vallées</strong> is a trademark of Téléverbier SA.</li>
+              <li><strong>Ski Arlberg</strong> is a trademark of Ski Arlberg Ski Pool.</li>
+              <li><strong>SkiWelt Wilder Kaiser-Brixental</strong> is a trademark of SkiWelt.</li>
+              <li><strong>Zermatt-Cervinia</strong> is a trademark of Zermatt Bergbahnen AG and Cervino S.p.A.</li>
+            </ul>
+
+            <h3 className="font-display text-lg font-semibold text-dark-700 mt-6 mb-3">North American Regional Passes</h3>
+            <ul className="space-y-2 text-dark-600">
+              <li><strong>Ski Big 3</strong> is a trademark of Banff &amp; Lake Louise Tourism.</li>
+              <li><strong>Ski Utah Interconnect</strong> is a trademark of Ski Utah.</li>
+              <li><strong>New England Pass</strong> is a trademark of Peak Resorts / Vail Resorts.</li>
+            </ul>
+
+            <p className="text-dark-600 mt-6">
               All resort names, logos, and related marks are trademarks of their respective owners.
               Reference to these marks is for informational purposes only and does not imply
               endorsement or affiliation.

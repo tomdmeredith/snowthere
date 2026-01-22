@@ -30,6 +30,7 @@ from shared.primitives import (
     log_reasoning,
     count_resorts,
     get_country_coverage_summary,
+    alert_pipeline_error,
 )
 from shared.primitives.intelligence import validate_resort_selection
 
@@ -472,6 +473,15 @@ Respond with JSON:
                 "error": str(error)[:200],
                 "decision": result.get("action"),
             },
+        )
+
+    # Send Slack alert if action requires human attention
+    if result.get("action") == "alert_human":
+        alert_pipeline_error(
+            error_type=f"{stage} failure",
+            error_message=f"{type(error).__name__}: {str(error)[:300]}",
+            resort_name=resort_name,
+            task_id=task_id,
         )
 
     return result

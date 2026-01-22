@@ -42,6 +42,9 @@ export function AgeBubble({
       onClick={onToggle}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      role="checkbox"
+      aria-checked={isSelected}
+      aria-label={`${label} (${ageRange}): ${description}`}
       className={`
         relative flex flex-col items-center justify-center
         w-full min-h-[140px] p-4 rounded-3xl

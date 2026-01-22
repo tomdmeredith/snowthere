@@ -40,6 +40,7 @@ from shared.primitives import (
     list_queue,
     log_reasoning,
     log_cost,
+    alert_pipeline_summary,
 )
 from shared.supabase_client import get_supabase_client
 
@@ -347,7 +348,7 @@ def get_quality_metrics() -> dict[str, Any]:
             .select("id", count="exact")\
             .eq("task_type", "quality_improvement")\
             .eq("status", "completed")\
-            .gte("updated_at", today_start.isoformat())\
+            .gte("completed_at", today_start.isoformat())\
             .execute()
 
         return {
@@ -1003,6 +1004,14 @@ def run_daily_pipeline(
         action=log_action,
         reasoning=f"Daily pipeline {status}. Published: {published_count}, Drafts: {draft_count}, Failed: {failed_count}. Total spend: ${final_spend:.2f}",
         metadata={**digest["summary"], "run_id": run_id, "status": status},
+    )
+
+    # Send Slack summary alert
+    alert_pipeline_summary(
+        total_processed=total_attempted,
+        successful=published_count + draft_count,
+        failed=failed_count,
+        resorts=[r["resort"] for r in results],
     )
 
     return digest

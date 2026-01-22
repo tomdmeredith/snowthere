@@ -75,13 +75,18 @@ export function Newsletter() {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+                  <label htmlFor="newsletter-email" className="sr-only">
+                    Email address for newsletter
+                  </label>
                   <input
+                    id="newsletter-email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="your@email.com"
                     required
                     disabled={status === 'submitting'}
+                    aria-describedby="newsletter-privacy"
                     className="flex-1 px-6 py-4 rounded-full border-2 border-white/30 bg-white/20 text-white placeholder:text-white/60 focus:outline-none focus:border-white focus:bg-white/30 transition-all disabled:opacity-50"
                   />
                   <motion.button
@@ -98,7 +103,7 @@ export function Newsletter() {
               )}
 
               {/* Privacy notice - CAN-SPAM compliance */}
-              <div className="mt-6 space-y-2">
+              <div id="newsletter-privacy" className="mt-6 space-y-2">
                 <p className="text-white/70 text-sm">
                   Join ski families getting monthly tips. Unsubscribe anytime.
                 </p>
