@@ -16,6 +16,11 @@ dependencies = [
     "google-search-results>=2.4.2",
     "tavily-python>=0.3.0",
     "python-dotenv>=1.0.0",
+    # Image generation dependencies
+    "google-genai>=0.3.0",
+    "replicate>=0.25.0",
+    # Text processing
+    "unidecode>=1.3.0",  # Transliterate non-Latin to ASCII for Google Places
 ]
 
 [project.optional-dependencies]

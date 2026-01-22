@@ -602,3 +602,216 @@ def get_resort_full(resort_id: str) -> dict | None:
         .execute()
     )
     return response.data
+
+
+# =============================================================================
+# AGENT-NATIVE EXISTENCE CHECKING PRIMITIVES
+# =============================================================================
+
+
+def _slugify(name: str) -> str:
+    """Convert resort name to URL-safe slug."""
+    return name.lower().replace(" ", "-").replace("'", "").replace(".", "")
+
+
+def _generate_name_variants(name: str) -> list[str]:
+    """
+    Generate common name variants for fuzzy matching.
+
+    Handles:
+    - St./Sankt/Saint variants
+    - Core name extraction (Whistler Blackcomb -> Whistler)
+    """
+    variants = [name]
+    name_lower = name.lower()
+
+    # St./Sankt/Saint variants
+    if name_lower.startswith("st. "):
+        base = name[4:].strip()
+        variants.extend([f"Sankt {base}", f"Saint {base}", f"St {base}"])
+    elif name_lower.startswith("st "):
+        base = name[3:].strip()
+        variants.extend([f"Sankt {base}", f"Saint {base}", f"St. {base}"])
+    elif name_lower.startswith("sankt "):
+        base = name[6:].strip()
+        variants.extend([f"St. {base}", f"St {base}", f"Saint {base}"])
+    elif name_lower.startswith("saint "):
+        base = name[6:].strip()
+        variants.extend([f"St. {base}", f"St {base}", f"Sankt {base}"])
+
+    # Core name extraction ("Whistler Blackcomb" -> "Whistler")
+    if " " in name:
+        core = name.split()[0]
+        if core.lower() != name_lower:
+            variants.append(core)
+
+    return list(set(variants))
+
+
+def _calculate_name_similarity(name1: str, name2: str) -> float:
+    """
+    Calculate token overlap similarity (Jaccard index).
+
+    Returns value 0-1, where 1 = exact match.
+    """
+    # Normalize: lowercase, remove punctuation
+    tokens1 = set(name1.lower().replace(".", "").replace("-", " ").split())
+    tokens2 = set(name2.lower().replace(".", "").replace("-", " ").split())
+
+    if not tokens1 or not tokens2:
+        return 0.0
+
+    intersection = tokens1 & tokens2
+    union = tokens1 | tokens2
+
+    return len(intersection) / len(union)
+
+
+def check_resort_exists(name: str, country: str) -> dict[str, Any] | None:
+    """
+    Check if a resort already exists (exact or case-insensitive match).
+
+    This is the agent-native way to check for duplicates before creating.
+
+    Strategies:
+    1. Exact slug match: slugify(name) + country
+    2. Case-insensitive name match: ilike query
+
+    Args:
+        name: Resort name (any casing/format)
+        country: Country name
+
+    Returns:
+        Resort dict if found, None if not exists
+    """
+    client = get_supabase_client()
+
+    # Strategy 1: Exact slug match
+    slug = _slugify(name)
+    response = (
+        client.table("resorts")
+        .select("id, name, country, slug, status")
+        .eq("slug", slug)
+        .ilike("country", country)
+        .limit(1)
+        .execute()
+    )
+
+    if response.data:
+        return response.data[0]
+
+    # Strategy 2: Case-insensitive name match
+    response = (
+        client.table("resorts")
+        .select("id, name, country, slug, status")
+        .ilike("name", name)
+        .ilike("country", country)
+        .limit(1)
+        .execute()
+    )
+
+    if response.data:
+        return response.data[0]
+
+    return None
+
+
+def find_similar_resorts(
+    name: str,
+    country: str | None = None,
+    threshold: float = 0.6,
+) -> list[dict[str, Any]]:
+    """
+    Find resorts with similar names (fuzzy match).
+
+    Catches name variants like:
+    - "St. Anton" vs "Sankt Anton" vs "Saint Anton"
+    - "Zermatt" vs "Zermatt-Matterhorn"
+    - "Whistler" vs "Whistler Blackcomb"
+
+    Args:
+        name: Resort name to search for
+        country: Optional country filter
+        threshold: Minimum similarity score (0-1), default 0.6
+
+    Returns:
+        List of similar resorts with similarity_score, sorted by score descending
+    """
+    client = get_supabase_client()
+
+    # Generate name variants to search
+    variants = _generate_name_variants(name)
+
+    results = []
+    seen_ids: set[str] = set()
+
+    for variant in variants:
+        query = (
+            client.table("resorts")
+            .select("id, name, country, slug, status")
+            .ilike("name", f"%{variant}%")
+        )
+
+        if country:
+            query = query.ilike("country", country)
+
+        response = query.limit(10).execute()
+
+        for r in response.data or []:
+            if r["id"] not in seen_ids:
+                seen_ids.add(r["id"])
+                score = _calculate_name_similarity(name, r["name"])
+                if score >= threshold:
+                    results.append({**r, "similarity_score": round(score, 3)})
+
+    # Sort by similarity score descending
+    return sorted(results, key=lambda x: x["similarity_score"], reverse=True)
+
+
+def count_resorts(status: str | None = None) -> int:
+    """
+    Get count of resorts by status (efficient, no data transfer).
+
+    This is the agent-native way to get summary stats without loading all data.
+
+    Args:
+        status: Filter by status (draft, published, archived), or None for all
+
+    Returns:
+        Count of resorts
+    """
+    client = get_supabase_client()
+
+    query = client.table("resorts").select("id", count="exact")
+
+    if status:
+        query = query.eq("status", status)
+
+    response = query.execute()
+    return response.count or 0
+
+
+def get_country_coverage_summary() -> dict[str, int]:
+    """
+    Get resort counts by country (aggregated summary).
+
+    This is the agent-native way to understand coverage without loading all resorts.
+
+    Returns:
+        Dict of {country: count} for published resorts
+    """
+    client = get_supabase_client()
+
+    response = (
+        client.table("resorts")
+        .select("country")
+        .eq("status", "published")
+        .execute()
+    )
+
+    counts: dict[str, int] = {}
+    for r in response.data or []:
+        country = r.get("country", "Unknown")
+        counts[country] = counts.get(country, 0) + 1
+
+    return counts

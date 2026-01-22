@@ -696,6 +696,42 @@ async def update_candidate_status(
         return False
 
 
+def check_discovery_candidate_exists(
+    resort_name: str,
+    country: str,
+) -> dict[str, Any] | None:
+    """
+    Check if a resort is already in discovery_candidates queue.
+
+    This is the agent-native way to check if a resort is already
+    being processed, avoiding duplicate work.
+
+    The UNIQUE(resort_name, country) constraint is our gatekeeper.
+
+    Args:
+        resort_name: Resort name
+        country: Country name
+
+    Returns:
+        Candidate dict if exists, None otherwise
+    """
+    try:
+        supabase = get_supabase_client()
+
+        result = supabase.table("discovery_candidates")\
+            .select("*")\
+            .ilike("resort_name", resort_name)\
+            .ilike("country", country)\
+            .limit(1)\
+            .execute()
+
+        return result.data[0] if result.data else None
+
+    except Exception as e:
+        print(f"Error checking discovery candidate: {e}")
+        return None
+
+
 # =============================================================================
 # Main Discovery Functions
 # =============================================================================

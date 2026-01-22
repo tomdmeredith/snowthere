@@ -345,6 +345,47 @@ export interface Database {
           completed_at?: string | null
         }
       }
+      resort_links: {
+        Row: {
+          id: string
+          resort_id: string
+          title: string
+          url: string
+          description: string | null
+          category: 'official' | 'lodging' | 'dining' | 'activity' | 'transport' | 'rental' | 'ski_school' | 'childcare'
+          is_affiliate: boolean
+          affiliate_url: string | null
+          display_order: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          resort_id: string
+          title: string
+          url: string
+          description?: string | null
+          category: 'official' | 'lodging' | 'dining' | 'activity' | 'transport' | 'rental' | 'ski_school' | 'childcare'
+          is_affiliate?: boolean
+          affiliate_url?: string | null
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          resort_id?: string
+          title?: string
+          url?: string
+          description?: string | null
+          category?: 'official' | 'lodging' | 'dining' | 'activity' | 'transport' | 'rental' | 'ski_school' | 'childcare'
+          is_affiliate?: boolean
+          affiliate_url?: string | null
+          display_order?: number
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -366,6 +407,7 @@ export type ResortCosts = Database['public']['Tables']['resort_costs']['Row']
 export type SkiQualityCalendar = Database['public']['Tables']['ski_quality_calendar']['Row']
 export type SkiPass = Database['public']['Tables']['ski_passes']['Row']
 export type ResortImage = Database['public']['Tables']['resort_images']['Row']
+export type ResortLink = Database['public']['Tables']['resort_links']['Row']
 
 // Full resort with all relations
 export interface ResortWithDetails extends Resort {
@@ -375,4 +417,5 @@ export interface ResortWithDetails extends Resort {
   calendar: SkiQualityCalendar[]
   passes: (SkiPass & { access_type: string | null })[]
   images?: ResortImage[]
+  links?: ResortLink[]
 }

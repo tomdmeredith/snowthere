@@ -524,3 +524,165 @@ Be specific enough to be useful, but general enough to apply broadly."""
             description="Failed to extract pattern",
             confidence=0.0,
         )
+
+
+# =============================================================================
+# AGENT-NATIVE RESORT VALIDATION
+# =============================================================================
+
+
+@dataclass
+class ResortValidationResult:
+    """Result of validating a resort candidate against existing data."""
+
+    name: str
+    country: str
+    exists_in_resorts: bool
+    exists_in_candidates: bool
+    similar_resorts: list[dict[str, Any]]
+    should_skip: bool
+    reason: str
+
+
+async def validate_resort_selection(
+    resorts: list[dict[str, str]],
+) -> list[ResortValidationResult]:
+    """
+    Validate a list of resort selections against existing data.
+
+    This is the Agent Native way: check each candidate individually
+    using atomic primitives rather than putting 3000 names in a prompt.
+
+    The two-phase approach:
+    1. Claude suggests candidates (without seeing full list)
+    2. This function validates each against the database
+
+    Args:
+        resorts: List of {"name": "...", "country": "..."} dicts
+
+    Returns:
+        List of validation results with should_skip flag and reason
+    """
+    # Import atomic primitives
+    from .database import check_resort_exists, find_similar_resorts
+    from .discovery import check_discovery_candidate_exists
+
+    results = []
+
+    for resort in resorts:
+        name = resort.get("name", "")
+        country = resort.get("country", "")
+
+        if not name or not country:
+            results.append(ResortValidationResult(
+                name=name,
+                country=country,
+                exists_in_resorts=False,
+                exists_in_candidates=False,
+                similar_resorts=[],
+                should_skip=True,
+                reason="Missing name or country",
+            ))
+            continue
+
+        # Check 1: Exact match in resorts table
+        existing = check_resort_exists(name, country)
+
+        # Check 2: Already in discovery candidates queue
+        in_candidates = check_discovery_candidate_exists(name, country)
+
+        # Check 3: Similar resorts (fuzzy match)
+        similar = find_similar_resorts(name, country, threshold=0.7)
+
+        # Determine if we should skip this resort
+        should_skip = False
+        reason = ""
+
+        if existing:
+            should_skip = True
+            reason = f"Already exists as '{existing['name']}' ({existing.get('status', 'unknown')})"
+        elif in_candidates and in_candidates.get("status") in ("queued", "researched", "published"):
+            should_skip = True
+            reason = f"Already in discovery queue (status: {in_candidates['status']})"
+        elif similar and similar[0]["similarity_score"] > 0.85:
+            should_skip = True
+            reason = f"Very similar to existing resort '{similar[0]['name']}' (score: {similar[0]['similarity_score']})"
+
+        results.append(ResortValidationResult(
+            name=name,
+            country=country,
+            exists_in_resorts=existing is not None,
+            exists_in_candidates=in_candidates is not None,
+            similar_resorts=similar[:3] if similar else [],
+            should_skip=should_skip,
+            reason=reason,
+        ))
+
+    return results
+
+
+async def generate_tagline(
+    resort_name: str,
+    country: str,
+    context: str,
+    voice_profile: str = "snowthere_guide",
+) -> str:
+    """
+    Generate a unique tagline for a resort (8-12 words).
+
+    This captures the resort's essence in a punchy, memorable hook.
+    Not generic - specific to what makes this resort special for families.
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        context: Research context about the resort
+        voice_profile: Voice profile to use
+
+    Returns:
+        A unique tagline string
+
+    Examples:
+        - "Matterhorn views meet family magic"
+        - "Where powder meets playful adventure"
+        - "Europe's best-kept family ski secret"
+    """
+    prompt = f"""Generate a unique tagline for {resort_name}, {country}.
+
+CONTEXT:
+{context[:3000]}
+
+VOICE: {voice_profile} - smart, witty, efficient like a well-traveled friend
+
+REQUIREMENTS:
+- 8-12 words maximum
+- Captures what makes THIS resort special for families
+- Not generic ("great for families!") - specific to this resort
+- Punchy, memorable, shareable
+- Can use wordplay, alliteration, or clever phrasing
+
+Good examples:
+- "Matterhorn views meet family magic" (Zermatt)
+- "Powder paradise meets kids' paradise" (Utah resort)
+- "Where value skiing meets family fun" (budget resort)
+- "Alpine charm without the premium price" (Austrian village)
+
+Return ONLY the tagline, no quotes or explanation."""
+
+    system = """You are a travel copywriter specializing in ski resort marketing.
+Write punchy, memorable taglines that make families want to visit.
+Be specific to each resort - generic phrases are a failure."""
+
+    try:
+        response = _call_claude(prompt, system=system, max_tokens=100)
+        # Clean up the response
+        tagline = response.strip().strip('"').strip("'")
+        # Ensure it's not too long
+        if len(tagline.split()) > 15:
+            # Truncate to first 12 words
+            words = tagline.split()[:12]
+            tagline = " ".join(words)
+        return tagline
+    except Exception as e:
+        print(f"Tagline generation failed: {e}")
+        return f"Your family adventure starts in {resort_name}"

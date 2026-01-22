@@ -6,10 +6,12 @@ that families actually visit these resorts.
 
 Pivoted from Instagram (API no longer viable) to Google Places.
 
-Cost: ~$0.06 per resort
+Cost: ~$0.06 per resort (first lookup)
 - Place Details: $0.017
 - Photo fetches: $0.007 each (5 photos = $0.035)
 - Optional vision filtering: ~$0.01
+
+With place_id caching, subsequent lookups save $0.003 per resort.
 """
 
 import asyncio
@@ -23,6 +25,98 @@ import httpx
 
 from shared.config import settings
 from shared.supabase_client import get_supabase_client
+
+
+# Country name variants for better Google Places matching
+COUNTRY_VARIANTS = {
+    "Switzerland": ["Switzerland", "Suisse", "Schweiz", "Svizzera"],
+    "Austria": ["Austria", "Österreich"],
+    "France": ["France", "Francia"],
+    "Germany": ["Germany", "Deutschland"],
+    "Italy": ["Italy", "Italia"],
+    "Spain": ["Spain", "España"],
+    "Norway": ["Norway", "Norge"],
+    "Sweden": ["Sweden", "Sverige"],
+    "Finland": ["Finland", "Suomi"],
+    "Japan": ["Japan", "日本", "Nippon"],
+    "South Korea": ["South Korea", "Korea", "한국"],
+    "Czech Republic": ["Czech Republic", "Czechia", "Česko"],
+    "Poland": ["Poland", "Polska"],
+    "Slovakia": ["Slovakia", "Slovensko"],
+    "Slovenia": ["Slovenia", "Slovenija"],
+}
+
+
+def _transliterate_name(name: str) -> str:
+    """Convert non-Latin characters to ASCII equivalents.
+
+    Helps with Google Places API matching for Russian, Arabic, CJK, etc.
+    Falls back gracefully if unidecode is not installed.
+    """
+    try:
+        from unidecode import unidecode
+        return unidecode(name)
+    except ImportError:
+        # Graceful fallback - return original name
+        return name
+
+
+def _get_country_variants(country: str) -> list[str]:
+    """Get all name variants for a country."""
+    variants = COUNTRY_VARIANTS.get(country, [country])
+    if country not in variants:
+        variants = [country] + list(variants)
+    return variants
+
+
+async def get_cached_place_id(resort_name: str, country: str) -> Optional[str]:
+    """Check if we have a cached place_id for this resort.
+
+    Queries the resorts table for google_place_id column.
+    Saves API calls on subsequent lookups.
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Case-insensitive search
+        result = supabase.table("resorts")\
+            .select("google_place_id")\
+            .ilike("name", resort_name)\
+            .ilike("country", country)\
+            .not_.is_("google_place_id", "null")\
+            .limit(1)\
+            .execute()
+
+        if result.data and result.data[0].get("google_place_id"):
+            return result.data[0]["google_place_id"]
+
+        return None
+
+    except Exception as e:
+        print(f"Error checking cached place_id: {e}")
+        return None
+
+
+async def cache_place_id(resort_name: str, country: str, place_id: str) -> bool:
+    """Cache a place_id in the resorts table.
+
+    Updates the google_place_id column for the matching resort.
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Find the resort and update its place_id
+        result = supabase.table("resorts")\
+            .update({"google_place_id": place_id})\
+            .ilike("name", resort_name)\
+            .ilike("country", country)\
+            .execute()
+
+        return len(result.data) > 0 if result.data else False
+
+    except Exception as e:
+        print(f"Error caching place_id: {e}")
+        return False
 
 
 class PhotoCategory(str, Enum):
@@ -67,6 +161,7 @@ async def find_place_id(
     country: str,
     latitude: Optional[float] = None,
     longitude: Optional[float] = None,
+    use_cache: bool = True,
 ) -> Optional[str]:
     """
     Find the Google Places ID for a ski resort using multiple strategies.
@@ -75,82 +170,145 @@ async def find_place_id(
     to maximize chances of finding the correct place.
 
     Strategies:
+    0. Check cache first (saves API calls)
     1. Nearby search with coordinates (most accurate if coords available)
     2. Text search with multiple query formats
+    3. Transliterated name search (for non-Latin names)
+    4. Country variant search (Schweiz vs Switzerland)
 
     Args:
         resort_name: Name of the ski resort
         country: Country where resort is located
         latitude: Optional latitude for more accurate results
         longitude: Optional longitude for more accurate results
+        use_cache: Whether to check/use cached place_id (default True)
 
     Returns:
         Google Place ID or None if not found
     """
+    # Strategy 0: Check cache first
+    if use_cache:
+        cached = await get_cached_place_id(resort_name, country)
+        if cached:
+            return cached
+
     # Use dedicated Places API key, fall back to generic Google key
     api_key = settings.google_places_api_key or settings.google_api_key
     if not api_key:
         print("⚠️  GOOGLE_PLACES_API_KEY not configured - skipping UGC photo lookup")
         return None
 
+    # Generate name variants (original + transliterated)
+    name_variants = [resort_name]
+    transliterated = _transliterate_name(resort_name)
+    if transliterated != resort_name:
+        name_variants.append(transliterated)
+
+    # Get country variants
+    country_variants = _get_country_variants(country)
+
+    place_id = None
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Strategy 1: Nearby search with coordinates (most accurate)
         if latitude and longitude:
-            for keyword in [resort_name, f"{resort_name} ski", f"{resort_name} mountain"]:
-                try:
-                    response = await client.get(
-                        "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
-                        params={
-                            "location": f"{latitude},{longitude}",
-                            "radius": 10000,  # 10km radius
-                            "keyword": keyword,
+            for name in name_variants:
+                for keyword in [name, f"{name} ski", f"{name} mountain"]:
+                    try:
+                        response = await client.get(
+                            "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
+                            params={
+                                "location": f"{latitude},{longitude}",
+                                "radius": 10000,  # 10km radius
+                                "keyword": keyword,
+                                "key": api_key,
+                            },
+                        )
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get("status") == "OK" and data.get("results"):
+                                place_id = data["results"][0].get("place_id")
+                                break
+                    except httpx.HTTPError:
+                        continue
+                if place_id:
+                    break
+            if place_id:
+                # Cache the result before returning
+                if use_cache:
+                    await cache_place_id(resort_name, country, place_id)
+                return place_id
+
+        # Strategy 2: Text search with multiple query formats and variants
+        for name in name_variants:
+            for country_var in country_variants:
+                queries = [
+                    f"{name} ski resort {country_var}",
+                    f"{name} ski area {country_var}",
+                    f"{name} skiing {country_var}",
+                    f"{name} {country_var}",  # Simple: "La Plagne France"
+                    f"{name} mountain {country_var}",
+                ]
+
+                for query in queries:
+                    try:
+                        params = {
+                            "input": query,
+                            "inputtype": "textquery",
+                            "fields": "place_id,name,formatted_address,geometry",
                             "key": api_key,
-                        },
+                        }
+
+                        # Add location bias if coordinates provided
+                        if latitude and longitude:
+                            params["locationbias"] = f"circle:10000@{latitude},{longitude}"
+
+                        response = await client.get(
+                            "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
+                            params=params,
+                        )
+
+                        if response.status_code == 200:
+                            data = response.json()
+                            if data.get("status") == "OK" and data.get("candidates"):
+                                place_id = data["candidates"][0].get("place_id")
+                                # Cache the result before returning
+                                if use_cache:
+                                    await cache_place_id(resort_name, country, place_id)
+                                return place_id
+
+                    except httpx.HTTPError:
+                        continue
+
+        # Strategy 3: Fallback - just the name without country
+        for name in name_variants:
+            for query in [f"{name} ski", name]:
+                try:
+                    params = {
+                        "input": query,
+                        "inputtype": "textquery",
+                        "fields": "place_id,name,formatted_address,geometry",
+                        "key": api_key,
+                    }
+
+                    if latitude and longitude:
+                        params["locationbias"] = f"circle:10000@{latitude},{longitude}"
+
+                    response = await client.get(
+                        "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
+                        params=params,
                     )
+
                     if response.status_code == 200:
                         data = response.json()
-                        if data.get("status") == "OK" and data.get("results"):
-                            return data["results"][0].get("place_id")
+                        if data.get("status") == "OK" and data.get("candidates"):
+                            place_id = data["candidates"][0].get("place_id")
+                            if use_cache:
+                                await cache_place_id(resort_name, country, place_id)
+                            return place_id
+
                 except httpx.HTTPError:
                     continue
-
-        # Strategy 2: Text search with multiple query formats
-        # Include variations for international resorts
-        queries = [
-            f"{resort_name} ski resort {country}",
-            f"{resort_name} ski area {country}",
-            f"{resort_name} skiing {country}",
-            f"{resort_name} {country}",  # Simple: "La Plagne France"
-            f"{resort_name} mountain {country}",
-            f"{resort_name} ski",  # Without country for well-known resorts
-            resort_name,  # Simple name as fallback
-        ]
-
-        for query in queries:
-            try:
-                params = {
-                    "input": query,
-                    "inputtype": "textquery",
-                    "fields": "place_id,name,formatted_address,geometry",
-                    "key": api_key,
-                }
-
-                # Add location bias if coordinates provided
-                if latitude and longitude:
-                    params["locationbias"] = f"circle:10000@{latitude},{longitude}"
-
-                response = await client.get(
-                    "https://maps.googleapis.com/maps/api/place/findplacefromtext/json",
-                    params=params,
-                )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get("status") == "OK" and data.get("candidates"):
-                        return data["candidates"][0].get("place_id")
-
-            except httpx.HTTPError:
-                continue
 
         return None  # All strategies failed
 
@@ -554,10 +712,10 @@ async def fetch_and_store_ugc_photos(
                 supabase.table("resort_images").upsert({
                     "resort_id": resort_id,
                     "image_type": "ugc",
-                    "url": photo.url,
+                    "image_url": photo.url,  # Fixed: was "url", schema has "image_url"
                     "source": "google_places",
-                    "attribution": "; ".join(photo.attributions) if photo.attributions else None,
                     "alt_text": f"User photo of {resort_name} - {photo.category.value}",
+                    "attribution": "; ".join(photo.attributions) if photo.attributions else None,
                     "metadata": {
                         "category": photo.category.value,
                         "relevance_score": photo.relevance_score,

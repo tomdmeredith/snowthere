@@ -7,8 +7,14 @@ Uses Claude to make decisions about:
 - Priority ordering
 
 This is the "brain" of the autonomous system.
+
+Agent-Native Design:
+- Uses SUMMARY context instead of listing all 3000 resorts
+- Two-phase validation: Claude suggests, then database validates
+- Atomic primitives for existence checking
 """
 
+import asyncio
 import json
 from typing import Any
 
@@ -22,7 +28,10 @@ from shared.primitives import (
     get_queue_stats,
     get_daily_spend,
     log_reasoning,
+    count_resorts,
+    get_country_coverage_summary,
 )
+from shared.primitives.intelligence import validate_resort_selection
 
 
 def get_claude_client() -> anthropic.Anthropic:
@@ -65,15 +74,24 @@ def get_discovery_candidates_count() -> tuple[int, list[dict]]:
 
 
 def generate_context() -> str:
-    """Generate context about current system state.
+    """Generate SUMMARY context about current system state.
+
+    Agent-Native Design:
+    - Uses efficient count/summary primitives instead of loading all data
+    - Does NOT list all 3000 resorts (that would waste tokens)
+    - Validation happens AFTER Claude suggests candidates
 
     This is injected into decision prompts so Claude knows
     what exists and what needs attention.
     """
-    # Get current state
+    # Get current state using efficient primitives
     try:
-        published = list_resorts(status="published", limit=500)
-        drafts = list_resorts(status="draft", limit=100)
+        # Use count primitives instead of loading all data
+        published_count = count_resorts(status="published")
+        draft_count = count_resorts(status="draft")
+        country_coverage = get_country_coverage_summary()
+
+        # These still load some data, but limited
         stale = get_stale_resorts(days_threshold=30, limit=20)
         queue_stats = get_queue_stats()
         daily_spend = get_daily_spend()
@@ -82,24 +100,19 @@ def generate_context() -> str:
         # If DB not connected, return minimal context
         return f"[Database not connected: {e}. Starting fresh.]"
 
-    # Build context
+    # Build SUMMARY context (no full resort list)
     context = f"""# Snowthere System Context
 
-## What Exists
-- Published resorts: {len(published)}
-- Draft resorts: {len(drafts)}
-- Countries covered: {len(set(r.get('country', '') for r in published))}
+## Coverage Summary
+- Published resorts: {published_count}
+- Draft resorts: {draft_count}
+- Countries covered: {len(country_coverage)}
 
 ## Top Countries by Coverage
 """
 
-    # Count by country
-    country_counts = {}
-    for r in published:
-        c = r.get('country', 'Unknown')
-        country_counts[c] = country_counts.get(c, 0) + 1
-
-    for country, count in sorted(country_counts.items(), key=lambda x: -x[1])[:10]:
+    # Show top 10 countries only
+    for country, count in sorted(country_coverage.items(), key=lambda x: -x[1])[:10]:
         context += f"- {country}: {count} resorts\n"
 
     context += f"""
@@ -124,15 +137,20 @@ def generate_context() -> str:
 - Remaining: ${5.0 - daily_spend:.2f}
 
 ## Priority Guidance
-1. **Discovery candidates** - High-scoring resorts identified through search demand analysis
+1. **Discovery candidates** - High-scoring resorts from search demand analysis
 2. High-demand resorts families are searching for
 3. Value skiing destinations (Europe, often cheaper than US)
 4. Stale content needing refresh
 5. Geographic diversity (not just US/Alps)
 
+## Important: Validation Process
+You don't need to memorize existing resorts - just suggest good candidates.
+Each resort you select will be validated against our database AFTER your selection.
+Duplicates will be automatically filtered out.
+
 ## Voice Reminder
-All content should be in 'instagram_mom' voice - encouraging, practical,
-like a helpful friend who's done all the research. Make international
+All content should be in 'snowthere_guide' voice - smart, witty, efficient,
+like a well-traveled friend who respects your time. Make international
 skiing feel doable for families.
 """
 
@@ -145,35 +163,46 @@ def pick_resorts_to_research(
 ) -> dict[str, Any]:
     """Ask Claude to pick resorts to research today.
 
+    Agent-Native Two-Phase Approach:
+    1. Claude suggests candidates (without seeing full 3000-resort list)
+    2. Database validates each candidate against existing resorts
+    3. Duplicates are filtered out automatically
+
     Returns:
         {
             "resorts": [
                 {"name": "Zermatt", "country": "Switzerland", "reasoning": "..."},
                 ...
             ],
-            "overall_reasoning": "..."
+            "overall_reasoning": "...",
+            "filtered_count": int  # How many duplicates were filtered
         }
     """
     client = get_claude_client()
     context = generate_context()
 
+    # Phase 1: Get Claude's suggestions (request 2x to account for filtering)
+    suggestions_needed = max_resorts * 2
+
     prompt = f"""You are the autonomous content strategist for Snowthere, a family ski resort directory.
 
-Your task: Pick 1-{max_resorts} resorts to research and generate content for today.
+Your task: Suggest {suggestions_needed} resorts to potentially research and generate content for.
 
 {context}
 
 ## Selection Criteria (in order of importance)
-1. **Search demand** - Resorts families are actively searching for
-2. **Value angle** - International resorts that offer better value than US (our unique angle)
-3. **Content gaps** - Major resorts we haven't covered
-4. **Freshness** - Stale content needing update
-5. **Diversity** - Geographic spread, not just the same countries
+1. **Discovery candidates** - If listed above, prioritize these high-scoring opportunities
+2. **Search demand** - Resorts families are actively searching for
+3. **Value angle** - International resorts that offer better value than US (our unique angle)
+4. **Content gaps** - Major resorts we haven't covered
+5. **Freshness** - Stale content needing update
+6. **Diversity** - Geographic spread, not just the same countries
 
-## Constraints
-- Budget allows ~3-4 new resorts today (at ~$1.20/resort)
-- Prefer quality over quantity
-- Don't duplicate what we already have unless it's stale
+## Important Notes
+- Suggest {suggestions_needed} resorts (we'll validate and filter to {max_resorts})
+- Each suggestion will be validated against our database
+- Duplicates will be automatically filtered - suggest freely
+- Include both well-known AND hidden gem resorts
 
 ## Output Format
 Return a JSON object with:
@@ -185,7 +214,7 @@ Think step by step about what would be most valuable, then respond with ONLY the
 
     response = client.messages.create(
         model="claude-sonnet-4-20250514",  # Fast, capable, cheaper
-        max_tokens=1024,
+        max_tokens=1500,
         messages=[{"role": "user", "content": prompt}],
     )
 
@@ -200,22 +229,70 @@ Think step by step about what would be most valuable, then respond with ONLY the
         elif "```" in response_text:
             response_text = response_text.split("```")[1].split("```")[0]
 
-        result = json.loads(response_text.strip())
+        claude_result = json.loads(response_text.strip())
     except json.JSONDecodeError:
         # Fallback if parsing fails
-        result = {
+        return {
             "resorts": [],
             "overall_reasoning": f"Failed to parse response: {response_text[:200]}",
             "error": True,
+            "filtered_count": 0,
         }
 
-    # Log the decision
+    suggestions = claude_result.get("resorts", [])
+
+    # Phase 2: Validate each suggestion against database
+    if suggestions:
+        validated = asyncio.run(validate_resort_selection(suggestions))
+
+        # Filter to valid (non-existing) resorts
+        valid_resorts = []
+        skipped_resorts = []
+
+        for i, v in enumerate(validated):
+            original = suggestions[i] if i < len(suggestions) else {}
+            if not v.should_skip:
+                valid_resorts.append({
+                    "name": v.name,
+                    "country": v.country,
+                    "reasoning": original.get("reasoning", "Selected by Claude, validated as new"),
+                })
+            else:
+                skipped_resorts.append({
+                    "name": v.name,
+                    "country": v.country,
+                    "skip_reason": v.reason,
+                })
+
+        # Log filtered duplicates
+        if task_id and skipped_resorts:
+            log_reasoning(
+                task_id=task_id,
+                agent_name="decision_maker",
+                action="filtered_duplicates",
+                reasoning=f"Filtered {len(skipped_resorts)} existing/duplicate resorts",
+                metadata={"skipped": skipped_resorts},
+            )
+
+        result = {
+            "resorts": valid_resorts[:max_resorts],
+            "overall_reasoning": claude_result.get("overall_reasoning", "No reasoning provided"),
+            "filtered_count": len(skipped_resorts),
+        }
+    else:
+        result = {
+            "resorts": [],
+            "overall_reasoning": claude_result.get("overall_reasoning", "No resorts suggested"),
+            "filtered_count": 0,
+        }
+
+    # Log the final decision
     if task_id:
         log_reasoning(
             task_id=task_id,
             agent_name="decision_maker",
             action="pick_resorts",
-            reasoning=result.get("overall_reasoning", "No reasoning provided"),
+            reasoning=f"{result['overall_reasoning']} (Filtered {result['filtered_count']} duplicates)",
             metadata={"resorts": result.get("resorts", [])},
         )
 

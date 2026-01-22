@@ -18,6 +18,8 @@ import { TerrainBreakdown } from '@/components/resort/TerrainBreakdown'
 import { ContentRenderer } from '@/components/resort/ContentRenderer'
 import { QuickScoreSummary } from '@/components/resort/QuickScoreSummary'
 import { SimilarResorts } from '@/components/resort/SimilarResorts'
+import { UsefulLinks } from '@/components/resort/UsefulLinks'
+import { PassCard } from '@/components/resort/PassCard'
 import {
   ChevronRight,
   MapPin,
@@ -55,7 +57,8 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
         access_type,
         pass:ski_passes(*)
       ),
-      images:resort_images(*)
+      images:resort_images(*),
+      links:resort_links(*)
     `)
     .eq('slug', slug)
     .eq('country', countryName)
@@ -90,6 +93,7 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
       access_type: p.access_type,
     })),
     images: resortData.images || [],
+    links: resortData.links || [],
   }
 
   return transformedResort
@@ -325,6 +329,9 @@ export default async function ResortPage({ params }: Props) {
   const heroImage = images.find((img: any) => img.image_type === 'hero')
   const atmosphereImage = images.find((img: any) => img.image_type === 'atmosphere')
 
+  // Get links for sidebar
+  const links = (resort as any).links || []
+
   // Build SkiResort schema for SEO/GEO
   const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
   const skiResortSchema = {
@@ -412,68 +419,110 @@ export default async function ResortPage({ params }: Props) {
         </div>
       </nav>
 
-      {/* Hero Image - Shows when image exists */}
-      {heroImage && (
-        <div className="container-page py-8">
-          <HeroImage
-            imageUrl={heroImage.image_url}
-            altText={heroImage.alt_text || `${resort.name} ski resort`}
-            resortName={resort.name}
-            country={resort.country}
-            familyScore={metrics?.family_overall_score ?? undefined}
-            atmosphereUrl={atmosphereImage?.image_url}
-            source={heroImage.source}
-          />
-        </div>
-      )}
+      {/* Hero Header - Design-5 Spielplatz Style */}
+      <header className="relative py-16 sm:py-24 overflow-hidden">
+        {/* Design-5: Warm gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]" />
 
-      {/* Hero Header - Design-5 Warm Gradient */}
-      <header className="relative py-20 sm:py-28 overflow-hidden">
-        {/* Design-5: "Sunset on snow" warm gradient background */}
-        <div className="absolute inset-0 hero-gradient" />
+        {/* Floating Geometric Shapes - Design-5 */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute text-8xl text-[#FF6B6B]/20 top-[10%] left-[5%]">
+            ○
+          </div>
+          <div className="absolute text-9xl text-[#4ECDC4]/20 top-[60%] right-[10%]">
+            △
+          </div>
+          <div className="absolute text-7xl text-[#FFE066]/30 bottom-[20%] left-[15%] rotate-45">
+            □
+          </div>
+          <div className="absolute text-6xl text-[#95E1D3]/20 top-[30%] right-[20%]">
+            ◇
+          </div>
+        </div>
 
         {/* Decorative gradient orbs */}
         <div className="absolute top-10 right-10 w-64 h-64 bg-coral-200/30 rounded-full blur-3xl" />
         <div className="absolute bottom-10 left-10 w-48 h-48 bg-teal-200/30 rounded-full blur-3xl" />
 
         <div className="container-page relative z-10">
-          <div className="animate-in animate-in-1">
-            <div className="flex items-center gap-2 text-dark-500 mb-4">
-              <MapPin className="w-4 h-4" />
-              <span className="text-sm font-medium">
-                {resort.region ? `${resort.region}, ${resort.country}` : resort.country}
-              </span>
-            </div>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <div className="animate-in animate-in-1">
+              <div className="flex items-center gap-2 text-dark-500 mb-4">
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm font-medium">
+                  {resort.region ? `${resort.region}, ${resort.country}` : resort.country}
+                </span>
+              </div>
 
-            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-black text-dark-800 tracking-tight leading-[0.95]">
-              {resort.name}
-            </h1>
+              <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-black text-dark-800 tracking-tight leading-[0.95]">
+                {resort.name}
+              </h1>
 
-            {metrics && (
-              <div className="mt-8 flex flex-wrap items-center gap-4">
-                {/* Design-5: Score badge with coral gradient */}
-                <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-coral-500 to-coral-600 text-white rounded-full shadow-coral font-semibold">
-                  <Star className="w-5 h-5 text-white" />
-                  <span className="text-lg">
-                    Family Score: <strong>{metrics.family_overall_score}/10</strong>
-                  </span>
-                </div>
+              {/* Handwritten tagline - Design-5 */}
+              <p className="mt-6 font-accent text-2xl sm:text-3xl text-teal-600 max-w-xl">
+                {(content?.tagline as string) || 'Everything you need to plan your family ski trip'}
+              </p>
 
-                {metrics.best_age_min && metrics.best_age_max && (
-                  <div className="flex items-center gap-2 px-4 py-2 bg-teal-100 text-teal-700 rounded-full font-medium">
-                    <Users className="w-4 h-4" />
-                    <span>
-                      Best for ages {metrics.best_age_min} to {metrics.best_age_max}
+              {metrics && (
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  {/* Design-5: Score badge with coral gradient */}
+                  <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-coral-500 to-coral-600 text-white rounded-full shadow-coral font-semibold">
+                    <Star className="w-5 h-5 text-white" />
+                    <span className="text-lg">
+                      Family Score: <strong>{metrics.family_overall_score}/10</strong>
                     </span>
                   </div>
-                )}
-              </div>
-            )}
 
-            {/* Handwritten tagline - Design-5 */}
-            <p className="mt-8 font-accent text-2xl sm:text-3xl text-teal-600 max-w-xl">
-              {(content?.tagline as string) || 'Everything you need to plan your family ski trip'}
-            </p>
+                  {metrics.best_age_min && metrics.best_age_max && (
+                    <div className="flex items-center gap-2 px-4 py-2 bg-teal-100 text-teal-700 rounded-full font-medium">
+                      <Users className="w-4 h-4" />
+                      <span>
+                        Ages {metrics.best_age_min}-{metrics.best_age_max}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Right Column - Image with Design-5 Treatment */}
+            <div className="animate-in animate-in-2 relative">
+              {heroImage ? (
+                <div className="relative transform rotate-2 hover:rotate-0 transition-transform duration-500">
+                  {/* Colored border frame - Design-5 */}
+                  <div className="absolute -inset-3 bg-gradient-to-br from-[#FF6B6B] via-[#FFE066] to-[#4ECDC4] rounded-3xl" />
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
+                    <img
+                      src={heroImage.image_url}
+                      alt={heroImage.alt_text || `${resort.name} ski resort`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  {/* Fun fact bubble */}
+                  {metrics?.family_overall_score && (
+                    <div className="absolute -bottom-4 -right-4 bg-white px-4 py-2 rounded-full shadow-lg transform rotate-3 border-2 border-[#4ECDC4]">
+                      <span className="text-sm font-bold text-dark-800">
+                        ★ {metrics.family_overall_score}/10 Family Score
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                /* Fallback gradient pattern when no image */
+                <div className="relative transform rotate-2">
+                  <div className="absolute -inset-3 bg-gradient-to-br from-[#FF6B6B] via-[#FFE066] to-[#4ECDC4] rounded-3xl" />
+                  <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-dark-100 to-dark-200 flex items-center justify-center">
+                    <div className="text-center p-8">
+                      <Mountain className="w-16 h-16 text-dark-300 mx-auto mb-4" />
+                      <p className="text-dark-400 font-medium">
+                        {resort.name}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -638,8 +687,46 @@ export default async function ResortPage({ params }: Props) {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="sticky top-8 space-y-6">
+              {/* Family Score Card - Top of sidebar */}
+              {metrics && (
+                <QuickScoreSummary
+                  familyScore={metrics.family_overall_score}
+                  bestAgeMin={metrics.best_age_min}
+                  bestAgeMax={metrics.best_age_max}
+                  perfectIf={metrics.perfect_if || []}
+                  skipIf={metrics.skip_if || []}
+                />
+              )}
+
               {/* Cost Summary Card */}
               {costs && <CostTable costs={costs} />}
+
+              {/* Ski Passes Section */}
+              {resort.passes.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">
+                  <h3 className="font-display text-lg font-bold text-dark-800 mb-4 flex items-center gap-2">
+                    <span>🎟️</span> Ski Passes
+                  </h3>
+                  <div className="space-y-3">
+                    {resort.passes.map((pass, i) => (
+                      <PassCard
+                        key={pass.id}
+                        name={pass.name}
+                        accessType={pass.access_type ?? undefined}
+                        purchaseUrl={(pass.purchase_url || pass.website_url) ?? undefined}
+                        color={(['coral', 'teal', 'gold', 'mint'] as const)[i % 4]}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Useful Links Section */}
+              {links && links.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">
+                  <UsefulLinks links={links} resortSlug={resort.slug} />
+                </div>
+              )}
 
               {/* Quick Links - Design-5 Card */}
               <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">

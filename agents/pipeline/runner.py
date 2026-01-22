@@ -35,6 +35,7 @@ from shared.primitives import (
     write_section,
     generate_faq,
     generate_seo_meta,
+    generate_tagline,
     # Database
     create_resort,
     get_resort_by_slug,
@@ -394,6 +395,14 @@ def run_resort_pipeline(
             resort_name=resort_name,
             country=country,
             quick_take=content["quick_take"],
+        ))
+
+        # Generate unique tagline (8-12 words capturing resort personality)
+        content["tagline"] = asyncio.run(generate_tagline(
+            resort_name=resort_name,
+            country=country,
+            context=content_context,
+            voice_profile="snowthere_guide",
         ))
 
         # Log content generation cost (~$0.80 for Claude API)

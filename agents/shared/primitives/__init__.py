@@ -60,6 +60,16 @@ from .database import (
     # Ski calendar
     get_resort_calendar,
     update_resort_calendar,
+    # Existence checking (agent-native duplicate detection)
+    check_resort_exists,
+    find_similar_resorts,
+    count_resorts,
+    get_country_coverage_summary,
+)
+
+# Discovery primitives
+from .discovery import (
+    check_discovery_candidate_exists,
 )
 
 # Publishing primitives
@@ -117,6 +127,11 @@ from .intelligence import (
     # Learning
     learn_from_outcome,
     LearningOutcome,
+    # Resort validation (agent-native duplicate detection)
+    validate_resort_selection,
+    ResortValidationResult,
+    # Content generation
+    generate_tagline,
 )
 
 # Quality audit primitives
@@ -303,6 +318,13 @@ __all__ = [
     # Database - Ski calendar
     "get_resort_calendar",
     "update_resort_calendar",
+    # Database - Existence checking (agent-native)
+    "check_resort_exists",
+    "find_similar_resorts",
+    "count_resorts",
+    "get_country_coverage_summary",
+    # Discovery
+    "check_discovery_candidate_exists",
     # Publishing
     "publish_resort",
     "unpublish_resort",
@@ -349,6 +371,11 @@ __all__ = [
     # Intelligence - Learning
     "learn_from_outcome",
     "LearningOutcome",
+    # Intelligence - Resort validation (agent-native)
+    "validate_resort_selection",
+    "ResortValidationResult",
+    # Intelligence - Content generation
+    "generate_tagline",
     # Quality - Enums and data classes
     "IssueSeverity",
     "IssueType",
