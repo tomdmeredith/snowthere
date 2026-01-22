@@ -115,10 +115,11 @@ def get_stale_work_items(limit: int = 5) -> list[dict[str, Any]]:
 
         items = []
         for resort in stale:
+            # Use `or` to coerce None to fallback (dict.get returns None if key exists with None value)
             items.append({
-                "name": resort.get("name"),
-                "country": resort.get("country"),
-                "region": resort.get("region"),
+                "name": resort.get("name") or "Unknown",
+                "country": resort.get("country") or "Unknown",
+                "region": resort.get("region") or "",
                 "reasoning": f"Content stale - last refreshed {resort.get('days_since_refresh', 30)}+ days ago",
                 "source": "stale_refresh",
                 "resort_id": resort.get("id"),
@@ -152,10 +153,11 @@ def get_queue_work_items(limit: int = 5) -> list[dict[str, Any]]:
         items = []
         for task in queue:
             # Extract resort info from task payload
-            payload = task.get("payload", {})
+            # Use `or` to coerce None to fallback (dict.get returns None if key exists with None value)
+            payload = task.get("payload") or {}
             items.append({
-                "name": payload.get("resort_name", task.get("resort_name")),
-                "country": payload.get("country", task.get("country")),
+                "name": payload.get("resort_name") or task.get("resort_name") or "Unknown",
+                "country": payload.get("country") or task.get("country") or "Unknown",
                 "reasoning": f"Manually queued: {task.get('task_type', 'research')}",
                 "source": "manual_queue",
                 "task_id": task.get("id"),
@@ -302,8 +304,15 @@ def get_work_items_mixed(
     seen = set()
     unique_items = []
     for item in items:
-        key = (item.get("name", "").lower(), item.get("country", "").lower())
-        if key not in seen and item.get("name"):
+        # Skip None items and handle None values in dict with `or` pattern
+        if item is None:
+            continue
+
+        name = item.get("name") or ""
+        country = item.get("country") or ""
+
+        key = (name.lower(), country.lower())
+        if key not in seen and name:
             seen.add(key)
             unique_items.append(item)
 

@@ -49,9 +49,10 @@ export function TradingCard({
 }: TradingCardProps) {
   const [isHovered, setIsHovered] = useState(false)
 
-  const score = resort.family_metrics?.family_overall_score || 0
+  const score = resort.family_metrics?.family_overall_score
+  const hasScore = score !== null && score !== undefined && score > 0
   const scoreSegments = 5
-  const filledSegments = Math.round((score / 10) * scoreSegments)
+  const filledSegments = hasScore ? Math.round((score / 10) * scoreSegments) : 0
 
   return (
     <Link
@@ -126,24 +127,30 @@ export function TradingCard({
             {resort.name}
           </h3>
           <p className="text-dark-500 text-sm mb-4">
-            {resort.region}, {resort.country}
+            {resort.region ? `${resort.region}, ${resort.country}` : resort.country}
           </p>
 
           {/* Score bar */}
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-dark-500">Family:</span>
-            <div className="flex gap-1 flex-1">
-              {Array.from({ length: scoreSegments }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-2 flex-1 rounded-full transition-colors"
-                  style={{
-                    backgroundColor: i < filledSegments ? color : `${color}30`,
-                  }}
-                />
-              ))}
-            </div>
-            <span className="text-xs font-bold text-dark-700">{score}/10</span>
+            {hasScore ? (
+              <>
+                <div className="flex gap-1 flex-1">
+                  {Array.from({ length: scoreSegments }).map((_, i) => (
+                    <div
+                      key={i}
+                      className="h-2 flex-1 rounded-full transition-colors"
+                      style={{
+                        backgroundColor: i < filledSegments ? color : `${color}30`,
+                      }}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-bold text-dark-700">{score}/10</span>
+              </>
+            ) : (
+              <span className="text-xs text-dark-400 italic">Coming soon</span>
+            )}
           </div>
         </div>
       </motion.div>

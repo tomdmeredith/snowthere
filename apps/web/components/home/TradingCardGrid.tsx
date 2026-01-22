@@ -16,6 +16,10 @@ interface Resort {
     best_age_min?: number
     best_age_max?: number
   }
+  images?: {
+    image_url: string
+    image_type: string
+  }[]
 }
 
 interface TradingCardGridProps {
@@ -56,17 +60,24 @@ export function TradingCardGrid({ resorts }: TradingCardGridProps) {
         {/* Trading Cards Grid */}
         <div className="flex flex-wrap justify-center gap-6 lg:gap-8 mb-12 px-4">
           {displayResorts.length > 0 ? (
-            displayResorts.map((resort, index) => (
-              <div key={resort.id} className="w-full sm:w-[280px] max-w-[320px]">
-                <TradingCard
-                  number={index + 1}
-                  resort={resort}
-                  color={getTradingCardColor(index)}
-                  baseRotation={getTradingCardRotation(index, displayResorts.length)}
-                  funFact={FUN_FACTS[resort.slug]}
-                />
-              </div>
-            ))
+            displayResorts.map((resort, index) => {
+              // Find hero image, falling back to any available image
+              const heroImage = resort.images?.find(img => img.image_type === 'hero')?.image_url
+                || resort.images?.[0]?.image_url
+
+              return (
+                <div key={resort.id} className="w-full sm:w-[280px] max-w-[320px]">
+                  <TradingCard
+                    number={index + 1}
+                    resort={resort}
+                    color={getTradingCardColor(index)}
+                    baseRotation={getTradingCardRotation(index, displayResorts.length)}
+                    image={heroImage}
+                    funFact={FUN_FACTS[resort.slug]}
+                  />
+                </div>
+              )
+            })
           ) : (
             // Placeholder cards when no resorts
             ['Park City', 'Zermatt', 'St. Anton', 'Niseko'].map((name, index) => (

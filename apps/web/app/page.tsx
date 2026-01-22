@@ -20,7 +20,8 @@ async function getFeaturedResorts() {
       slug,
       country,
       region,
-      family_metrics:resort_family_metrics(family_overall_score, best_age_min, best_age_max)
+      family_metrics:resort_family_metrics(family_overall_score, best_age_min, best_age_max),
+      images:resort_images(image_url, image_type)
     `)
     .eq('status', 'published')
     .limit(4)
