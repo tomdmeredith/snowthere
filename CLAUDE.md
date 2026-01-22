@@ -568,10 +568,14 @@ This project uses compound-beads methodology (inherited from workspace).
 
 ## How to Continue
 
-1. Run `/ready` to load context
-2. Check Rounds section for current work (Round 4)
-3. Use `/plan` for complex tasks, `/work` for execution
-4. Run `/land` at session end to document progress
+1. Read this CLAUDE.md for full context
+2. Check Rounds section - Round 5.1 complete, Round 5 (Compliance & Polish) has remaining tasks
+3. To test the pipeline: `cd agents && python cron.py --dry-run --max-resorts 2`
+4. Railway auto-deploys from main branch (project: creative-spontaneity)
+
+**Immediate Next Steps:**
+- Run a test batch on Railway to verify new agent-native pipeline
+- Round 5 remaining: cron failure alerts, accessibility audit, trademark notices
 
 ---
 
