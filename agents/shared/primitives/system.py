@@ -187,7 +187,7 @@ def get_daily_spend() -> float:
         client.table("agent_audit_log")
         .select("input_data")  # Schema uses input_data, not metadata
         .eq("action", "api_cost")
-        .gte("created_at", f"{today}T00:00:00")
+        .gte("created_at", f"{today}T00:00:00+00:00")  # UTC timezone for consistent queries
         .execute()
     )
 

@@ -152,7 +152,7 @@ def has_minimum_data(research_data: dict[str, Any]) -> tuple[bool, list[str]]:
     return has_minimum, missing
 
 
-def run_resort_pipeline(
+async def run_resort_pipeline(
     resort_name: str,
     country: str,
     task_id: str | None = None,
@@ -204,7 +204,7 @@ def run_resort_pipeline(
     }
 
     # Get context from memory (similar episodes, learned patterns)
-    memory_context = asyncio.run(memory.get_context_for_objective(objective))
+    memory_context = await memory.get_context_for_objective(objective)
     similar_episodes = memory_context.get("similar_episodes", [])
     learned_patterns = memory_context.get("learned_patterns", [])
 
@@ -257,7 +257,7 @@ def run_resort_pipeline(
             reasoning=f"Researching {resort_name} using Exa, SerpAPI, and Tavily",
         )
 
-        research_data = asyncio.run(search_resort_info(resort_name, country))
+        research_data = await search_resort_info(resort_name, country)
 
         # Log research cost (~$0.20 for 3 API calls)
         log_cost("research_apis", 0.20, None, {"run_id": run_id, "stage": "research"})
@@ -278,7 +278,7 @@ def run_resort_pipeline(
 
         # Extract coordinates for better Google Places and trail map lookups
         from shared.primitives.research import extract_coordinates
-        coords = asyncio.run(extract_coordinates(resort_name, country))
+        coords = await extract_coordinates(resort_name, country)
         if coords:
             research_data["latitude"], research_data["longitude"] = coords
             log_reasoning(
@@ -302,11 +302,11 @@ def run_resort_pipeline(
             reasoning=f"Extracting structured costs and family metrics from raw research for {resort_name}",
         )
 
-        extracted = asyncio.run(extract_resort_data(
+        extracted = await extract_resort_data(
             raw_research=research_data,
             resort_name=resort_name,
             country=country,
-        ))
+        )
 
         # Merge extracted data into research_data for downstream use
         research_data["costs"] = extracted.costs
@@ -369,16 +369,16 @@ def run_resort_pipeline(
         longitude = research_data.get("longitude")
 
         # Fetch trail map data
-        trail_map_result = asyncio.run(get_trail_map(
+        trail_map_result = await get_trail_map(
             resort_name=resort_name,
             country=country,
             latitude=latitude,
             longitude=longitude,
             radius_km=8.0,  # Larger radius for big resorts
-        ))
+        )
 
         # Get difficulty breakdown
-        difficulty_breakdown = asyncio.run(get_difficulty_breakdown(trail_map_result.pistes))
+        difficulty_breakdown = await get_difficulty_breakdown(trail_map_result.pistes)
 
         # Convert to dict for storage (without full geometry for smaller payload)
         trail_map_data = {
@@ -461,35 +461,35 @@ def run_resort_pipeline(
         }
 
         for section in sections:
-            content[section] = asyncio.run(write_section(
+            content[section] = await write_section(
                 section_name=section,
                 context=content_context,
                 voice_profile="snowthere_guide",
-            ))
+            )
 
         # Generate FAQs
-        content["faqs"] = asyncio.run(generate_faq(
+        content["faqs"] = await generate_faq(
             resort_name=resort_name,
             country=country,
             context=content_context,
             num_questions=6,
             voice_profile="snowthere_guide",
-        ))
+        )
 
         # Generate SEO meta
-        content["seo_meta"] = asyncio.run(generate_seo_meta(
+        content["seo_meta"] = await generate_seo_meta(
             resort_name=resort_name,
             country=country,
             quick_take=content["quick_take"],
-        ))
+        )
 
         # Generate unique tagline (8-12 words capturing resort personality)
-        content["tagline"] = asyncio.run(generate_tagline(
+        content["tagline"] = await generate_tagline(
             resort_name=resort_name,
             country=country,
             context=content_context,
             voice_profile="snowthere_guide",
-        ))
+        )
 
         # Log content generation cost (~$0.80 for Claude API)
         log_cost("anthropic", 0.80, None, {"run_id": run_id, "stage": "content_generation"})
@@ -635,7 +635,7 @@ def run_resort_pipeline(
         longitude = research_data.get("longitude")
 
         # Fetch real images (official website → UGC fallback, NO AI)
-        image_result = asyncio.run(fetch_resort_images_with_fallback(
+        image_result = await fetch_resort_images_with_fallback(
             resort_id=resort_id,
             resort_name=resort_name,
             country=country,
@@ -643,7 +643,7 @@ def run_resort_pipeline(
             latitude=latitude,
             longitude=longitude,
             task_id=None,
-        ))
+        )
 
         if image_result.success:
             log_reasoning(
@@ -723,7 +723,7 @@ def run_resort_pipeline(
             longitude = research_data.get("longitude")
 
             # Fetch and store UGC photos for gallery
-            ugc_result = asyncio.run(fetch_and_store_ugc_photos(
+            ugc_result = await fetch_and_store_ugc_photos(
                 resort_id=resort_id,
                 resort_name=resort_name,
                 country=country,
@@ -731,7 +731,7 @@ def run_resort_pipeline(
                 longitude=longitude,
                 max_photos=8,
                 filter_with_vision=True,  # Use Gemini to filter family-relevant photos
-            ))
+            )
 
             if ugc_result.success and ugc_result.photos:
                 # Log cost
@@ -841,13 +841,13 @@ def run_resort_pipeline(
 
             # Run approval panel (TrustGuard + FamilyValue + VoiceCoach)
             # This iterates up to 3 times, improving content based on feedback
-            approval_result = asyncio.run(approval_loop(
+            approval_result = await approval_loop(
                 content=content,
                 sources=research_data.get("sources", []),
                 resort_data=resort_data,
                 voice_profile="snowthere_guide",
                 max_iterations=3,
-            ))
+            )
 
             # Log approval panel cost (~$0.45-0.60 for 3 agents × up to 3 iterations)
             panel_cost = 0.15 * approval_result.iterations  # ~$0.15 per panel run
@@ -1017,13 +1017,13 @@ def run_resort_pipeline(
             observation["lessons"].append(f"Image generation successful for {resort_name}")
 
         # Store the episode
-        asyncio.run(memory.store_episode(
+        await memory.store_episode(
             run_id=run_id,
             objective=objective,
             plan=plan,
             result=result,
             observation=observation,
-        ))
+        )
 
         log_reasoning(
             task_id=None,

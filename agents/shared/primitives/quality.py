@@ -397,7 +397,7 @@ def get_resorts_needing_audit(
     """
     client = get_supabase_client()
 
-    cutoff_date = (datetime.utcnow() - timedelta(days=staleness_threshold_days)).isoformat()
+    cutoff_date = (datetime.utcnow() - timedelta(days=staleness_threshold_days)).isoformat() + "+00:00"
 
     query = client.table("resorts").select("*")
 
@@ -444,7 +444,7 @@ def get_stale_resorts_count(
     """
     client = get_supabase_client()
 
-    cutoff_date = (datetime.utcnow() - timedelta(days=threshold_days)).isoformat()
+    cutoff_date = (datetime.utcnow() - timedelta(days=threshold_days)).isoformat() + "+00:00"
 
     response = (
         client.table("resorts")

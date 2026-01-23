@@ -43,6 +43,7 @@ Environment Variables Required:
 """
 
 import argparse
+import asyncio
 import json
 import sys
 from datetime import datetime
@@ -186,11 +187,11 @@ def main():
         print(f"SINGLE RESORT MODE: {args.resort}, {args.country}")
         print(f"{'='*60}\n")
 
-        result = run_single_resort(
+        result = asyncio.run(run_single_resort(
             resort_name=args.resort,
             country=args.country,
             auto_publish=not args.no_publish,
-        )
+        ))
 
     else:
         # Daily pipeline mode
@@ -203,13 +204,13 @@ def main():
         print(f"Selection: {selection_mode} | Discovery: {discovery_mode}")
         print(f"{'='*60}\n")
 
-        result = run_daily_pipeline(
+        result = asyncio.run(run_daily_pipeline(
             max_resorts=args.max_resorts,
             dry_run=args.dry_run,
             use_mixed_selection=args.use_mixed_selection,
             run_discovery=args.run_discovery,
             force_discovery=args.force_discovery,
-        )
+        ))
 
     # Output results
     if args.json:

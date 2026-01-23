@@ -158,7 +158,7 @@ skiing feel doable for families.
     return context
 
 
-def pick_resorts_to_research(
+async def pick_resorts_to_research(
     max_resorts: int = 4,
     task_id: str | None = None,
 ) -> dict[str, Any]:
@@ -213,11 +213,20 @@ Return a JSON object with:
 Think step by step about what would be most valuable, then respond with ONLY the JSON.
 """
 
-    response = client.messages.create(
-        model="claude-sonnet-4-20250514",  # Fast, capable, cheaper
-        max_tokens=1500,
-        messages=[{"role": "user", "content": prompt}],
-    )
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",  # Fast, capable, cheaper
+            max_tokens=1500,
+            messages=[{"role": "user", "content": prompt}],
+        )
+    except anthropic.APIError as e:
+        log_reasoning(
+            task_id=task_id,
+            agent_name="decision_maker",
+            action="api_error",
+            reasoning=f"Claude API error: {e}",
+        )
+        return {"resorts": [], "error": True, "overall_reasoning": f"Claude API error: {e}", "filtered_count": 0}
 
     # Parse response
     response_text = response.content[0].text
@@ -244,7 +253,7 @@ Think step by step about what would be most valuable, then respond with ONLY the
 
     # Phase 2: Validate each suggestion against database
     if suggestions:
-        validated = asyncio.run(validate_resort_selection(suggestions))
+        validated = await validate_resort_selection(suggestions)
 
         # Filter to valid (non-existing) resorts
         valid_resorts = []

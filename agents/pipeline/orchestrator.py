@@ -540,7 +540,7 @@ def mark_discovery_candidate_processed(
 # =============================================================================
 
 
-def run_discovery_if_needed(
+async def run_discovery_if_needed(
     force: bool = False,
     days_since_last: int = 7,
 ) -> dict[str, Any]:
@@ -597,8 +597,8 @@ def run_discovery_if_needed(
             metadata={"force": force},
         )
 
-        # Run discovery asynchronously
-        result = asyncio.run(run_full_discovery_agent(max_candidates=20))
+        # Run discovery
+        result = await run_full_discovery_agent(max_candidates=20)
 
         log_reasoning(
             task_id=None,
@@ -634,7 +634,7 @@ def run_discovery_if_needed(
 # =============================================================================
 
 
-def run_daily_pipeline(
+async def run_daily_pipeline(
     max_resorts: int = 4,
     dry_run: bool = False,
     use_mixed_selection: bool = True,  # Changed: prioritize quality over growth
@@ -736,7 +736,7 @@ def run_daily_pipeline(
             metadata={"run_id": run_id},
         )
 
-        discovery_result = run_discovery_if_needed(force=force_discovery)
+        discovery_result = await run_discovery_if_needed(force=force_discovery)
         digest["discovery_result"] = discovery_result
 
         if discovery_result.get("error"):
@@ -802,7 +802,7 @@ def run_daily_pipeline(
             metadata={"run_id": run_id},
         )
 
-        selection = pick_resorts_to_research(max_resorts=max_resorts, task_id=None)
+        selection = await pick_resorts_to_research(max_resorts=max_resorts, task_id=None)
 
         if selection.get("error"):
             digest["status"] = "selection_failed"
@@ -878,7 +878,7 @@ def run_daily_pipeline(
 
         # Run the pipeline for this resort
         try:
-            result = run_resort_pipeline(
+            result = await run_resort_pipeline(
                 resort_name=resort_name,
                 country=country,
                 task_id=None,  # No queue task - run_id tracked in metadata
@@ -922,12 +922,18 @@ def run_daily_pipeline(
             })
 
         except Exception as e:
+            import traceback
             log_reasoning(
                 task_id=None,
                 agent_name="orchestrator",
                 action="resort_error",
-                reasoning=f"Error processing {resort_name}: {e}",
-                metadata={"run_id": run_id, "resort": resort_name, "error": str(e)},
+                reasoning=f"Error processing {resort_name}: {type(e).__name__}: {e}",
+                metadata={
+                    "run_id": run_id,
+                    "resort": resort_name,
+                    "error": str(e),
+                    "traceback": traceback.format_exc(),
+                },
             )
 
             # Mark discovery candidate as rejected on error
@@ -1017,7 +1023,7 @@ def run_daily_pipeline(
     return digest
 
 
-def run_single_resort(
+async def run_single_resort(
     resort_name: str,
     country: str,
     auto_publish: bool = True,
@@ -1045,7 +1051,7 @@ def run_single_resort(
         metadata={"run_id": run_id},
     )
 
-    return run_resort_pipeline(
+    return await run_resort_pipeline(
         resort_name=resort_name,
         country=country,
         task_id=None,  # No queue task for manual triggers
