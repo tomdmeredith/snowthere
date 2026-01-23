@@ -153,12 +153,12 @@ def get_queue_work_items(limit: int = 5) -> list[dict[str, Any]]:
 
         items = []
         for task in queue:
-            # Extract resort info from task payload
+            # Extract resort info from task metadata (not payload - that field doesn't exist)
             # Use `or` to coerce None to fallback (dict.get returns None if key exists with None value)
-            payload = task.get("payload") or {}
+            metadata = task.get("metadata") or {}
             items.append({
-                "name": payload.get("resort_name") or task.get("resort_name") or "Unknown",
-                "country": payload.get("country") or task.get("country") or "Unknown",
+                "name": metadata.get("resort_name") or task.get("resort_name") or "Unknown",
+                "country": metadata.get("country") or task.get("country") or "Unknown",
                 "reasoning": f"Manually queued: {task.get('task_type', 'research')}",
                 "source": "manual_queue",
                 "task_id": task.get("id"),

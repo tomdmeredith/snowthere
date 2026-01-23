@@ -670,7 +670,43 @@ def run_resort_pipeline(
     # Philosophy: Publish early, improve continuously (agent-native approach)
     # The approval panel provides quality signals but doesn't gate publication.
     # If there are concerns, we still publish but queue for continuous improvement.
+    #
+    # SAFETY NET: Minimum confidence threshold of 0.60 to prevent publishing
+    # content with unreliable research data (e.g., confidence 0.30).
     # =========================================================================
+
+    # Check minimum confidence before publishing
+    MIN_PUBLISH_CONFIDENCE = 0.60
+    confidence = result.get("confidence", 0)
+
+    if auto_publish and confidence < MIN_PUBLISH_CONFIDENCE:
+        # Research quality too low - save as draft, don't run approval panel
+        result["status"] = "draft"
+        result["stages"]["approval_panel"] = {
+            "status": "skipped_low_confidence",
+            "confidence": confidence,
+            "threshold": MIN_PUBLISH_CONFIDENCE,
+            "reason": f"Confidence {confidence:.2f} below minimum threshold {MIN_PUBLISH_CONFIDENCE}",
+        }
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="low_confidence_draft",
+            reasoning=f"Research confidence {confidence:.2f} is below minimum {MIN_PUBLISH_CONFIDENCE}. Saving as draft instead of publishing.",
+            metadata={
+                "confidence": confidence,
+                "threshold": MIN_PUBLISH_CONFIDENCE,
+                "resort": resort_name,
+            },
+        )
+
+        print(f"⚠️  Low confidence ({confidence:.2f}) - saving as draft: {resort_name}")
+
+        # Skip to complete stage
+        result["completed_at"] = datetime.utcnow().isoformat()
+        return result
+
     if auto_publish:
         try:
             log_reasoning(

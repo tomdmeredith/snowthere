@@ -122,7 +122,16 @@ def create_resort(
 
     Returns:
         Created resort record
+
+    Raises:
+        ValueError: If name or country is empty/invalid
     """
+    # Safety net: Reject invalid resort data to prevent ghost resorts
+    if not name or not name.strip() or name.strip().lower() == "unknown":
+        raise ValueError(f"Resort name cannot be empty or 'Unknown': got '{name}'")
+    if not country or not country.strip() or country.strip().lower() == "unknown":
+        raise ValueError(f"Resort country cannot be empty or 'Unknown': got '{country}'")
+
     client = get_supabase_client()
 
     # Auto-generate slug if not provided
