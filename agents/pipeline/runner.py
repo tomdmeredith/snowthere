@@ -55,10 +55,9 @@ from shared.primitives import (
     # Trail map
     get_trail_map,
     get_difficulty_breakdown,
-    # Image generation (3-tier fallback)
-    generate_resort_image_set,
-    ImageType,
-    # UGC Photos (Google Places)
+    # Official images (real photos from resort websites)
+    fetch_resort_images_with_fallback,
+    # UGC Photos (Google Places) - kept as fallback
     fetch_and_store_ugc_photos,
     # Approval Panel (Three-agent quality evaluation)
     approval_loop,
@@ -79,42 +78,78 @@ def calculate_confidence(research_data: dict[str, Any]) -> float:
     Factors:
     - Number of sources found
     - Presence of official resort data
-    - Price data completeness
+    - Price data completeness (CRITICAL - weighted 0.4)
+    - Family metrics completeness
     - Review data quality
 
     Returns: 0.0 - 1.0
     """
     score = 0.0
 
-    # Source count (max 0.3)
+    # Source count (max 0.2)
     sources = research_data.get("sources", [])
-    source_score = min(len(sources) / 10, 0.3)
+    source_score = min(len(sources) / 10, 0.2)
     score += source_score
 
-    # Official data present (0.2)
+    # Official data present (0.15)
     if research_data.get("official_site_data"):
-        score += 0.2
+        score += 0.15
 
-    # Price data completeness (max 0.2)
+    # Price data completeness (max 0.4) - CRITICAL for family value
+    # Without pricing, families can't plan trips
     costs = research_data.get("costs", {})
-    price_fields = ["lift_adult_daily", "lodging_budget_nightly", "lodging_mid_nightly"]
+    price_fields = ["lift_adult_daily", "lift_child_daily", "lodging_mid_nightly"]
     price_completeness = sum(1 for f in price_fields if costs.get(f)) / len(price_fields)
-    score += price_completeness * 0.2
+    score += price_completeness * 0.4
 
     # Family metrics completeness (max 0.15)
     metrics = research_data.get("family_metrics", {})
-    metric_fields = ["family_overall_score", "childcare_min_age", "ski_school_min_age"]
+    metric_fields = ["family_overall_score", "best_age_min", "best_age_max"]
     metric_completeness = sum(1 for f in metric_fields if metrics.get(f)) / len(metric_fields)
     score += metric_completeness * 0.15
 
-    # Review data (max 0.15)
+    # Review data (max 0.1)
     reviews = research_data.get("reviews", [])
     if len(reviews) >= 5:
-        score += 0.15
+        score += 0.1
     elif len(reviews) >= 2:
-        score += 0.08
+        score += 0.05
 
     return min(score, 1.0)
+
+
+def has_minimum_data(research_data: dict[str, Any]) -> tuple[bool, list[str]]:
+    """Check if research data meets minimum requirements for publication.
+
+    Families need at least SOME pricing data to plan trips. Without it,
+    the content is incomplete regardless of how well-written it is.
+
+    Returns:
+        Tuple of (has_minimum, missing_fields)
+    """
+    REQUIRED_COST_FIELDS = ["lift_adult_daily", "lodging_mid_nightly"]
+    REQUIRED_METRIC_FIELDS = ["family_overall_score", "best_age_min"]
+
+    costs = research_data.get("costs", {})
+    metrics = research_data.get("family_metrics", {})
+
+    missing = []
+
+    # Check costs - need at least ONE cost field
+    cost_present = any(costs.get(f) for f in REQUIRED_COST_FIELDS)
+    if not cost_present:
+        missing.extend([f"costs.{f}" for f in REQUIRED_COST_FIELDS])
+
+    # Check metrics - need at least ONE metric field
+    metric_present = any(metrics.get(f) for f in REQUIRED_METRIC_FIELDS)
+    if not metric_present:
+        missing.extend([f"metrics.{f}" for f in REQUIRED_METRIC_FIELDS])
+
+    # Must have at least one cost OR one metric to publish
+    # This is a soft gate - we want SOME data, not necessarily all
+    has_minimum = cost_present or metric_present
+
+    return has_minimum, missing
 
 
 def run_resort_pipeline(
@@ -583,137 +618,164 @@ def run_resort_pipeline(
         return result
 
     # =========================================================================
-    # STAGE 4.5: Image Generation (3-tier fallback)
+    # STAGE 4.5: Official Images (Real photos from resort websites)
     # =========================================================================
+    # Philosophy: Families deserve REAL images, not AI-generated approximations.
+    # Priority: Official website > Google Places UGC > No image (NO AI generation)
     try:
         log_reasoning(
             task_id=None,
             agent_name="pipeline_runner",
-            action="start_image_generation",
-            reasoning=f"Generating hero and atmosphere images for {resort_name}",
-        )
-
-        # Generate images with 3-tier fallback (Gemini → Glif → Replicate)
-        image_results = asyncio.run(generate_resort_image_set(
-            resort_id=resort_id,
-            resort_name=resort_name,
-            country=country,
-            task_id=None,
-        ))
-
-        hero_result = image_results.get("hero")
-        atmosphere_result = image_results.get("atmosphere")
-
-        # Track results
-        images_generated = sum(1 for r in [hero_result, atmosphere_result] if r and r.success)
-        total_image_cost = sum(r.cost for r in [hero_result, atmosphere_result] if r and r.success)
-
-        if images_generated > 0:
-            log_reasoning(
-                task_id=None,
-                agent_name="pipeline_runner",
-                action="image_generation_complete",
-                reasoning=f"Generated {images_generated} images for {resort_name}. Cost: ${total_image_cost:.3f}",
-                metadata={
-                    "hero_success": hero_result.success if hero_result else False,
-                    "hero_url": hero_result.url if hero_result and hero_result.success else None,
-                    "hero_source": hero_result.source.value if hero_result and hero_result.success else None,
-                    "atmosphere_success": atmosphere_result.success if atmosphere_result else False,
-                    "atmosphere_url": atmosphere_result.url if atmosphere_result and atmosphere_result.success else None,
-                    "total_cost": total_image_cost,
-                },
-            )
-
-        result["stages"]["images"] = {
-            "status": "complete" if images_generated > 0 else "partial",
-            "hero_generated": hero_result.success if hero_result else False,
-            "atmosphere_generated": atmosphere_result.success if atmosphere_result else False,
-            "images_count": images_generated,
-            "cost": total_image_cost,
-        }
-
-        print(f"✓ Images: {images_generated}/2 generated for {resort_name}")
-
-    except Exception as e:
-        # Image generation is non-critical - continue without it
-        log_reasoning(
-            task_id=None,
-            agent_name="pipeline_runner",
-            action="image_generation_failed",
-            reasoning=f"Image generation failed (non-critical): {e}",
-        )
-        result["stages"]["images"] = {"status": "skipped", "error": str(e)}
-        print(f"⚠️  Images skipped for {resort_name}: {e}", file=sys.stderr)
-
-    # =========================================================================
-    # STAGE 4.6: UGC Photos (Google Places)
-    # =========================================================================
-    try:
-        log_reasoning(
-            task_id=None,
-            agent_name="pipeline_runner",
-            action="start_ugc_photos",
-            reasoning=f"Fetching user-generated photos from Google Places for {resort_name}",
+            action="start_official_images",
+            reasoning=f"Fetching real images from official website for {resort_name}",
         )
 
         # Get coordinates from research data if available
         latitude = research_data.get("latitude")
         longitude = research_data.get("longitude")
 
-        # Fetch and store UGC photos
-        ugc_result = asyncio.run(fetch_and_store_ugc_photos(
+        # Fetch real images (official website → UGC fallback, NO AI)
+        image_result = asyncio.run(fetch_resort_images_with_fallback(
             resort_id=resort_id,
             resort_name=resort_name,
             country=country,
+            official_website=None,  # Will be discovered via search
             latitude=latitude,
             longitude=longitude,
-            max_photos=8,
-            filter_with_vision=True,  # Use Gemini to filter family-relevant photos
+            task_id=None,
         ))
 
-        if ugc_result.success and ugc_result.photos:
-            # Log cost
-            log_cost("google_places", ugc_result.cost, None, {"run_id": run_id, "stage": "ugc_photos"})
-
+        if image_result.success:
             log_reasoning(
                 task_id=None,
                 agent_name="pipeline_runner",
-                action="ugc_photos_complete",
-                reasoning=f"Fetched {len(ugc_result.photos)} UGC photos for {resort_name}. Cost: ${ugc_result.cost:.3f}",
+                action="official_image_complete",
+                reasoning=f"Fetched real image for {resort_name} from {image_result.source}",
                 metadata={
-                    "photos_found": ugc_result.total_found,
-                    "photos_kept": len(ugc_result.photos),
-                    "place_id": ugc_result.place_id,
-                    "cost": ugc_result.cost,
+                    "hero_url": image_result.url,
+                    "source": image_result.source,
+                    "attribution": image_result.attribution,
                 },
             )
 
-            result["stages"]["ugc_photos"] = {
+            result["stages"]["images"] = {
                 "status": "complete",
-                "photos_count": len(ugc_result.photos),
-                "total_found": ugc_result.total_found,
-                "cost": ugc_result.cost,
+                "hero_generated": True,
+                "source": image_result.source,
+                "images_count": 1,
+                "cost": 0,  # Scraping is free
             }
-            print(f"✓ UGC Photos: {len(ugc_result.photos)} family-relevant photos for {resort_name}")
 
+            print(f"✓ Image: Real photo from {image_result.source} for {resort_name}")
         else:
-            result["stages"]["ugc_photos"] = {
-                "status": "no_photos",
-                "error": ugc_result.error,
-                "cost": ugc_result.cost,
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="official_image_failed",
+                reasoning=f"Could not fetch real images for {resort_name}: {image_result.error}",
+            )
+
+            result["stages"]["images"] = {
+                "status": "skipped",
+                "hero_generated": False,
+                "reason": "No real images available (AI images disabled)",
+                "images_count": 0,
+                "cost": 0,
             }
-            print(f"⚠️  No UGC photos found for {resort_name}: {ugc_result.error}")
+
+            print(f"⚠️  No real images found for {resort_name} (AI disabled)")
 
     except Exception as e:
-        # UGC photos are non-critical - continue without them
+        # Image fetching is non-critical - continue without it
         log_reasoning(
             task_id=None,
             agent_name="pipeline_runner",
-            action="ugc_photos_failed",
-            reasoning=f"UGC photo fetch failed (non-critical): {e}",
+            action="official_image_error",
+            reasoning=f"Image fetching failed (non-critical): {e}",
         )
-        result["stages"]["ugc_photos"] = {"status": "skipped", "error": str(e)}
-        print(f"⚠️  UGC photos skipped for {resort_name}: {e}", file=sys.stderr)
+        result["stages"]["images"] = {"status": "skipped", "error": str(e)}
+        print(f"⚠️  Images skipped for {resort_name}: {e}", file=sys.stderr)
+
+    # =========================================================================
+    # STAGE 4.6: Additional UGC Photos (Google Places)
+    # =========================================================================
+    # Note: Hero image already fetched in 4.5 (may include UGC fallback).
+    # This stage fetches ADDITIONAL gallery photos if we don't already have them.
+    hero_source = result.get("stages", {}).get("images", {}).get("source", "")
+    if hero_source == "google_places":
+        # We already got UGC photos via the fallback, skip duplicate fetch
+        result["stages"]["ugc_photos"] = {
+            "status": "skipped",
+            "reason": "UGC photos already fetched as hero fallback",
+        }
+        print(f"✓ UGC Photos: Already fetched as hero fallback for {resort_name}")
+    else:
+        try:
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="start_ugc_photos",
+                reasoning=f"Fetching additional UGC photos from Google Places for {resort_name}",
+            )
+
+            # Get coordinates from research data if available
+            latitude = research_data.get("latitude")
+            longitude = research_data.get("longitude")
+
+            # Fetch and store UGC photos for gallery
+            ugc_result = asyncio.run(fetch_and_store_ugc_photos(
+                resort_id=resort_id,
+                resort_name=resort_name,
+                country=country,
+                latitude=latitude,
+                longitude=longitude,
+                max_photos=8,
+                filter_with_vision=True,  # Use Gemini to filter family-relevant photos
+            ))
+
+            if ugc_result.success and ugc_result.photos:
+                # Log cost
+                log_cost("google_places", ugc_result.cost, None, {"run_id": run_id, "stage": "ugc_photos"})
+
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="ugc_photos_complete",
+                    reasoning=f"Fetched {len(ugc_result.photos)} UGC photos for {resort_name}. Cost: ${ugc_result.cost:.3f}",
+                    metadata={
+                        "photos_found": ugc_result.total_found,
+                        "photos_kept": len(ugc_result.photos),
+                        "place_id": ugc_result.place_id,
+                        "cost": ugc_result.cost,
+                    },
+                )
+
+                result["stages"]["ugc_photos"] = {
+                    "status": "complete",
+                    "photos_count": len(ugc_result.photos),
+                    "total_found": ugc_result.total_found,
+                    "cost": ugc_result.cost,
+                }
+                print(f"✓ UGC Photos: {len(ugc_result.photos)} family-relevant photos for {resort_name}")
+
+            else:
+                result["stages"]["ugc_photos"] = {
+                    "status": "no_photos",
+                    "error": ugc_result.error,
+                    "cost": ugc_result.cost,
+                }
+                print(f"⚠️  No UGC photos found for {resort_name}: {ugc_result.error}")
+
+        except Exception as e:
+            # UGC photos are non-critical - continue without them
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="ugc_photos_failed",
+                reasoning=f"UGC photo fetch failed (non-critical): {e}",
+            )
+            result["stages"]["ugc_photos"] = {"status": "skipped", "error": str(e)}
+            print(f"⚠️  UGC photos skipped for {resort_name}: {e}", file=sys.stderr)
 
     # =========================================================================
     # STAGE 5: Three-Agent Approval Panel (Publish-First Model)
@@ -722,9 +784,41 @@ def run_resort_pipeline(
     # The approval panel provides quality signals but doesn't gate publication.
     # If there are concerns, we still publish but queue for continuous improvement.
     #
+    # DATA GATE: Check for minimum data completeness before publishing.
+    # Families need at least SOME pricing/metric data to plan trips.
+    #
     # SAFETY NET: Minimum confidence threshold of 0.60 to prevent publishing
     # content with unreliable research data (e.g., confidence 0.30).
     # =========================================================================
+
+    # DATA GATE: Check for minimum required data
+    has_data, missing_fields = has_minimum_data(research_data)
+    if auto_publish and not has_data:
+        # Insufficient data - save as draft, don't publish hollow content
+        result["status"] = "draft"
+        result["stages"]["approval_panel"] = {
+            "status": "skipped_insufficient_data",
+            "missing_fields": missing_fields,
+            "reason": "No pricing or family metrics found - cannot help families plan trips",
+        }
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="insufficient_data_draft",
+            reasoning=f"Insufficient data for {resort_name}: missing {missing_fields}. Saving as draft - families need pricing to plan trips.",
+            metadata={
+                "missing_fields": missing_fields,
+                "costs": research_data.get("costs", {}),
+                "family_metrics": research_data.get("family_metrics", {}),
+            },
+        )
+
+        print(f"⚠️  Insufficient data - saving as draft: {resort_name}")
+        print(f"   Missing: {', '.join(missing_fields[:4])}")
+
+        result["completed_at"] = datetime.utcnow().isoformat()
+        return result
 
     # Check minimum confidence before publishing
     MIN_PUBLISH_CONFIDENCE = 0.60

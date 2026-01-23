@@ -372,9 +372,9 @@ def get_quality_metrics() -> dict[str, Any]:
 def get_work_items_mixed(
     max_items: int = 4,
     discovery_pct: float = 0.30,
-    quality_pct: float = 0.20,
-    stale_pct: float = 0.30,
-    queue_pct: float = 0.20,
+    quality_pct: float = 0.50,  # Changed: prioritize fixing existing resorts
+    stale_pct: float = 0.20,
+    queue_pct: float = 0.00,    # Changed: manual queue rarely used
 ) -> list[dict[str, Any]]:
     """Get balanced work items from multiple sources.
 
@@ -637,7 +637,7 @@ def run_discovery_if_needed(
 def run_daily_pipeline(
     max_resorts: int = 4,
     dry_run: bool = False,
-    use_mixed_selection: bool = False,
+    use_mixed_selection: bool = True,  # Changed: prioritize quality over growth
     run_discovery: bool = False,
     force_discovery: bool = False,
 ) -> dict[str, Any]:

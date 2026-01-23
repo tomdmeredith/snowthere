@@ -31,6 +31,7 @@ python-dotenv>=1.0.0
 
 # Text Processing
 unidecode>=1.3.0        # Transliterate non-Latin to ASCII for Google Places
+beautifulsoup4>=4.12.0  # HTML parsing for official image scraping
 
 # Scheduling
 apscheduler>=3.10.0

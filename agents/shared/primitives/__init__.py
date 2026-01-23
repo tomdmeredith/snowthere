@@ -235,6 +235,18 @@ from .ugc_photos import (
     classify_photo_with_vision,
 )
 
+# Official Images primitives (Real photos from resort websites)
+from .official_images import (
+    OfficialImageResult,
+    fetch_official_resort_image,
+    fetch_resort_images_with_fallback,
+    find_resort_website,
+    extract_images_from_page,
+    download_and_store_image,
+    delete_ai_generated_images,
+    count_ai_generated_images,
+)
+
 # Approval Panel primitives (Three-agent quality evaluation)
 from .approval import (
     # Data classes
@@ -512,4 +524,15 @@ __all__ = [
     "format_loop_summary",
     # Approval Panel - Constants
     "REQUIRED_SECTIONS",
+    # Official Images - Data classes
+    "OfficialImageResult",
+    # Official Images - Main functions
+    "fetch_official_resort_image",
+    "fetch_resort_images_with_fallback",
+    "find_resort_website",
+    "extract_images_from_page",
+    "download_and_store_image",
+    # Official Images - Cleanup
+    "delete_ai_generated_images",
+    "count_ai_generated_images",
 ]

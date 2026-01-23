@@ -73,7 +73,7 @@ async def exa_search(
             SearchResult(
                 title=r.title or "",
                 url=r.url,
-                snippet=r.text[:500] if r.text else "",
+                snippet=r.text[:1500] if r.text else "",  # Increased from 500 for better price extraction
                 source="exa",
                 score=r.score if hasattr(r, "score") else None,
                 published_date=r.published_date if hasattr(r, "published_date") else None,
@@ -204,12 +204,21 @@ async def search_resort_info(
     - Exa: Finding relevant content by meaning (trip reports, reviews)
     - Brave: Traditional search for official sites, specific queries
     - Tavily: AI-synthesized research with answer generation
+
+    CRITICAL: Includes dedicated pricing queries to find cost data families need.
     """
+    from datetime import datetime
+    current_year = datetime.now().year
+
     queries = {
         "family_reviews": f"{resort_name} {country} family ski trip review kids",
         "official_info": f"{resort_name} ski resort official site lift tickets",
         "ski_school": f"{resort_name} ski school children lessons childcare",
         "lodging": f"{resort_name} family lodging ski-in ski-out hotels",
+        # NEW: Dedicated pricing queries
+        "lift_prices": f"{resort_name} lift ticket prices {current_year} {current_year + 1}",
+        "lodging_rates": f"{resort_name} hotel prices per night winter ski season",
+        "ski_school_cost": f"{resort_name} ski school lesson prices children cost",
     }
 
     # Run all searches in parallel
@@ -227,6 +236,11 @@ async def search_resort_info(
     # Additional Exa for lodging
     tasks.append(exa_search(queries["lodging"], num_results=5))
 
+    # NEW: Pricing-specific searches (CRITICAL for family value)
+    tasks.append(brave_search(queries["lift_prices"], num_results=5))
+    tasks.append(brave_search(queries["lodging_rates"], num_results=5))
+    tasks.append(tavily_search(queries["ski_school_cost"], max_results=3))
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Organize results
@@ -235,6 +249,10 @@ async def search_resort_info(
         "official_info": results[1] if not isinstance(results[1], Exception) else [],
         "ski_school": results[2] if not isinstance(results[2], Exception) else {"results": []},
         "lodging": results[3] if not isinstance(results[3], Exception) else [],
+        # NEW: Pricing categories
+        "lift_prices": results[4] if not isinstance(results[4], Exception) else [],
+        "lodging_rates": results[5] if not isinstance(results[5], Exception) else [],
+        "ski_school_cost": results[6] if not isinstance(results[6], Exception) else {"results": []},
         "errors": [str(r) for r in results if isinstance(r, Exception)],
     }
 
@@ -259,8 +277,12 @@ def flatten_sources(research_data: dict[str, Any]) -> list[dict[str, Any]]:
     sources = []
     seen_urls: set[str] = set()
 
-    # Standard list categories
-    for category in ["family_reviews", "official_info", "lodging"]:
+    # Standard list categories (including new pricing categories)
+    list_categories = [
+        "family_reviews", "official_info", "lodging",
+        "lift_prices", "lodging_rates",  # New pricing categories
+    ]
+    for category in list_categories:
         for result in research_data.get(category, []):
             if isinstance(result, SearchResult) and result.url not in seen_urls:
                 sources.append({
@@ -272,19 +294,21 @@ def flatten_sources(research_data: dict[str, Any]) -> list[dict[str, Any]]:
                 })
                 seen_urls.add(result.url)
 
-    # Handle ski_school dict structure (from Tavily)
-    ski_school = research_data.get("ski_school", {})
-    if isinstance(ski_school, dict):
-        for result in ski_school.get("results", []):
-            if isinstance(result, SearchResult) and result.url not in seen_urls:
-                sources.append({
-                    "title": result.title,
-                    "url": result.url,
-                    "snippet": result.snippet,
-                    "source": result.source,
-                    "category": "ski_school",
-                })
-                seen_urls.add(result.url)
+    # Handle dict categories (from Tavily - ski_school and ski_school_cost)
+    dict_categories = ["ski_school", "ski_school_cost"]
+    for category in dict_categories:
+        data = research_data.get(category, {})
+        if isinstance(data, dict):
+            for result in data.get("results", []):
+                if isinstance(result, SearchResult) and result.url not in seen_urls:
+                    sources.append({
+                        "title": result.title,
+                        "url": result.url,
+                        "snippet": result.snippet,
+                        "source": result.source,
+                        "category": category,
+                    })
+                    seen_urls.add(result.url)
 
     return sources
 
