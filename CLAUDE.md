@@ -527,55 +527,76 @@ No exclusion list exists - resorts are discovered via pass networks, keyword res
 
 ## Compound Beads Workflow
 
-This project uses compound-beads methodology (inherited from workspace).
+This project uses compound-beads v2.0.
 
-### Slash Commands
+### Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/ready` | Start session - load context, check current round |
-| `/plan` | Enter planning mode for complex work |
-| `/work` | Execution guidelines and best practices |
-| `/eval` | Evaluate work against criteria |
-| `/review` | Quality gates before completion |
-| `/land` | End session - compress context, document learnings |
-| `/panel` | Expert panel facilitation |
+| `/compound:start-round` | Begin new development round |
+| `/compound:status` | Show current round state |
+| `/compound:close-session` | 7-step session close protocol |
+| `/compound:compound` | Extract learnings + Arc narrative |
+| `/compound:panel` | Expert consultation (optional) |
+| `/compound:handoff` | Context window transition |
+| `/compound:research` | Search past learnings |
+
+### Tracking Files
+
+| File | Purpose |
+|------|---------|
+| `.compound-beads/QUICKSTART.md` | Instant pickup (<500 chars) |
+| `.compound-beads/context.md` | Current state + recent rounds |
+| `.compound-beads/rounds.jsonl` | Machine-readable history |
+| `.compound-beads/learnings.md` | Knowledge with Arc narratives |
 
 ### Session Flow
 
 ```
-/ready
-  → Read CLAUDE.md
-  → Check current round status
-  → Identify next task
+/compound:start-round
+  → Read QUICKSTART.md + context.md
+  → Identify pending tasks
+  → Work on round tasks
 
-/plan (if needed)
-  → Create plan file in .claude/plans/
-  → Complex work only
+/compound:close-session (7 steps)
+  1. git status
+  2. git add
+  3. git commit [Round N]
+  4. Update rounds.jsonl
+  5. Update context.md
+  6. Regenerate QUICKSTART.md
+  7. git push
+```
 
-/work
-  → Execute task
-  → Update CLAUDE.md checkboxes
-  → Commit progress
+### Arc Narrative (End of Each Round)
 
-/land
-  → Mark tasks complete
-  → Update Rounds section
-  → Document learnings
+Every round captures its transformation:
+```
+We started believing: [Initial hypothesis]
+We ended believing: [Final understanding]
+The transformation: [One-sentence shift in thinking]
 ```
 
 ---
 
 ## How to Continue
 
-1. Read this CLAUDE.md for full context
-2. Check Rounds section - Round 5.1 complete, Round 5 (Compliance & Polish) has remaining tasks
-3. To test the pipeline: `cd agents && python cron.py --dry-run --max-resorts 2`
-4. Railway auto-deploys from main branch (project: creative-spontaneity)
+1. Read `.compound-beads/QUICKSTART.md` for instant context
+2. Check `.compound-beads/context.md` for current state
+3. Run `/compound:start-round` to begin work
+4. Run `/compound:close-session` when done (includes git push)
+
+**Quick Commands:**
+```bash
+# Test pipeline
+cd agents && python cron.py --dry-run --max-resorts 2
+
+# Railway auto-deploys from main branch (creative-spontaneity)
+```
 
 **Immediate Next Steps:**
-- Run a test batch on Railway to verify new agent-native pipeline
 - Round 5 remaining: cron failure alerts, accessibility audit, trademark notices
+- Round 6 pending: Homepage redesign
 
 ---
 
