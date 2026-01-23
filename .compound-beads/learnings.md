@@ -4,6 +4,32 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Round 5.2: Schema Contract Audit
+
+**Arc:**
+- **Started believing**: Schema mismatches are coding errors to fix quickly
+- **Ended believing**: The extraction layer's ambition was correct - the database schema was incomplete for family needs
+- **Transformation**: Expand schema to match user needs, don't shrink capabilities to match technical limits
+
+**Technical:**
+- Extraction layer produced `lesson_group_child`, `rental_adult_daily` etc. that families need
+- Database schema was designed for frontend display, not family budgeting
+- Sanitization layer (`sanitize_for_schema()`) provides safety net during schema evolution
+- Field name mapping handles extraction→DB name differences (`childcare_min_age_months` → `childcare_min_age`)
+- Schema whitelists are single source of truth for valid columns
+
+**Process:**
+- Convene expert panel for architectural audits (Architecture, Data Integrity, FamilyValue, Philosopher)
+- "Autonomy in execution ≠ autonomy in evolution" - code changes need human testing
+- $8.86 wasted is tuition IF architecture improves
+- Schema contracts must be explicit, not implicit coupling
+
+**Key Insight:**
+Ski school is often the LARGEST budget item for families with kids - more than lift tickets.
+The extraction layer was trying to capture what families actually need to budget.
+
+---
+
 ## Round 5.1: Agent-Native Scalability
 
 **Arc:**
@@ -115,6 +141,8 @@ Knowledge extracted across all rounds with Arc narratives.
 | Launch when "ready" | Launch early, iterate |
 | Formula-based confidence only | Claude for borderline decisions |
 | Massive lists in prompts | Two-phase validation |
+| Implicit schema coupling | Explicit schema whitelists + sanitization |
+| Shrink extraction to match DB | Expand DB to match user needs |
 
 ---
 
@@ -128,3 +156,6 @@ Knowledge extracted across all rounds with Arc narratives.
 | Voice profiles | Consistent tone across content |
 | Arc narratives | Capture transformation, not just tasks |
 | Session close protocol | Work isn't done until pushed |
+| Schema sanitization layer | Prevents failures during schema evolution |
+| Expert panel audits | Multiple perspectives catch design issues |
+| User-first schema design | DB should serve user needs, not technical convenience |

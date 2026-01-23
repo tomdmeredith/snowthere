@@ -13,6 +13,90 @@ from ..supabase_client import get_supabase_client
 
 
 # =============================================================================
+# SCHEMA WHITELISTS (Single Source of Truth)
+# =============================================================================
+# These define what columns exist in the database. Any fields not in these sets
+# will be filtered out before upsert operations to prevent schema mismatch errors.
+
+RESORT_COSTS_COLUMNS = frozenset({
+    "resort_id",
+    "currency",
+    "lift_adult_daily",
+    "lift_child_daily",
+    "lift_family_daily",
+    "lodging_budget_nightly",
+    "lodging_mid_nightly",
+    "lodging_luxury_nightly",
+    "meal_family_avg",
+    "estimated_family_daily",
+    "price_level",
+    # Added in migration 016 (family-critical costs):
+    "lesson_group_child",
+    "lesson_private_hour",
+    "rental_adult_daily",
+    "rental_child_daily",
+    "lift_under6",
+})
+
+RESORT_FAMILY_METRICS_COLUMNS = frozenset({
+    "resort_id",
+    "family_overall_score",
+    "best_age_min",
+    "best_age_max",
+    "kid_friendly_terrain_pct",
+    "has_childcare",
+    "childcare_min_age",  # in months
+    "ski_school_min_age",  # in years
+    "kids_ski_free_age",
+    "has_magic_carpet",
+    "has_terrain_park_kids",
+    "perfect_if",
+    "skip_if",
+})
+
+# Field name mappings (extraction layer name -> database column name)
+FAMILY_METRICS_FIELD_MAP = {
+    "childcare_min_age_months": "childcare_min_age",
+    "ski_school_min_age_years": "ski_school_min_age",
+}
+
+
+def sanitize_for_schema(
+    data: dict[str, Any],
+    allowed_columns: frozenset[str],
+    field_map: dict[str, str] | None = None,
+) -> tuple[dict[str, Any], list[str]]:
+    """
+    Filter and map data to only columns that exist in the DB schema.
+
+    This prevents schema mismatch errors when the extraction layer produces
+    fields that don't exist in the database yet (or have different names).
+
+    Args:
+        data: Raw data dictionary
+        allowed_columns: Set of valid column names for this table
+        field_map: Optional dict to rename fields (extraction_name -> db_name)
+
+    Returns:
+        Tuple of (sanitized_data, dropped_fields)
+    """
+    field_map = field_map or {}
+    sanitized = {}
+    dropped = []
+
+    for key, value in data.items():
+        # Apply field name mapping first
+        mapped_key = field_map.get(key, key)
+
+        if mapped_key in allowed_columns:
+            sanitized[mapped_key] = value
+        else:
+            dropped.append(key)
+
+    return sanitized, dropped
+
+
+# =============================================================================
 # RESORT CRUD OPERATIONS
 # =============================================================================
 
@@ -330,18 +414,31 @@ def update_resort_costs(resort_id: str, costs: dict[str, Any]) -> dict:
     """
     Update resort costs (upsert).
 
+    Automatically filters out any fields not in the database schema to prevent
+    schema mismatch errors. Dropped fields are logged for debugging.
+
     Args:
         resort_id: UUID of the resort
         costs: Cost fields to update (lift_adult_daily, lodging_budget_nightly, etc.)
 
     Returns:
-        Updated costs record
+        Updated costs record (includes _dropped_fields for debugging)
     """
     client = get_supabase_client()
 
-    data = {"resort_id": resort_id, **costs}
+    # Sanitize data to only include valid columns
+    sanitized_costs, dropped = sanitize_for_schema(costs, RESORT_COSTS_COLUMNS)
+
+    if dropped:
+        print(f"[sanitize] Dropped {len(dropped)} fields from resort_costs: {dropped}")
+
+    data = {"resort_id": resort_id, **sanitized_costs}
     response = client.table("resort_costs").upsert(data).execute()
-    return response.data[0] if response.data else data
+
+    result = response.data[0] if response.data else data
+    if dropped:
+        result["_dropped_fields"] = dropped
+    return result
 
 
 # =============================================================================
@@ -374,18 +471,39 @@ def update_resort_family_metrics(resort_id: str, metrics: dict[str, Any]) -> dic
     """
     Update resort family metrics (upsert).
 
+    Automatically filters out any fields not in the database schema and maps
+    field names from extraction format to database format.
+
+    Field mappings:
+    - childcare_min_age_months -> childcare_min_age
+    - ski_school_min_age_years -> ski_school_min_age
+
     Args:
         resort_id: UUID of the resort
         metrics: Metrics to update (family_overall_score, childcare_min_age, etc.)
 
     Returns:
-        Updated metrics record
+        Updated metrics record (includes _dropped_fields for debugging)
     """
     client = get_supabase_client()
 
-    data = {"resort_id": resort_id, **metrics}
+    # Sanitize data with field name mapping
+    sanitized_metrics, dropped = sanitize_for_schema(
+        metrics,
+        RESORT_FAMILY_METRICS_COLUMNS,
+        FAMILY_METRICS_FIELD_MAP,
+    )
+
+    if dropped:
+        print(f"[sanitize] Dropped {len(dropped)} fields from family_metrics: {dropped}")
+
+    data = {"resort_id": resort_id, **sanitized_metrics}
     response = client.table("resort_family_metrics").upsert(data).execute()
-    return response.data[0] if response.data else data
+
+    result = response.data[0] if response.data else data
+    if dropped:
+        result["_dropped_fields"] = dropped
+    return result
 
 
 # =============================================================================

@@ -10,6 +10,20 @@
 - Status: Not started
 - Goal: Implement chosen homepage design from concepts
 
+## Round 5.2: Schema Contract Audit (Completed)
+
+**Goal**: Fix schema mismatch causing 100% pipeline failure
+
+**Accomplishments**:
+- Identified root cause: extraction layer produced fields DB didn't have
+- Added `sanitize_for_schema()` safety layer to database.py
+- Created migration 016: adds lesson costs, rental costs, lift_under6
+- Aligned extraction schema with database columns exactly
+- Expert panel audit (Architecture, Data Integrity, FamilyValue, Philosopher)
+
+**Key Insight**: The extraction layer was RIGHT - families need ski school and rental costs.
+The DB schema was incomplete. Expand schema to match user needs, don't shrink capabilities.
+
 ## Round 5.1: Agent-Native Scalability (Completed)
 
 **Goal**: Scale duplicate detection to 3000+ resorts

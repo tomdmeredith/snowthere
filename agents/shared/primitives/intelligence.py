@@ -729,32 +729,49 @@ async def extract_resort_data(
 
     Cost: ~$0.01 per call with Sonnet
     """
+    # Schema aligned with database columns (016_extend_costs_for_families.sql)
+    # Field names MUST match exactly to avoid schema mismatch errors
     target_schema = {
         "costs": {
+            # Core lift costs
             "lift_adult_daily": "Adult daily lift ticket in local currency (number)",
             "lift_child_daily": "Child (6-12) daily lift ticket (number)",
-            "lift_under6": "Price for under 6 or 'free' (number or 0)",
+            "lift_under6": "Price for under 6 (number, use 0 if free)",
+            "lift_family_daily": "Family bundle lift ticket if available (number or null)",
+            # Lodging tiers
             "lodging_budget_nightly": "Budget family lodging per night (number)",
             "lodging_mid_nightly": "Mid-range family lodging per night (number)",
             "lodging_luxury_nightly": "Luxury family lodging per night (number)",
-            "ski_rental_adult_daily": "Adult ski rental per day (number)",
-            "ski_rental_child_daily": "Child ski rental per day (number)",
-            "lesson_group_adult": "Adult group lesson price (number)",
-            "lesson_group_child": "Child group lesson price (number)",
+            # Ski school costs (often largest budget item for families!)
+            "lesson_group_child": "Child group lesson per day (number)",
             "lesson_private_hour": "Private lesson per hour (number)",
+            # Rental costs (most families rent)
+            "rental_adult_daily": "Adult ski/boot rental per day (number)",
+            "rental_child_daily": "Child ski/boot rental per day (number)",
+            # Meals and totals
+            "meal_family_avg": "Average meal cost for family of 4 (number)",
+            "estimated_family_daily": "Total estimated daily cost for family of 4 (number)",
             "currency": "Currency code (USD, EUR, CHF, etc.)",
         },
         "family_metrics": {
+            # Scores
             "family_overall_score": "1-10 score for families with kids under 12",
-            "beginner_friendliness": "1-10 score for beginner terrain/facilities",
-            "childcare_min_age_months": "Minimum age for resort childcare in months",
-            "ski_school_min_age_years": "Minimum age for ski school in years",
-            "beginner_terrain_pct": "Percentage of beginner terrain (0-100)",
-            "intermediate_terrain_pct": "Percentage of intermediate terrain (0-100)",
-            "advanced_terrain_pct": "Percentage of advanced terrain (0-100)",
-            "has_kids_club": "Boolean - does resort have dedicated kids club",
-            "has_magic_carpet": "Boolean - does resort have magic carpet lifts",
+            # Age ranges
+            "best_age_min": "Minimum ideal child age in years (number)",
+            "best_age_max": "Maximum ideal child age in years (number)",
+            # Childcare
             "has_childcare": "Boolean - does resort offer childcare",
+            "childcare_min_age": "Minimum age for childcare in months (number)",
+            # Ski school
+            "ski_school_min_age": "Minimum age for ski school in years (number)",
+            "kids_ski_free_age": "Age under which kids ski free (number or null)",
+            # Terrain
+            "kid_friendly_terrain_pct": "Percentage of kid-friendly terrain (0-100)",
+            "has_magic_carpet": "Boolean - does resort have magic carpet lifts",
+            "has_terrain_park_kids": "Boolean - does resort have kids terrain park",
+            # Decision helpers (arrays)
+            "perfect_if": "Array of reasons this resort is perfect for a family",
+            "skip_if": "Array of reasons a family might want to skip this resort",
         },
     }
 
