@@ -89,6 +89,79 @@ REQUIRED_SECTIONS = [
 
 
 # =============================================================================
+# Voice Pattern Post-Processing (Deterministic Cleanup)
+# =============================================================================
+# These patterns slip through Claude's voice coaching. We catch them here
+# with deterministic regex to ensure zero tolerance for forbidden patterns.
+# =============================================================================
+
+import re
+
+FORBIDDEN_PATTERNS = [
+    # Performative openers - these sound like trying too hard
+    ("Here's the thing", ""),
+    ("Here's the thing:", ""),
+    ("Here's the deal", ""),
+    ("Here's the deal:", ""),
+    ("Real talk:", ""),
+    ("Real talk,", ""),
+    ("I'm not gonna lie", ""),
+    ("Let me tell you", ""),
+    ("Confession:", ""),
+    ("Truth bomb:", ""),
+    ("Hot take:", ""),
+    # LLM transition markers - dead giveaways of AI content
+    ("Additionally,", ""),
+    ("Furthermore,", ""),
+    ("Moreover,", ""),
+    ("Subsequently,", ""),
+    ("In addition,", ""),
+    ("It's worth noting", "Note:"),
+    ("It's important to note", "Note:"),
+    ("It should be noted", "Note:"),
+    ("That being said,", ""),
+    ("With that being said,", ""),
+    ("Having said that,", ""),
+    # Corporate/generic filler
+    ("At the end of the day,", ""),
+    ("When all is said and done,", ""),
+    ("For what it's worth,", ""),
+]
+
+
+def apply_voice_post_processing(content: dict[str, Any]) -> dict[str, Any]:
+    """Apply deterministic pattern fixes to content sections.
+
+    This catches voice violations that slip through the approval panel.
+    Called after improve_content() and at all return points in approval_loop().
+
+    The function is idempotent - safe to call multiple times on same content.
+    """
+    processed = {}
+
+    for key, value in content.items():
+        if isinstance(value, str):
+            text = value
+            for pattern, replacement in FORBIDDEN_PATTERNS:
+                # Case-insensitive replacement
+                text = re.sub(re.escape(pattern), replacement, text, flags=re.IGNORECASE)
+
+            # Clean up artifacts from removals
+            text = re.sub(r'\s+', ' ', text)  # Multiple spaces → single space
+            text = re.sub(r'\s+([.,!?])', r'\1', text)  # Space before punctuation
+            text = re.sub(r'^\s+', '', text)  # Leading whitespace
+            text = re.sub(r'\s+$', '', text)  # Trailing whitespace
+            text = re.sub(r'^[.,!?]\s*', '', text)  # Leading punctuation from removals
+
+            processed[key] = text.strip()
+        else:
+            # Pass through non-string values unchanged
+            processed[key] = value
+
+    return processed
+
+
+# =============================================================================
 # Helper Functions
 # =============================================================================
 
@@ -650,10 +723,11 @@ Preserve all accurate factual information."""
         for key, value in content.items():
             if key not in improved:
                 improved[key] = value
-        return improved
+        # Apply voice pattern cleanup before returning
+        return apply_voice_post_processing(improved)
     except json.JSONDecodeError:
-        # Return original content if parsing fails
-        return content
+        # Return original content if parsing fails (still apply cleanup)
+        return apply_voice_post_processing(content)
 
 
 # =============================================================================
@@ -705,8 +779,9 @@ async def approval_loop(
 
         if panel_result.approved:
             # Success! Content approved by 2/3 majority
+            # Apply voice post-processing as final cleanup
             return ApprovalLoopResult(
-                final_content=current_content,
+                final_content=apply_voice_post_processing(current_content),
                 approved=True,
                 iterations=iteration,
                 panel_history=panel_history,
@@ -725,8 +800,9 @@ async def approval_loop(
             )
         else:
             # Max iterations reached - return as not approved
+            # Still apply voice post-processing for consistency
             return ApprovalLoopResult(
-                final_content=current_content,
+                final_content=apply_voice_post_processing(current_content),
                 approved=False,
                 iterations=iteration,
                 panel_history=panel_history,
@@ -735,7 +811,7 @@ async def approval_loop(
 
     # Should not reach here, but handle edge case
     return ApprovalLoopResult(
-        final_content=current_content,
+        final_content=apply_voice_post_processing(current_content),
         approved=False,
         iterations=max_iterations,
         panel_history=panel_history,

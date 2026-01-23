@@ -690,3 +690,127 @@ Be specific to each resort - generic phrases are a failure."""
     except Exception as e:
         print(f"Tagline generation failed: {e}")
         return f"Your family adventure starts in {resort_name}"
+
+
+# =============================================================================
+# RESORT DATA EXTRACTION
+# =============================================================================
+
+
+@dataclass
+class ExtractedResortData:
+    """Result of extracting structured costs and family metrics."""
+
+    costs: dict[str, Any]
+    family_metrics: dict[str, Any]
+    confidence: float
+    reasoning: str
+    missing_fields: list[str] = field(default_factory=list)
+
+
+async def extract_resort_data(
+    raw_research: dict[str, Any],
+    resort_name: str,
+    country: str,
+) -> ExtractedResortData:
+    """
+    Extract structured costs and family metrics from raw research data.
+
+    This is the missing layer between research and storage - raw data goes in,
+    structured costs/family_metrics come out ready for database insertion.
+
+    Args:
+        raw_research: Raw research data from search_resort_info()
+        resort_name: Name of the resort
+        country: Country where resort is located
+
+    Returns:
+        ExtractedResortData with costs, family_metrics, and confidence
+
+    Cost: ~$0.01 per call with Sonnet
+    """
+    target_schema = {
+        "costs": {
+            "lift_adult_daily": "Adult daily lift ticket in local currency (number)",
+            "lift_child_daily": "Child (6-12) daily lift ticket (number)",
+            "lift_under6": "Price for under 6 or 'free' (number or 0)",
+            "lodging_budget_nightly": "Budget family lodging per night (number)",
+            "lodging_mid_nightly": "Mid-range family lodging per night (number)",
+            "lodging_luxury_nightly": "Luxury family lodging per night (number)",
+            "ski_rental_adult_daily": "Adult ski rental per day (number)",
+            "ski_rental_child_daily": "Child ski rental per day (number)",
+            "lesson_group_adult": "Adult group lesson price (number)",
+            "lesson_group_child": "Child group lesson price (number)",
+            "lesson_private_hour": "Private lesson per hour (number)",
+            "currency": "Currency code (USD, EUR, CHF, etc.)",
+        },
+        "family_metrics": {
+            "family_overall_score": "1-10 score for families with kids under 12",
+            "beginner_friendliness": "1-10 score for beginner terrain/facilities",
+            "childcare_min_age_months": "Minimum age for resort childcare in months",
+            "ski_school_min_age_years": "Minimum age for ski school in years",
+            "beginner_terrain_pct": "Percentage of beginner terrain (0-100)",
+            "intermediate_terrain_pct": "Percentage of intermediate terrain (0-100)",
+            "advanced_terrain_pct": "Percentage of advanced terrain (0-100)",
+            "has_kids_club": "Boolean - does resort have dedicated kids club",
+            "has_magic_carpet": "Boolean - does resort have magic carpet lifts",
+            "has_childcare": "Boolean - does resort offer childcare",
+        },
+    }
+
+    prompt = f"""Extract costs and family metrics from this resort research data.
+
+RESORT: {resort_name}, {country}
+
+RESEARCH DATA:
+{json.dumps(raw_research, indent=2, default=str)[:8000]}
+
+TARGET SCHEMA:
+{json.dumps(target_schema, indent=2)}
+
+EXTRACTION RULES:
+- Extract exact values where available in the research
+- For price ranges, use the midpoint
+- For family_overall_score: Consider childcare quality, beginner terrain %, terrain park safety, crowds, ski school reputation
+- Use null for truly unavailable data - do NOT fabricate
+- Be conservative - only extract what you can verify from the source
+- Convert all prices to the local currency of the resort
+
+Return JSON:
+{{
+    "costs": {{ ... }},
+    "family_metrics": {{ ... }},
+    "confidence": 0.0-1.0,
+    "reasoning": "Brief quality assessment of extraction",
+    "missing_fields": ["field1", "field2"]
+}}"""
+
+    system = """You are a data extraction specialist for ski resort information.
+Extract structured data from raw research accurately and conservatively.
+Never fabricate data - use null when information isn't available.
+Be especially careful with family metrics - these help parents make decisions."""
+
+    response = _call_claude(
+        prompt,
+        system=system,
+        model="claude-sonnet-4-20250514",
+        max_tokens=1500,
+    )
+
+    try:
+        parsed = _parse_json_response(response)
+        return ExtractedResortData(
+            costs=parsed.get("costs", {}),
+            family_metrics=parsed.get("family_metrics", {}),
+            confidence=float(parsed.get("confidence", 0.5)),
+            reasoning=parsed.get("reasoning", "Extraction completed"),
+            missing_fields=parsed.get("missing_fields", []),
+        )
+    except Exception as e:
+        return ExtractedResortData(
+            costs={},
+            family_metrics={},
+            confidence=0.3,
+            reasoning=f"Extraction failed: {e}",
+            missing_fields=["all"],
+        )

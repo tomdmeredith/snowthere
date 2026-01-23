@@ -254,6 +254,57 @@ def run_resort_pipeline(
                 metadata={"lat": coords[0], "lon": coords[1]},
             )
 
+        # =====================================================================
+        # EXTRACTION: Transform raw research into structured costs/family_metrics
+        # This is the critical layer between research and storage
+        # =====================================================================
+        from shared.primitives.intelligence import extract_resort_data
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="start_extraction",
+            reasoning=f"Extracting structured costs and family metrics from raw research for {resort_name}",
+        )
+
+        extracted = asyncio.run(extract_resort_data(
+            raw_research=research_data,
+            resort_name=resort_name,
+            country=country,
+        ))
+
+        # Merge extracted data into research_data for downstream use
+        research_data["costs"] = extracted.costs
+        research_data["family_metrics"] = extracted.family_metrics
+
+        # Log extraction cost (~$0.01 for Sonnet)
+        log_cost("anthropic", 0.01, None, {"run_id": run_id, "stage": "extraction"})
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="extraction_complete",
+            reasoning=f"Extracted data with confidence {extracted.confidence:.2f}: {extracted.reasoning}",
+            metadata={
+                "extraction_confidence": extracted.confidence,
+                "missing_fields": extracted.missing_fields,
+                "costs_fields": list(extracted.costs.keys()) if extracted.costs else [],
+                "metrics_fields": list(extracted.family_metrics.keys()) if extracted.family_metrics else [],
+            },
+        )
+
+        # Update confidence with extraction quality
+        if extracted.confidence < 0.5 and extracted.missing_fields:
+            # Reduce overall confidence if extraction was poor
+            confidence = confidence * 0.8
+            result["confidence"] = confidence
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="confidence_adjusted",
+                reasoning=f"Adjusted confidence to {confidence:.2f} due to poor extraction (missing: {len(extracted.missing_fields)} fields)",
+            )
+
     except Exception as e:
         error_decision = handle_error(e, resort_name, "research", None)
         result["status"] = "failed"

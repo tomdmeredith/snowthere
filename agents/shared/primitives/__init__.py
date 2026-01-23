@@ -139,6 +139,9 @@ from .intelligence import (
     ResortValidationResult,
     # Content generation
     generate_tagline,
+    # Resort data extraction
+    extract_resort_data,
+    ExtractedResortData,
 )
 
 # Quality audit primitives
@@ -387,6 +390,9 @@ __all__ = [
     "ResortValidationResult",
     # Intelligence - Content generation
     "generate_tagline",
+    # Intelligence - Resort data extraction
+    "extract_resort_data",
+    "ExtractedResortData",
     # Quality - Enums and data classes
     "IssueSeverity",
     "IssueType",
