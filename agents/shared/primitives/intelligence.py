@@ -624,7 +624,7 @@ async def validate_resort_selection(
 async def generate_tagline(
     resort_name: str,
     country: str,
-    context: str,
+    context: str | dict[str, Any],
     voice_profile: str = "snowthere_guide",
 ) -> str:
     """
@@ -636,7 +636,7 @@ async def generate_tagline(
     Args:
         resort_name: Name of the resort
         country: Country where resort is located
-        context: Research context about the resort
+        context: Research context about the resort (string or dict)
         voice_profile: Voice profile to use
 
     Returns:
@@ -647,6 +647,10 @@ async def generate_tagline(
         - "Where powder meets playful adventure"
         - "Europe's best-kept family ski secret"
     """
+    # Convert dict context to string for prompt
+    if isinstance(context, dict):
+        context = json.dumps(context, indent=2, default=str)
+
     prompt = f"""Generate a unique tagline for {resort_name}, {country}.
 
 CONTEXT:
