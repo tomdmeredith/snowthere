@@ -782,75 +782,43 @@ def run_resort_pipeline(
     # =========================================================================
     # Philosophy: Publish early, improve continuously (agent-native approach)
     # The approval panel provides quality signals but doesn't gate publication.
-    # If there are concerns, we still publish but queue for continuous improvement.
-    #
-    # DATA GATE: Check for minimum data completeness before publishing.
-    # Families need at least SOME pricing/metric data to plan trips.
-    #
-    # SAFETY NET: Minimum confidence threshold of 0.60 to prevent publishing
-    # content with unreliable research data (e.g., confidence 0.30).
+    # PUBLISH-FIRST PHILOSOPHY: Always publish, queue low-quality for improvement.
+    # The quality score determines enhancement priority, NOT whether to publish.
+    # A thin page is better than no page - it can be discovered and improved.
     # =========================================================================
 
-    # DATA GATE: Check for minimum required data
+    # Check data completeness (for improvement queue priority, not gating)
     has_data, missing_fields = has_minimum_data(research_data)
-    if auto_publish and not has_data:
-        # Insufficient data - save as draft, don't publish hollow content
-        result["status"] = "draft"
-        result["stages"]["approval_panel"] = {
-            "status": "skipped_insufficient_data",
-            "missing_fields": missing_fields,
-            "reason": "No pricing or family metrics found - cannot help families plan trips",
-        }
-
-        log_reasoning(
-            task_id=None,
-            agent_name="pipeline_runner",
-            action="insufficient_data_draft",
-            reasoning=f"Insufficient data for {resort_name}: missing {missing_fields}. Saving as draft - families need pricing to plan trips.",
-            metadata={
-                "missing_fields": missing_fields,
-                "costs": research_data.get("costs", {}),
-                "family_metrics": research_data.get("family_metrics", {}),
-            },
-        )
-
-        print(f"⚠️  Insufficient data - saving as draft: {resort_name}")
-        print(f"   Missing: {', '.join(missing_fields[:4])}")
-
-        result["completed_at"] = datetime.utcnow().isoformat()
-        return result
-
-    # Check minimum confidence before publishing
-    MIN_PUBLISH_CONFIDENCE = 0.60
     confidence = result.get("confidence", 0)
+    QUALITY_THRESHOLD = 0.60  # Below this = high priority for improvement
 
-    if auto_publish and confidence < MIN_PUBLISH_CONFIDENCE:
-        # Research quality too low - save as draft, don't run approval panel
-        result["status"] = "draft"
-        result["stages"]["approval_panel"] = {
-            "status": "skipped_low_confidence",
-            "confidence": confidence,
-            "threshold": MIN_PUBLISH_CONFIDENCE,
-            "reason": f"Confidence {confidence:.2f} below minimum threshold {MIN_PUBLISH_CONFIDENCE}",
-        }
+    # Track quality issues for improvement queue
+    quality_issues = []
+    improvement_priority = 5  # Default medium priority
 
+    if not has_data:
+        quality_issues.append(f"Missing data: {', '.join(missing_fields[:4])}")
+        improvement_priority = max(improvement_priority, 8)  # High priority
         log_reasoning(
             task_id=None,
             agent_name="pipeline_runner",
-            action="low_confidence_draft",
-            reasoning=f"Research confidence {confidence:.2f} is below minimum {MIN_PUBLISH_CONFIDENCE}. Saving as draft instead of publishing.",
-            metadata={
-                "confidence": confidence,
-                "threshold": MIN_PUBLISH_CONFIDENCE,
-                "resort": resort_name,
-            },
+            action="data_quality_note",
+            reasoning=f"Low data completeness for {resort_name}: missing {missing_fields}. Will publish and queue for improvement.",
+            metadata={"missing_fields": missing_fields},
         )
+        print(f"📝 Low data completeness - will publish and queue for improvement: {resort_name}")
 
-        print(f"⚠️  Low confidence ({confidence:.2f}) - saving as draft: {resort_name}")
-
-        # Skip to complete stage
-        result["completed_at"] = datetime.utcnow().isoformat()
-        return result
+    if confidence < QUALITY_THRESHOLD:
+        quality_issues.append(f"Low confidence: {confidence:.2f}")
+        improvement_priority = max(improvement_priority, 7)  # High priority
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="confidence_quality_note",
+            reasoning=f"Low research confidence {confidence:.2f} for {resort_name}. Will publish and queue for improvement.",
+            metadata={"confidence": confidence, "threshold": QUALITY_THRESHOLD},
+        )
+        print(f"📝 Low confidence ({confidence:.2f}) - will publish and queue for improvement: {resort_name}")
 
     if auto_publish:
         try:

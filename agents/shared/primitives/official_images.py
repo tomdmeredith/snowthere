@@ -330,12 +330,13 @@ async def download_and_store_image(
                 return None
 
             # Determine file extension
+            # Note: IANA standard is "image/jpeg" not "image/jpg"
             if "png" in content_type:
                 ext = "png"
             elif "webp" in content_type:
                 ext = "webp"
             else:
-                ext = "jpg"
+                ext = "jpeg"  # Use IANA standard (image/jpeg, not image/jpg)
 
         except httpx.HTTPError as e:
             print(f"Failed to download image: {e}")

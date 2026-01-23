@@ -372,37 +372,179 @@ async def get_pass_network_resorts(pass_name: str) -> list[dict]:
     Returns:
         List of resort info dicts
     """
-    # Known pass networks (could be moved to database)
+    # Known pass networks - comprehensive list for gap discovery
+    # Note: Primary source is discovery_candidates table (seeded via migration)
+    # This is a backup for gap analysis
     PASS_NETWORKS = {
         "epic": [
-            {"name": "Vail", "country": "USA", "region": "Colorado"},
-            {"name": "Park City", "country": "USA", "region": "Utah"},
+            # Colorado
+            {"name": "Vail", "country": "United States", "region": "Colorado"},
+            {"name": "Beaver Creek", "country": "United States", "region": "Colorado"},
+            {"name": "Breckenridge", "country": "United States", "region": "Colorado"},
+            {"name": "Keystone", "country": "United States", "region": "Colorado"},
+            {"name": "Crested Butte", "country": "United States", "region": "Colorado"},
+            # Utah
+            {"name": "Park City", "country": "United States", "region": "Utah"},
+            # California
+            {"name": "Heavenly", "country": "United States", "region": "California"},
+            {"name": "Northstar", "country": "United States", "region": "California"},
+            {"name": "Kirkwood", "country": "United States", "region": "California"},
+            # Vermont
+            {"name": "Stowe", "country": "United States", "region": "Vermont"},
+            {"name": "Okemo", "country": "United States", "region": "Vermont"},
+            {"name": "Mount Snow", "country": "United States", "region": "Vermont"},
+            # Other US
+            {"name": "Stevens Pass", "country": "United States", "region": "Washington"},
+            {"name": "Afton Alps", "country": "United States", "region": "Minnesota"},
+            {"name": "Hunter Mountain", "country": "United States", "region": "New York"},
+            {"name": "Attitash", "country": "United States", "region": "New Hampshire"},
+            {"name": "Wildcat", "country": "United States", "region": "New Hampshire"},
+            # Canada
             {"name": "Whistler Blackcomb", "country": "Canada", "region": "British Columbia"},
+            # Europe
             {"name": "Verbier", "country": "Switzerland", "region": "Valais"},
+            {"name": "Crans-Montana", "country": "Switzerland", "region": "Valais"},
             {"name": "Les 3 Vallées", "country": "France", "region": "Savoie"},
+            {"name": "Courchevel", "country": "France", "region": "Savoie"},
+            {"name": "Méribel", "country": "France", "region": "Savoie"},
+            {"name": "Val Thorens", "country": "France", "region": "Savoie"},
+            {"name": "Les Menuires", "country": "France", "region": "Savoie"},
+            {"name": "St. Anton", "country": "Austria", "region": "Tyrol"},
+            {"name": "Lech-Zürs", "country": "Austria", "region": "Vorarlberg"},
+            {"name": "Sölden", "country": "Austria", "region": "Tyrol"},
+            {"name": "Ischgl", "country": "Austria", "region": "Tyrol"},
+            {"name": "Andermatt", "country": "Switzerland", "region": "Uri"},
+            # Asia/Oceania
             {"name": "Hakuba Valley", "country": "Japan", "region": "Nagano"},
-            {"name": "Perisher", "country": "Australia", "region": "NSW"},
-            {"name": "Breckenridge", "country": "USA", "region": "Colorado"},
-            {"name": "Keystone", "country": "USA", "region": "Colorado"},
-            {"name": "Heavenly", "country": "USA", "region": "California"},
-            {"name": "Northstar", "country": "USA", "region": "California"},
-            {"name": "Kirkwood", "country": "USA", "region": "California"},
+            {"name": "Rusutsu", "country": "Japan", "region": "Hokkaido"},
+            {"name": "Perisher", "country": "Australia", "region": "New South Wales"},
+            {"name": "Falls Creek", "country": "Australia", "region": "Victoria"},
+            {"name": "Hotham", "country": "Australia", "region": "Victoria"},
         ],
         "ikon": [
-            {"name": "Aspen Snowmass", "country": "USA", "region": "Colorado"},
-            {"name": "Steamboat", "country": "USA", "region": "Colorado"},
-            {"name": "Winter Park", "country": "USA", "region": "Colorado"},
-            {"name": "Big Sky", "country": "USA", "region": "Montana"},
-            {"name": "Jackson Hole", "country": "USA", "region": "Wyoming"},
-            {"name": "Deer Valley", "country": "USA", "region": "Utah"},
-            {"name": "Alta", "country": "USA", "region": "Utah"},
-            {"name": "Snowbird", "country": "USA", "region": "Utah"},
-            {"name": "Mammoth Mountain", "country": "USA", "region": "California"},
-            {"name": "Squaw Valley", "country": "USA", "region": "California"},
+            # Colorado
+            {"name": "Aspen Snowmass", "country": "United States", "region": "Colorado"},
+            {"name": "Steamboat", "country": "United States", "region": "Colorado"},
+            {"name": "Winter Park", "country": "United States", "region": "Colorado"},
+            {"name": "Copper Mountain", "country": "United States", "region": "Colorado"},
+            {"name": "Eldora", "country": "United States", "region": "Colorado"},
+            {"name": "Arapahoe Basin", "country": "United States", "region": "Colorado"},
+            # Montana/Wyoming
+            {"name": "Big Sky", "country": "United States", "region": "Montana"},
+            {"name": "Jackson Hole", "country": "United States", "region": "Wyoming"},
+            {"name": "Grand Targhee", "country": "United States", "region": "Wyoming"},
+            # Utah
+            {"name": "Deer Valley", "country": "United States", "region": "Utah"},
+            {"name": "Alta", "country": "United States", "region": "Utah"},
+            {"name": "Snowbird", "country": "United States", "region": "Utah"},
+            {"name": "Brighton", "country": "United States", "region": "Utah"},
+            {"name": "Solitude", "country": "United States", "region": "Utah"},
+            # California
+            {"name": "Mammoth Mountain", "country": "United States", "region": "California"},
+            {"name": "Palisades Tahoe", "country": "United States", "region": "California"},
+            {"name": "June Mountain", "country": "United States", "region": "California"},
+            {"name": "Big Bear Mountain", "country": "United States", "region": "California"},
+            # Vermont/NH/Maine
+            {"name": "Killington", "country": "United States", "region": "Vermont"},
+            {"name": "Stratton", "country": "United States", "region": "Vermont"},
+            {"name": "Sugarbush", "country": "United States", "region": "Vermont"},
+            {"name": "Loon Mountain", "country": "United States", "region": "New Hampshire"},
+            {"name": "Sunday River", "country": "United States", "region": "Maine"},
+            {"name": "Sugarloaf", "country": "United States", "region": "Maine"},
+            # Other US
+            {"name": "Crystal Mountain", "country": "United States", "region": "Washington"},
+            {"name": "Mount Bachelor", "country": "United States", "region": "Oregon"},
+            {"name": "Taos", "country": "United States", "region": "New Mexico"},
+            {"name": "Arizona Snowbowl", "country": "United States", "region": "Arizona"},
+            # Canada
+            {"name": "Lake Louise", "country": "Canada", "region": "Alberta"},
+            {"name": "Banff Sunshine", "country": "Canada", "region": "Alberta"},
+            {"name": "Revelstoke", "country": "Canada", "region": "British Columbia"},
+            {"name": "Red Mountain", "country": "Canada", "region": "British Columbia"},
+            {"name": "Mont Tremblant", "country": "Canada", "region": "Quebec"},
+            {"name": "Blue Mountain", "country": "Canada", "region": "Ontario"},
+            # Europe
             {"name": "Chamonix", "country": "France", "region": "Haute-Savoie"},
             {"name": "Zermatt", "country": "Switzerland", "region": "Valais"},
             {"name": "St. Moritz", "country": "Switzerland", "region": "Graubünden"},
+            {"name": "Davos-Klosters", "country": "Switzerland", "region": "Graubünden"},
+            {"name": "Kitzbühel", "country": "Austria", "region": "Tyrol"},
+            {"name": "Saalbach-Hinterglemm", "country": "Austria", "region": "Salzburg"},
+            {"name": "Cortina dAmpezzo", "country": "Italy", "region": "Veneto"},
+            {"name": "Selva Val Gardena", "country": "Italy", "region": "South Tyrol"},
+            {"name": "Alta Badia", "country": "Italy", "region": "South Tyrol"},
+            # Asia/Oceania
             {"name": "Niseko", "country": "Japan", "region": "Hokkaido"},
+            {"name": "Furano", "country": "Japan", "region": "Hokkaido"},
+            {"name": "Thredbo", "country": "Australia", "region": "New South Wales"},
+            {"name": "Coronet Peak", "country": "New Zealand", "region": "Otago"},
+            {"name": "The Remarkables", "country": "New Zealand", "region": "Otago"},
+            {"name": "Mount Hutt", "country": "New Zealand", "region": "Canterbury"},
+            # South America
+            {"name": "Valle Nevado", "country": "Chile", "region": "Santiago Region"},
+            {"name": "Portillo", "country": "Chile", "region": "Valparaíso"},
+            {"name": "Cerro Catedral", "country": "Argentina", "region": "Río Negro"},
+        ],
+        "mountain_collective": [
+            # Premier independent resorts
+            {"name": "Aspen Snowmass", "country": "United States", "region": "Colorado"},
+            {"name": "Alta", "country": "United States", "region": "Utah"},
+            {"name": "Snowbird", "country": "United States", "region": "Utah"},
+            {"name": "Jackson Hole", "country": "United States", "region": "Wyoming"},
+            {"name": "Banff Sunshine", "country": "Canada", "region": "Alberta"},
+            {"name": "Lake Louise", "country": "Canada", "region": "Alberta"},
+            {"name": "Revelstoke", "country": "Canada", "region": "British Columbia"},
+            {"name": "Sun Valley", "country": "United States", "region": "Idaho"},
+            {"name": "Taos", "country": "United States", "region": "New Mexico"},
+            {"name": "Big Sky", "country": "United States", "region": "Montana"},
+            {"name": "Snowbasin", "country": "United States", "region": "Utah"},
+            {"name": "Palisades Tahoe", "country": "United States", "region": "California"},
+            {"name": "Mammoth Mountain", "country": "United States", "region": "California"},
+            {"name": "Chamonix", "country": "France", "region": "Haute-Savoie"},
+            {"name": "Niseko", "country": "Japan", "region": "Hokkaido"},
+            {"name": "Thredbo", "country": "Australia", "region": "New South Wales"},
+            {"name": "Coronet Peak", "country": "New Zealand", "region": "Otago"},
+            {"name": "The Remarkables", "country": "New Zealand", "region": "Otago"},
+            {"name": "Sugarbush", "country": "United States", "region": "Vermont"},
+            {"name": "Crested Butte", "country": "United States", "region": "Colorado"},
+            {"name": "Arapahoe Basin", "country": "United States", "region": "Colorado"},
+            {"name": "Crystal Mountain", "country": "United States", "region": "Washington"},
+        ],
+        "indy": [
+            # Indy Pass - Independent resorts, family-focused value
+            {"name": "Brundage Mountain", "country": "United States", "region": "Idaho"},
+            {"name": "Lost Trail", "country": "United States", "region": "Montana"},
+            {"name": "Ski Cooper", "country": "United States", "region": "Colorado"},
+            {"name": "Purgatory", "country": "United States", "region": "Colorado"},
+            {"name": "Loveland", "country": "United States", "region": "Colorado"},
+            {"name": "Monarch Mountain", "country": "United States", "region": "Colorado"},
+            {"name": "Wolf Creek", "country": "United States", "region": "Colorado"},
+            {"name": "Powder Mountain", "country": "United States", "region": "Utah"},
+            {"name": "Brian Head", "country": "United States", "region": "Utah"},
+            {"name": "Bridger Bowl", "country": "United States", "region": "Montana"},
+            {"name": "Red Lodge", "country": "United States", "region": "Montana"},
+            {"name": "Silver Star", "country": "Canada", "region": "British Columbia"},
+            {"name": "Fernie", "country": "Canada", "region": "British Columbia"},
+            {"name": "Kicking Horse", "country": "Canada", "region": "British Columbia"},
+            {"name": "Marmot Basin", "country": "Canada", "region": "Alberta"},
+            {"name": "Le Massif", "country": "Canada", "region": "Quebec"},
+            {"name": "Mont Sainte-Anne", "country": "Canada", "region": "Quebec"},
+            {"name": "Jay Peak", "country": "United States", "region": "Vermont"},
+            {"name": "Magic Mountain", "country": "United States", "region": "Vermont"},
+            {"name": "Bolton Valley", "country": "United States", "region": "Vermont"},
+            {"name": "Cannon Mountain", "country": "United States", "region": "New Hampshire"},
+            {"name": "Black Mountain", "country": "United States", "region": "New Hampshire"},
+            {"name": "Saddleback", "country": "United States", "region": "Maine"},
+            # Japan partners
+            {"name": "Myoko Kogen", "country": "Japan", "region": "Niigata"},
+            {"name": "Nozawa Onsen", "country": "Japan", "region": "Nagano"},
+            {"name": "Shiga Kogen", "country": "Japan", "region": "Nagano"},
+            {"name": "Madarao", "country": "Japan", "region": "Nagano"},
+            # Europe partners
+            {"name": "Engelberg", "country": "Switzerland", "region": "Central Switzerland"},
+            {"name": "Laax", "country": "Switzerland", "region": "Graubünden"},
+            {"name": "Les Gets", "country": "France", "region": "Haute-Savoie"},
+            {"name": "Morzine", "country": "France", "region": "Haute-Savoie"},
         ],
     }
 
@@ -419,7 +561,7 @@ async def find_pass_coverage_gaps() -> list[DiscoveryCandidate]:
     covered = await get_covered_resorts()
     candidates = []
 
-    for pass_name in ["epic", "ikon"]:
+    for pass_name in ["epic", "ikon", "mountain_collective", "indy"]:
         resorts = await get_pass_network_resorts(pass_name)
 
         for resort in resorts:
@@ -981,23 +1123,69 @@ async def run_exploration_discovery(count: int = 5) -> DiscoveryResult:
     Returns:
         DiscoveryResult with random exploration candidates
     """
-    # Lesser-known ski regions to explore
+    # Diverse global resorts for exploration discovery
+    # Mix of value destinations, emerging markets, and hidden gems
     EXPLORATION_POOL = [
+        # Eastern Europe - Value destinations
         {"name": "Bansko", "country": "Bulgaria", "region": "Pirin"},
         {"name": "Borovets", "country": "Bulgaria", "region": "Rila"},
         {"name": "Jasná", "country": "Slovakia", "region": "Low Tatras"},
         {"name": "Kopaonik", "country": "Serbia", "region": "Central Serbia"},
+        {"name": "Kranjska Gora", "country": "Slovenia", "region": "Upper Carniola"},
+        {"name": "Zakopane", "country": "Poland", "region": "Lesser Poland"},
+        {"name": "Špindlerův Mlýn", "country": "Czech Republic", "region": "Hradec Králové"},
+        # Caucasus & Central Asia
         {"name": "Gudauri", "country": "Georgia", "region": "Greater Caucasus"},
-        {"name": "Grandvalira", "country": "Andorra", "region": "Pyrenees"},
-        {"name": "Sierra Nevada", "country": "Spain", "region": "Andalusia"},
-        {"name": "Gulmarg", "country": "India", "region": "Kashmir"},
-        {"name": "Yongpyong", "country": "South Korea", "region": "Gangwon"},
-        {"name": "Thredbo", "country": "Australia", "region": "NSW"},
-        {"name": "Ruapehu", "country": "New Zealand", "region": "North Island"},
-        {"name": "Cerro Catedral", "country": "Argentina", "region": "Patagonia"},
-        {"name": "Valle Nevado", "country": "Chile", "region": "Santiago Region"},
         {"name": "Shymbulak", "country": "Kazakhstan", "region": "Almaty"},
         {"name": "Dizin", "country": "Iran", "region": "Alborz"},
+        # Iberian/Mediterranean
+        {"name": "Grandvalira", "country": "Andorra", "region": "Pyrenees"},
+        {"name": "Sierra Nevada", "country": "Spain", "region": "Andalusia"},
+        {"name": "Baqueira-Beret", "country": "Spain", "region": "Catalonia"},
+        {"name": "Formigal", "country": "Spain", "region": "Aragon"},
+        # Asia
+        {"name": "Gulmarg", "country": "India", "region": "Kashmir"},
+        {"name": "Yongpyong", "country": "South Korea", "region": "Gangwon"},
+        {"name": "High1", "country": "South Korea", "region": "Gangwon"},
+        {"name": "Thaiwoo", "country": "China", "region": "Hebei"},
+        {"name": "Wanlong", "country": "China", "region": "Hebei"},
+        # Southern Hemisphere
+        {"name": "Ruapehu", "country": "New Zealand", "region": "North Island"},
+        {"name": "Mount Hutt", "country": "New Zealand", "region": "Canterbury"},
+        {"name": "Falls Creek", "country": "Australia", "region": "Victoria"},
+        {"name": "Mount Hotham", "country": "Australia", "region": "Victoria"},
+        # South America
+        {"name": "Cerro Bayo", "country": "Argentina", "region": "Neuquén"},
+        {"name": "Chapelco", "country": "Argentina", "region": "Neuquén"},
+        {"name": "Las Leñas", "country": "Argentina", "region": "Mendoza"},
+        {"name": "Cerro Castor", "country": "Argentina", "region": "Tierra del Fuego"},
+        {"name": "Nevados de Chillán", "country": "Chile", "region": "Biobío"},
+        {"name": "Corralco", "country": "Chile", "region": "Araucanía"},
+        {"name": "Pucón", "country": "Chile", "region": "Araucanía"},
+        # Scandinavia
+        {"name": "Åre", "country": "Sweden", "region": "Jämtland"},
+        {"name": "Sälen", "country": "Sweden", "region": "Dalarna"},
+        {"name": "Trysil", "country": "Norway", "region": "Innlandet"},
+        {"name": "Hemsedal", "country": "Norway", "region": "Viken"},
+        {"name": "Levi", "country": "Finland", "region": "Lapland"},
+        {"name": "Ylläs", "country": "Finland", "region": "Lapland"},
+        # Germany & Austria value options
+        {"name": "Garmisch-Partenkirchen", "country": "Germany", "region": "Bavaria"},
+        {"name": "Oberstdorf", "country": "Germany", "region": "Bavaria"},
+        {"name": "Serfaus-Fiss-Ladis", "country": "Austria", "region": "Tyrol"},
+        {"name": "Obergurgl-Hochgurgl", "country": "Austria", "region": "Tyrol"},
+        {"name": "Mayrhofen", "country": "Austria", "region": "Tyrol"},
+        {"name": "Alpbach", "country": "Austria", "region": "Tyrol"},
+        {"name": "Obertauern", "country": "Austria", "region": "Salzburg"},
+        # France beyond 3 Vallées
+        {"name": "La Clusaz", "country": "France", "region": "Haute-Savoie"},
+        {"name": "Le Grand Bornand", "country": "France", "region": "Haute-Savoie"},
+        {"name": "Serre Chevalier", "country": "France", "region": "Hautes-Alpes"},
+        # Japan beyond Niseko/Hakuba
+        {"name": "Myoko Kogen", "country": "Japan", "region": "Niigata"},
+        {"name": "Madarao", "country": "Japan", "region": "Nagano"},
+        {"name": "Appi Kogen", "country": "Japan", "region": "Iwate"},
+        {"name": "Zao Onsen", "country": "Japan", "region": "Yamagata"},
     ]
 
     try:

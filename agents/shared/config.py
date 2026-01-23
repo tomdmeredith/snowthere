@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     brave_api_key: str | None = None  # Replaces SerpAPI - simpler, already in Claude Code
     tavily_api_key: str | None = None
 
+    # DataForSEO (keyword research for discovery)
+    dataforseo_login: str | None = None
+    dataforseo_password: str | None = None
+
     # AI
     anthropic_api_key: str
 

@@ -12,6 +12,7 @@ Design Decision: We use Brave instead of SerpAPI because:
 """
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from typing import Any
 
@@ -20,6 +21,8 @@ from exa_py import Exa
 from tavily import TavilyClient
 
 from ..config import settings
+
+logger = logging.getLogger(__name__)
 
 
 # Brave Search API base URL
@@ -87,12 +90,15 @@ async def brave_search(
     query: str,
     num_results: int = 10,
     country: str = "US",
+    max_retries: int = 3,
 ) -> list[SearchResult]:
     """
-    Web search via Brave Search API.
+    Web search via Brave Search API with exponential backoff.
 
     Best for: Official resort sites, current pricing, news.
     Replaces SerpAPI with a simpler, direct HTTP implementation.
+
+    Rate limiting: Implements exponential backoff on 429 errors.
     """
     if not settings.brave_api_key:
         return []
@@ -111,17 +117,34 @@ async def brave_search(
     }
 
     async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(
-                BRAVE_SEARCH_URL,
-                headers=headers,
-                params=params,
-                timeout=30,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except httpx.HTTPError as e:
-            print(f"Brave search error: {e}")
+        for attempt in range(max_retries):
+            try:
+                response = await client.get(
+                    BRAVE_SEARCH_URL,
+                    headers=headers,
+                    params=params,
+                    timeout=30,
+                )
+                response.raise_for_status()
+                data = response.json()
+                break  # Success, exit retry loop
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 429:
+                    # Rate limited - exponential backoff
+                    wait_time = 2 ** attempt  # 1s, 2s, 4s
+                    logger.warning(f"Brave API rate limited (429), waiting {wait_time}s... (attempt {attempt + 1}/{max_retries})")
+                    await asyncio.sleep(wait_time)
+                    if attempt == max_retries - 1:
+                        logger.error(f"Brave API rate limit exceeded after {max_retries} retries for query: {query[:50]}")
+                        return []
+                else:
+                    logger.error(f"Brave search HTTP error: {e}")
+                    return []
+            except httpx.HTTPError as e:
+                logger.error(f"Brave search error: {e}")
+                return []
+        else:
+            # All retries exhausted
             return []
 
     results = []
