@@ -382,11 +382,11 @@ def get_quality_metrics() -> dict[str, Any]:
 
 
 def get_work_items_mixed(
-    max_items: int = 4,
-    discovery_pct: float = 0.30,
-    quality_pct: float = 0.50,  # Changed: prioritize fixing existing resorts
-    stale_pct: float = 0.20,
-    queue_pct: float = 0.00,    # Changed: manual queue rarely used
+    max_items: int = 8,
+    discovery_pct: float = 0.70,  # Prioritize site growth with new resorts
+    quality_pct: float = 0.10,    # Quality queue has 45-day cooling off
+    stale_pct: float = 0.20,      # Keep some freshness maintenance
+    queue_pct: float = 0.00,      # Manual queue rarely used
 ) -> list[dict[str, Any]]:
     """Get balanced work items from multiple sources.
 
@@ -647,9 +647,9 @@ async def run_discovery_if_needed(
 
 
 async def run_daily_pipeline(
-    max_resorts: int = 4,
+    max_resorts: int = 8,
     dry_run: bool = False,
-    use_mixed_selection: bool = True,  # Changed: prioritize quality over growth
+    use_mixed_selection: bool = True,  # Prioritize site growth
     run_discovery: bool = False,
     force_discovery: bool = False,
 ) -> dict[str, Any]:
@@ -658,7 +658,7 @@ async def run_daily_pipeline(
     This is the main entry point called by Railway cron.
 
     Args:
-        max_resorts: Maximum resorts to process today (default 4)
+        max_resorts: Maximum resorts to process today (default 8)
         dry_run: If True, log what would happen but don't execute
         use_mixed_selection: If True, use balanced selection from multiple sources
                             (discovery, stale, queue) instead of Claude-based selection

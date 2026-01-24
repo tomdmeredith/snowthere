@@ -5,24 +5,27 @@
 
 ## Current Round
 
-**Round 5.9.5: Pipeline Bug Fixes** (completed 2026-01-24)
-- Type: bug fix
+**Round 5.9.6: Growth Mode** (completed 2026-01-24)
+- Type: config change
 - Status: Completed
-- Goal: Fix confidence score and duplicate resort bugs
+- Goal: Increase pipeline throughput to grow the site faster
+
+**Changes**:
+- `max_resorts`: 4 → 8 (process more per run)
+- `discovery_pct`: 30% → 70% (prioritize new resorts)
+- `quality_pct`: 50% → 10% (quality queue empty due to cooling off)
+- `stale_pct`: 20% → 20% (maintain some refresh)
+
+**Expected Output**: ~6 resorts per run (5 discovery + 1 stale)
+- ~250 discovery candidates seeded from migration 017
+
+## Round 5.9.5: Pipeline Bug Fixes (Completed)
 
 **Bug 1: Stale Confidence Score**
-- Problem: Confidence calculated before cost acquisition, never recalculated after
-- Effect: "88% quality but 0.16 confidence" in logs
-- Fix: Recalculate confidence after cost acquisition succeeds
+- Fix: Recalculate confidence after cost acquisition
 
 **Bug 2: Duplicate Resorts from Unicode Slugs**
-- Problem: `slugify()` didn't transliterate Unicode (Kitzbühel → kitzbühel instead of kitzbuhel)
-- Effect: Same resort created twice with different slug encodings
-- Fix: Added `unidecode` to slugify function for ASCII transliteration
-
-**Note on "only 2 resorts ran"**:
-- Expected behavior: mixed selection = 1 discovery + 0 quality (45-day cooling off) + 1 stale + 0 queue
-- Quality items have intentional 45-day cooling off to prevent infinite loops
+- Fix: Added `unidecode` to slugify function
 
 ## Round 5.9.4: Sidebar Polish (Completed)
 
