@@ -51,3 +51,9 @@ coverage
 # Turbo
 .turbo
 supabase/.temp/
+
+# Playwright MCP screenshots (debugging)
+.playwright-mcp/
+
+# API comparison output (regeneratable)
+agents/comparison_results/
