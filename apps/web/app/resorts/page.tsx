@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { Button, Badge, ScoreBadge } from '@/components/ui'
 import { Navbar } from '@/components/layout/Navbar'
@@ -117,6 +118,7 @@ interface ResortWithMetrics {
     best_age_min: number | null
     best_age_max: number | null
   } | null
+  images: { image_url: string; image_type: string }[] | null
 }
 
 async function getResorts(): Promise<ResortWithMetrics[]> {
@@ -132,6 +134,10 @@ async function getResorts(): Promise<ResortWithMetrics[]> {
         family_overall_score,
         best_age_min,
         best_age_max
+      ),
+      images:resort_images(
+        image_url,
+        image_type
       )
     `)
     .eq('status', 'published')
@@ -323,11 +329,26 @@ export default async function ResortsPage({
                       className="group"
                     >
                       <div className="resort-card">
-                        {/* Placeholder image with scale on hover */}
-                        <div className="resort-card-image aspect-[16/9] bg-gradient-to-br from-teal-100 via-mint-100 to-teal-50">
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Mountain className="w-14 h-14 text-teal-300 transition-transform duration-500" />
-                          </div>
+                        {/* Resort hero image with fallback */}
+                        <div className="resort-card-image aspect-[16/9] bg-gradient-to-br from-teal-100 via-mint-100 to-teal-50 relative overflow-hidden">
+                          {(() => {
+                            const heroImage = resort.images?.find(img => img.image_type === 'hero')?.image_url
+                              || resort.images?.find(img => img.image_type === 'atmosphere')?.image_url
+                              || resort.images?.[0]?.image_url
+                            return heroImage ? (
+                              <Image
+                                src={heroImage}
+                                alt={`${resort.name} ski resort`}
+                                fill
+                                className="object-cover transition-transform duration-500 group-hover:scale-105"
+                                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Mountain className="w-14 h-14 text-teal-300 transition-transform duration-500" />
+                              </div>
+                            )
+                          })()}
                         </div>
 
                         <div className="p-6">

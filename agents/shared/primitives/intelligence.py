@@ -831,3 +831,154 @@ Be especially careful with family metrics - these help parents make decisions.""
             reasoning=f"Extraction failed: {e}",
             missing_fields=["all"],
         )
+
+
+# ============================================================================
+# LINK CURATION - Extract and categorize useful links from research sources
+# ============================================================================
+
+
+@dataclass
+class CuratedLink:
+    """A curated link with category and description."""
+
+    title: str
+    url: str
+    category: str  # official, lodging, dining, activity, transport, rental, ski_school, childcare
+    description: str
+
+
+@dataclass
+class LinkCurationResult:
+    """Result of link curation."""
+
+    success: bool
+    links: list[CuratedLink] = field(default_factory=list)
+    has_official: bool = False
+    error: str | None = None
+
+
+async def curate_resort_links(
+    resort_name: str,
+    country: str,
+    research_sources: list[dict[str, Any]],
+) -> LinkCurationResult:
+    """
+    Extract family-relevant links from research sources.
+
+    Uses Claude to classify URLs into useful categories for families:
+    - official: Resort's official website
+    - lodging: Hotels, vacation rentals, lodges
+    - dining: Family-friendly restaurants
+    - activity: Off-mountain activities (sledding, ice skating, etc.)
+    - transport: Airport shuttles, car rentals, transfer services
+    - rental: Ski/snowboard rental shops
+    - ski_school: Ski school and lesson providers
+    - childcare: Daycare, kids clubs, babysitting services
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        research_sources: List of source dicts with 'url', 'title', 'snippet' keys
+
+    Returns:
+        LinkCurationResult with categorized links
+
+    Quality Gate: Requires at least 1 official link + 2 other links.
+    """
+    if not research_sources:
+        return LinkCurationResult(
+            success=False,
+            error="No research sources provided",
+        )
+
+    # Build a summary of sources for Claude
+    sources_summary = []
+    for source in research_sources[:20]:  # Limit to avoid token issues
+        sources_summary.append({
+            "url": source.get("url", ""),
+            "title": source.get("title", ""),
+            "snippet": source.get("snippet", source.get("content", ""))[:300],
+        })
+
+    prompt = f"""Curate family-relevant links for {resort_name}, {country} from these research sources.
+
+SOURCES:
+{json.dumps(sources_summary, indent=2)}
+
+CATEGORIES:
+- official: Resort's official website (exactly 1)
+- lodging: Family-friendly hotels, vacation rentals
+- dining: Restaurants good for kids
+- activity: Off-mountain activities (sledding, pool, etc.)
+- transport: Airport shuttles, transfers
+- rental: Ski/snowboard equipment rental
+- ski_school: Ski lessons for kids
+- childcare: Daycare, kids clubs
+
+REQUIREMENTS:
+- Select 1 official link (required)
+- Select 3-8 other useful links for families
+- Prefer URLs that are direct (not search results, aggregators)
+- Write brief, helpful descriptions (1 sentence max)
+
+Return JSON:
+{{
+    "links": [
+        {{
+            "title": "Resort Name Official",
+            "url": "https://...",
+            "category": "official",
+            "description": "Official website with tickets, conditions, and reservations"
+        }},
+        ...
+    ]
+}}"""
+
+    system = """You are a travel curator for ski families.
+Select the most useful, trustworthy links for parents planning ski trips with kids.
+Prioritize official sources and well-known brands over unknown sites.
+Skip paywalled, login-required, or spam sites."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+        )
+
+        parsed = _parse_json_response(response)
+        raw_links = parsed.get("links", [])
+
+        curated_links = []
+        has_official = False
+
+        for link_data in raw_links:
+            link = CuratedLink(
+                title=link_data.get("title", ""),
+                url=link_data.get("url", ""),
+                category=link_data.get("category", "activity"),
+                description=link_data.get("description", ""),
+            )
+
+            # Validate URL
+            if not link.url or not link.url.startswith("http"):
+                continue
+
+            curated_links.append(link)
+
+            if link.category == "official":
+                has_official = True
+
+        return LinkCurationResult(
+            success=len(curated_links) >= 1,
+            links=curated_links,
+            has_official=has_official,
+        )
+
+    except Exception as e:
+        return LinkCurationResult(
+            success=False,
+            error=f"Link curation failed: {e}",
+        )

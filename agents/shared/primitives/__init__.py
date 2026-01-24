@@ -152,6 +152,35 @@ from .intelligence import (
     # Resort data extraction
     extract_resort_data,
     ExtractedResortData,
+    # Link curation
+    curate_resort_links,
+    CuratedLink,
+    LinkCurationResult,
+)
+
+# Cost acquisition primitives (Multi-strategy pricing)
+from .costs import (
+    # Data classes
+    CostResult,
+    # Core acquisition
+    acquire_resort_costs,
+    get_cached_pricing,
+    cache_pricing_result,
+    # Individual strategies
+    get_pass_network_pricing,
+    search_targeted_pricing,
+    scrape_resort_pricing_page,
+    find_pricing_page,
+    extract_pricing_with_claude,
+    # Utilities
+    get_currency_for_country,
+    convert_to_usd,
+    update_usd_columns,
+    parse_prices_from_text,
+    extract_pricing_from_html,
+    # Constants
+    COUNTRY_CURRENCIES,
+    USD_RATES,
 )
 
 # Quality audit primitives
@@ -422,6 +451,31 @@ __all__ = [
     # Intelligence - Resort data extraction
     "extract_resort_data",
     "ExtractedResortData",
+    # Intelligence - Link curation
+    "curate_resort_links",
+    "CuratedLink",
+    "LinkCurationResult",
+    # Cost acquisition - Data classes
+    "CostResult",
+    # Cost acquisition - Core
+    "acquire_resort_costs",
+    "get_cached_pricing",
+    "cache_pricing_result",
+    # Cost acquisition - Strategies
+    "get_pass_network_pricing",
+    "search_targeted_pricing",
+    "scrape_resort_pricing_page",
+    "find_pricing_page",
+    "extract_pricing_with_claude",
+    # Cost acquisition - Utilities
+    "get_currency_for_country",
+    "convert_to_usd",
+    "update_usd_columns",
+    "parse_prices_from_text",
+    "extract_pricing_from_html",
+    # Cost acquisition - Constants
+    "COUNTRY_CURRENCIES",
+    "USD_RATES",
     # Quality - Enums and data classes
     "IssueSeverity",
     "IssueType",

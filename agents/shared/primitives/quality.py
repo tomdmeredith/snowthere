@@ -1001,7 +1001,7 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     ))
 
     # has_perfect_if
-    perfect_if = content.get("perfect_if") or []
+    perfect_if = metrics.get("perfect_if") or []
     if isinstance(perfect_if, str):
         import json
         try:
@@ -1018,7 +1018,7 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     ))
 
     # has_skip_if
-    skip_if = content.get("skip_if") or []
+    skip_if = metrics.get("skip_if") or []
     if isinstance(skip_if, str):
         import json
         try:

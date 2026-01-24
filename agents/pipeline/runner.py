@@ -19,6 +19,7 @@ Design Decisions:
 """
 
 import asyncio
+import logging
 import sys
 import time
 from datetime import datetime
@@ -27,6 +28,11 @@ from uuid import uuid4
 
 # Agent Layer - Memory for learning from past runs
 from agent_layer.memory import AgentMemory
+
+# Supabase client for direct DB operations
+from shared.supabase_client import get_supabase_client
+
+logger = logging.getLogger(__name__)
 
 from shared.primitives import (
     # Research
@@ -341,6 +347,89 @@ async def run_resort_pipeline(
                 action="confidence_adjusted",
                 reasoning=f"Adjusted confidence to {confidence:.2f} due to poor extraction (missing: {len(extracted.missing_fields)} fields)",
             )
+
+        # =====================================================================
+        # STAGE 2.2: Multi-Strategy Cost Acquisition
+        # If extraction didn't find good cost data, try additional strategies
+        # =====================================================================
+        costs = research_data.get("costs", {})
+        needs_cost_acquisition = (
+            not costs.get("lift_adult_daily")
+            or not costs.get("lodging_mid_nightly")
+        )
+
+        if needs_cost_acquisition:
+            from shared.primitives.costs import acquire_resort_costs
+
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="start_cost_acquisition",
+                reasoning=f"Extraction missing cost data. Starting multi-strategy cost acquisition for {resort_name}",
+            )
+
+            # Collect research snippets for Claude extraction fallback
+            research_snippets = []
+            for source in research_data.get("sources", []):
+                if source.get("snippet"):
+                    research_snippets.append(source["snippet"])
+                elif source.get("content"):
+                    research_snippets.append(source["content"][:500])
+
+            cost_result = await acquire_resort_costs(
+                resort_name=resort_name,
+                country=country,
+                official_website=research_data.get("official_website"),
+                research_snippets=research_snippets,
+            )
+
+            if cost_result.success:
+                # Merge acquired costs with existing (acquired takes precedence for missing fields)
+                for key, value in cost_result.costs.items():
+                    if value is not None and not costs.get(key):
+                        costs[key] = value
+
+                # Update currency if we acquired it
+                if cost_result.currency and not costs.get("currency"):
+                    costs["currency"] = cost_result.currency
+
+                research_data["costs"] = costs
+
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="cost_acquisition_complete",
+                    reasoning=f"Acquired costs from {cost_result.source} with confidence {cost_result.confidence:.2f}",
+                    metadata={
+                        "source": cost_result.source,
+                        "confidence": cost_result.confidence,
+                        "costs_acquired": list(cost_result.costs.keys()),
+                    },
+                )
+
+                result["stages"]["cost_acquisition"] = {
+                    "status": "complete",
+                    "source": cost_result.source,
+                    "confidence": cost_result.confidence,
+                }
+                print(f"✓ Cost Acquisition: {cost_result.source} (confidence: {cost_result.confidence:.2f})")
+            else:
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="cost_acquisition_failed",
+                    reasoning=f"Cost acquisition failed: {cost_result.error}",
+                )
+                result["stages"]["cost_acquisition"] = {
+                    "status": "failed",
+                    "error": cost_result.error,
+                }
+                print(f"⚠️  Cost Acquisition: Failed - {cost_result.error}")
+        else:
+            result["stages"]["cost_acquisition"] = {
+                "status": "skipped",
+                "reason": "Extraction already found cost data",
+            }
 
     except Exception as e:
         error_decision = handle_error(e, resort_name, "research", None)
@@ -778,6 +867,93 @@ async def run_resort_pipeline(
             )
             result["stages"]["ugc_photos"] = {"status": "skipped", "error": str(e)}
             print(f"⚠️  UGC photos skipped for {resort_name}: {e}", file=sys.stderr)
+
+    # =========================================================================
+    # STAGE 4.8: Link Curation (Extract family-relevant links from sources)
+    # =========================================================================
+    try:
+        from shared.primitives.intelligence import curate_resort_links
+        from shared.primitives.links import get_resort_links
+
+        # Check if we already have links for this resort
+        existing_links = await get_resort_links(resort_id) if resort_id else []
+
+        if not existing_links:
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="start_link_curation",
+                reasoning=f"Curating family-relevant links for {resort_name}",
+            )
+
+            # Get research sources for link curation
+            research_sources = research_data.get("sources", [])
+
+            link_result = await curate_resort_links(
+                resort_name=resort_name,
+                country=country,
+                research_sources=research_sources,
+            )
+
+            if link_result.success and link_result.links:
+                # Store curated links in database
+                client = get_supabase_client()
+
+                for link in link_result.links:
+                    try:
+                        client.table("resort_links").upsert({
+                            "resort_id": resort_id,
+                            "title": link.title,
+                            "url": link.url,
+                            "category": link.category,
+                            "description": link.description,
+                        }, on_conflict="resort_id,url").execute()
+                    except Exception as link_err:
+                        logger.warning(f"Failed to store link {link.url}: {link_err}")
+
+                # Log cost (~$0.01 for Sonnet)
+                log_cost("anthropic", 0.01, None, {"run_id": run_id, "stage": "link_curation"})
+
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="link_curation_complete",
+                    reasoning=f"Curated {len(link_result.links)} links (official: {link_result.has_official})",
+                    metadata={
+                        "links_count": len(link_result.links),
+                        "has_official": link_result.has_official,
+                        "categories": list(set(l.category for l in link_result.links)),
+                    },
+                )
+
+                result["stages"]["link_curation"] = {
+                    "status": "complete",
+                    "links_count": len(link_result.links),
+                    "has_official": link_result.has_official,
+                }
+                print(f"✓ Link Curation: {len(link_result.links)} links (official: {'✓' if link_result.has_official else '✗'})")
+            else:
+                result["stages"]["link_curation"] = {
+                    "status": "no_links",
+                    "error": link_result.error,
+                }
+                print(f"⚠️  Link Curation: No links found - {link_result.error}")
+        else:
+            result["stages"]["link_curation"] = {
+                "status": "skipped",
+                "reason": f"Already has {len(existing_links)} links",
+            }
+
+    except Exception as e:
+        # Link curation is non-critical - continue without them
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="link_curation_failed",
+            reasoning=f"Link curation failed (non-critical): {e}",
+        )
+        result["stages"]["link_curation"] = {"status": "skipped", "error": str(e)}
+        print(f"⚠️  Link curation skipped for {resort_name}: {e}", file=sys.stderr)
 
     # =========================================================================
     # STAGE 4.7: Perfect Page Quality Gate
