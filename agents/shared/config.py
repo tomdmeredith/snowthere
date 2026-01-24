@@ -39,8 +39,10 @@ class Settings(BaseSettings):
     google_places_api_key: str | None = None
 
     # Budget Controls
-    daily_budget_limit: float = 5.00  # Daily API spend limit
-    daily_budget_usd: float = 5.00  # Alias for compatibility
+    # NOTE: Actual cost per resort is ~$10 (Opus content + research APIs)
+    # Growth mode targets 8 resorts/day = ~$80/day
+    daily_budget_limit: float = 100.00  # Daily API spend limit
+    daily_budget_usd: float = 100.00  # Alias for compatibility
     alert_email: str | None = None
 
     # Slack Alerts

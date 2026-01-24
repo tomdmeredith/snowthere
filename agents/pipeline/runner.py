@@ -250,7 +250,7 @@ async def run_resort_pipeline(
     # =========================================================================
     # STAGE 1: Budget Check
     # =========================================================================
-    if not check_budget(1.5):  # ~$1.50 per resort
+    if not check_budget(10.0):  # ~$10 per resort (Opus content + research APIs)
         result["status"] = "budget_exceeded"
         result["error"] = "Daily budget exceeded"
         log_reasoning(
