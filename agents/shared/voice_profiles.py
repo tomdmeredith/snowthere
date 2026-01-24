@@ -58,6 +58,14 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Clinical/report-style language ('The resort features...')",
         "Hedging language ('arguably', 'somewhat', 'relatively')",
         "Transition words that feel robotic ('Moreover', 'Subsequently')",
+        # Vague stage-setting phrases
+        "'is real' as emphasis (say it directly, don't stage-set)",
+        "'the reality is' (just state the reality)",
+        "'the truth is' (just state the truth)",
+        "'here's the deal' (just state the deal)",
+        # Placeholder text for missing data
+        "Phrases like 'not available', 'info not available', 'data not available'",
+        "If data is missing, omit the section entirely rather than noting its absence",
     ],
     include=[
         "Get to the point fast (BLUF - bottom line up front)",

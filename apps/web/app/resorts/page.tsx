@@ -7,14 +7,11 @@ import { Navbar } from '@/components/layout/Navbar'
 import {
   ChevronRight,
   Mountain,
-  Star,
-  Users,
   Globe,
   MapPin,
   Search,
   Filter,
   X,
-  Heart,
 } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -118,6 +115,9 @@ interface ResortWithMetrics {
     best_age_min: number | null
     best_age_max: number | null
   } | null
+  content: {
+    tagline: string | null
+  } | null
   images: { image_url: string; image_type: string }[] | null
 }
 
@@ -134,6 +134,9 @@ async function getResorts(): Promise<ResortWithMetrics[]> {
         family_overall_score,
         best_age_min,
         best_age_max
+      ),
+      content:resort_content(
+        tagline
       ),
       images:resort_images(
         image_url,
@@ -359,7 +362,7 @@ export default async function ResortsPage({
                               </h3>
                               <p className="mt-1.5 text-dark-500 flex items-center gap-1.5">
                                 <MapPin className="w-4 h-4" />
-                                {resort.region}
+                                {resort.region ? `${resort.region}, ${resort.country}` : resort.country}
                               </p>
                             </div>
 
@@ -372,10 +375,9 @@ export default async function ResortsPage({
                             )}
                           </div>
 
-                          {resort.family_metrics?.best_age_min && resort.family_metrics?.best_age_max && (
-                            <p className="mt-4 text-sm text-dark-500 flex items-center gap-2">
-                              <Heart className="w-4 h-4 text-coral-400" />
-                              Best for ages {resort.family_metrics.best_age_min}–{resort.family_metrics.best_age_max}
+                          {resort.content?.tagline && (
+                            <p className="mt-4 text-sm text-dark-500 italic">
+                              &ldquo;{resort.content.tagline}&rdquo;
                             </p>
                           )}
                         </div>

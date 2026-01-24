@@ -12,7 +12,6 @@ import {
   MapPin,
   Search,
   Filter,
-  Heart,
   X,
 } from 'lucide-react'
 
@@ -123,6 +122,9 @@ interface ResortWithMetrics {
     best_age_min: number | null
     best_age_max: number | null
   } | null
+  content: {
+    tagline: string | null
+  } | null
   images: { image_url: string; image_type: string }[] | null
 }
 
@@ -144,6 +146,9 @@ async function getResortsByCountry(countryName: string): Promise<ResortWithMetri
         family_overall_score,
         best_age_min,
         best_age_max
+      ),
+      content:resort_content(
+        tagline
       ),
       images:resort_images(
         image_url,
@@ -385,7 +390,7 @@ export default async function CountryResortsPage({ params, searchParams }: PageP
                             </h3>
                             <p className="mt-1.5 text-dark-500 flex items-center gap-1.5">
                               <MapPin className="w-4 h-4" />
-                              {resort.region}
+                              {resort.region ? `${resort.region}, ${countryName}` : countryName}
                             </p>
                           </div>
 
@@ -398,10 +403,9 @@ export default async function CountryResortsPage({ params, searchParams }: PageP
                           )}
                         </div>
 
-                        {resort.family_metrics?.best_age_min && resort.family_metrics?.best_age_max && (
-                          <p className="mt-4 text-sm text-dark-500 flex items-center gap-2">
-                            <Heart className="w-4 h-4 text-coral-400" />
-                            Best for ages {resort.family_metrics.best_age_min}–{resort.family_metrics.best_age_max}
+                        {resort.content?.tagline && (
+                          <p className="mt-4 text-sm text-dark-500 italic">
+                            &ldquo;{resort.content.tagline}&rdquo;
                           </p>
                         )}
                       </div>
