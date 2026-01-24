@@ -36,6 +36,8 @@ from shared.primitives import (
     generate_faq,
     generate_seo_meta,
     generate_tagline,
+    # Quality
+    score_resort_page,
     # Database
     create_resort,
     get_resort_by_slug,
@@ -776,6 +778,48 @@ async def run_resort_pipeline(
             )
             result["stages"]["ugc_photos"] = {"status": "skipped", "error": str(e)}
             print(f"⚠️  UGC photos skipped for {resort_name}: {e}", file=sys.stderr)
+
+    # =========================================================================
+    # STAGE 4.7: Perfect Page Quality Gate
+    # =========================================================================
+    # Philosophy: Quality checklist ensures every page meets the "gold standard"
+    # before publishing. This prevents data gaps like missing cost data or
+    # family metrics from reaching production.
+    quality_score_result = score_resort_page(resort_id)
+    if quality_score_result:
+        result["stages"]["quality_check"] = {
+            "status": "complete",
+            "score_pct": quality_score_result.score_pct,
+            "passed": quality_score_result.passed_checks,
+            "total": quality_score_result.total_checks,
+            "failing": [r.check_id for r in quality_score_result.failing_checks],
+        }
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="quality_check",
+            reasoning=f"Quality score: {quality_score_result.score_pct:.0f}% ({quality_score_result.passed_checks}/{quality_score_result.total_checks})",
+            metadata=quality_score_result.to_dict(),
+        )
+
+        print(f"✓ Quality Check: {quality_score_result.score_pct:.0f}% ({quality_score_result.passed_checks}/{quality_score_result.total_checks} checks)")
+
+        # Block publishing if below 70%
+        QUALITY_GATE_THRESHOLD = 70
+        if quality_score_result.score_pct < QUALITY_GATE_THRESHOLD:
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="quality_gate_failed",
+                reasoning=f"Blocked: Quality {quality_score_result.score_pct:.0f}% < {QUALITY_GATE_THRESHOLD}%. Failing: {[r.check_id for r in quality_score_result.failing_checks]}",
+            )
+            result["status"] = "draft"
+            result["publish_blocked"] = True
+            result["publish_blocked_reason"] = f"Quality score {quality_score_result.score_pct:.0f}% below {QUALITY_GATE_THRESHOLD}%"
+            auto_publish = False
+            print(f"🚫 Quality Gate: BLOCKED publishing (score {quality_score_result.score_pct:.0f}% < {QUALITY_GATE_THRESHOLD}%)")
+            print(f"   Failing checks: {[r.check_id for r in quality_score_result.failing_checks]}")
 
     # =========================================================================
     # STAGE 5: Three-Agent Approval Panel (Publish-First Model)

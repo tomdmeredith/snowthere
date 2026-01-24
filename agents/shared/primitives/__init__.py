@@ -23,6 +23,16 @@ from .research import (
     extract_coordinates,
 )
 
+# Research cache primitives
+from .research_cache import (
+    get_cached_results,
+    cache_results,
+    store_resort_sources,
+    mark_sources_cited,
+    get_cache_stats,
+    clear_expired_cache,
+)
+
 # Content primitives
 from .content import (
     write_section,
@@ -151,12 +161,19 @@ from .quality import (
     IssueType,
     QualityIssue,
     AuditResult,
+    CheckResult,
+    PageQualityScore,
     # Formula-based checks
     check_staleness,
     check_low_confidence,
     check_completeness,
     get_resorts_needing_audit,
     get_stale_resorts_count,
+    # Perfect Page Checklist
+    PERFECT_PAGE_CHECKLIST,
+    score_resort_page,
+    get_resorts_below_quality_threshold,
+    queue_quality_improvements,
     # Audit logging
     log_quality_issue,
     log_audit_run,
@@ -410,12 +427,19 @@ __all__ = [
     "IssueType",
     "QualityIssue",
     "AuditResult",
+    "CheckResult",
+    "PageQualityScore",
     # Quality - Formula-based checks
     "check_staleness",
     "check_low_confidence",
     "check_completeness",
     "get_resorts_needing_audit",
     "get_stale_resorts_count",
+    # Quality - Perfect Page Checklist
+    "PERFECT_PAGE_CHECKLIST",
+    "score_resort_page",
+    "get_resorts_below_quality_threshold",
+    "queue_quality_improvements",
     # Quality - Audit logging
     "log_quality_issue",
     "log_audit_run",

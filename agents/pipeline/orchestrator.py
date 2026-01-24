@@ -27,7 +27,7 @@ The runner.py module handles HOW to do each individual resort.
 
 import asyncio
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 from uuid import uuid4
 
@@ -177,7 +177,11 @@ def get_queue_work_items(limit: int = 5) -> list[dict[str, Any]]:
         return []
 
 
-def get_quality_improvement_items(limit: int = 5, max_attempts: int = 5) -> list[dict[str, Any]]:
+def get_quality_improvement_items(
+    limit: int = 5,
+    max_attempts: int = 5,
+    cooling_off_days: int = 45,
+) -> list[dict[str, Any]]:
     """Get resorts queued for quality improvement.
 
     These are resorts that were published with the publish-first model
@@ -186,6 +190,9 @@ def get_quality_improvement_items(limit: int = 5, max_attempts: int = 5) -> list
     Args:
         limit: Maximum items to return
         max_attempts: Skip items that have been tried this many times
+        cooling_off_days: Only return items older than this many days (default 45)
+                         This prevents infinite loops where resorts are re-processed
+                         every run. Gives content time to "settle" before re-evaluation.
 
     Returns:
         List of resort dicts needing quality improvement
@@ -194,11 +201,16 @@ def get_quality_improvement_items(limit: int = 5, max_attempts: int = 5) -> list
         # Query the content_queue for quality_improvement tasks
         supabase = get_supabase_client()
 
+        # Calculate cooling-off cutoff (only pick items older than N days)
+        # This breaks the infinite loop where low-confidence resorts get re-queued immediately
+        cutoff_date = (datetime.utcnow() - timedelta(days=cooling_off_days)).isoformat() + "+00:00"
+
         result = supabase.table("content_queue")\
             .select("*, resorts(name, country)")\
             .eq("task_type", "quality_improvement")\
             .eq("status", "pending")\
             .lt("attempts", max_attempts)\
+            .lt("created_at", cutoff_date)\
             .order("priority", desc=True)\
             .order("created_at", desc=False)\
             .limit(limit)\

@@ -659,6 +659,8 @@ PERFECT_PAGE_CHECKLIST = {
     "data": [
         ("has_lift_prices", "Has lift prices", "Has adult and child daily lift ticket prices"),
         ("has_family_score", "Has family score", "Has overall family friendliness score"),
+        ("has_best_age_range", "Has age range", "Has best_age_min and best_age_max for family planning"),
+        ("has_lodging_prices", "Has lodging prices", "Has at least mid-range lodging price"),
         ("has_perfect_if", "Has Perfect If", "Has 3+ 'Perfect if' items"),
         ("has_skip_if", "Has Skip If", "Has 1+ 'Skip if' items"),
     ],
@@ -767,7 +769,7 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     # Fetch all data needed for checks
     resort_response = (
         client.table("resorts")
-        .select("id, name, slug")
+        .select("id, name, slug, trail_map_data")
         .eq("id", resort_id)
         .single()
         .execute()
@@ -778,46 +780,39 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
 
     resort = resort_response.data
     resort_name = resort["name"]
+    trail_map = resort.get("trail_map_data") or {}
 
-    # Get content
+    # Get content (use limit(1) and handle empty results - safer than maybe_single)
     content_response = (
         client.table("resort_content")
         .select("*")
         .eq("resort_id", resort_id)
-        .maybeSingle()
+        .limit(1)
         .execute()
     )
-    content = content_response.data or {}
+    content = content_response.data[0] if content_response.data else {}
 
     # Get family metrics
     metrics_response = (
         client.table("resort_family_metrics")
         .select("*")
         .eq("resort_id", resort_id)
-        .maybeSingle()
+        .limit(1)
         .execute()
     )
-    metrics = metrics_response.data or {}
+    metrics = metrics_response.data[0] if metrics_response.data else {}
 
     # Get costs
     costs_response = (
         client.table("resort_costs")
         .select("*")
         .eq("resort_id", resort_id)
-        .maybeSingle()
+        .limit(1)
         .execute()
     )
-    costs = costs_response.data or {}
+    costs = costs_response.data[0] if costs_response.data else {}
 
-    # Get trail map
-    trail_map_response = (
-        client.table("resort_trail_maps")
-        .select("*")
-        .eq("resort_id", resort_id)
-        .maybeSingle()
-        .execute()
-    )
-    trail_map = trail_map_response.data or {}
+    # trail_map already fetched from resorts table above
 
     # Get images
     images_response = (
@@ -856,14 +851,15 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     ))
 
     # tagline_exists
-    tagline = content.get("tagline", "")
+    tagline = content.get("tagline") or ""
     passed = bool(tagline and len(tagline.strip()) >= 20)
+    tagline_display = tagline[:50] + "..." if tagline and len(tagline) > 50 else (tagline or "No tagline")
     content_results.append(CheckResult(
         check_id="tagline_exists",
         label="Has unique tagline",
         description="Resort has a distinctive 8-12 word tagline",
         passed=passed,
-        details=tagline[:50] + "..." if len(tagline) > 50 else tagline if tagline else "No tagline",
+        details=tagline_display,
     ))
 
     # no_em_dashes - check all content fields
@@ -918,28 +914,37 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
         details=f"{len(hero_images)} hero/atmosphere images" if hero_images else "No hero image",
     ))
 
-    # has_trail_map
-    has_map = bool(trail_map.get("geojson")) or bool(trail_map.get("official_map_url"))
+    # has_trail_map (check for piste_count/lift_count or official URL)
+    has_map = bool(trail_map.get("piste_count")) or bool(trail_map.get("official_map_url"))
+    map_details = ""
+    if trail_map.get("piste_count"):
+        map_details = f"{trail_map.get('piste_count')} runs, {trail_map.get('lift_count', 0)} lifts"
+    elif trail_map.get("official_map_url"):
+        map_details = "Official map URL"
+    else:
+        map_details = "No trail map data"
     media_results.append(CheckResult(
         check_id="has_trail_map",
         label="Has trail map",
         description="Has trail map data OR official URL fallback",
         passed=has_map,
-        details="Has trail map" if has_map else "No trail map data",
+        details=map_details,
     ))
 
-    # has_terrain_data
-    has_terrain = all([
-        metrics.get("terrain_beginner_pct") is not None,
-        metrics.get("terrain_intermediate_pct") is not None,
-        metrics.get("terrain_advanced_pct") is not None,
-    ])
+    # has_terrain_data (difficulty breakdown from trail_map_data)
+    difficulty = trail_map.get("difficulty_breakdown", {})
+    has_terrain = bool(difficulty.get("easy") or difficulty.get("intermediate") or difficulty.get("advanced"))
+    terrain_details = ""
+    if has_terrain:
+        terrain_details = f"Easy: {difficulty.get('easy', 0)}, Int: {difficulty.get('intermediate', 0)}, Adv: {difficulty.get('advanced', 0)}"
+    else:
+        terrain_details = "Missing terrain data"
     media_results.append(CheckResult(
         check_id="has_terrain_data",
         label="Has terrain %s",
         description="Has beginner/intermediate/advanced percentages",
         passed=has_terrain,
-        details="Has terrain breakdown" if has_terrain else "Missing terrain data",
+        details=terrain_details,
     ))
 
     results_by_category["media"] = media_results
@@ -947,24 +952,52 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     # DATA CHECKS
     data_results = []
 
-    # has_lift_prices
-    has_prices = bool(costs.get("lift_adult_daily")) and bool(costs.get("lift_child_daily"))
+    # has_lift_prices (use 'is not None' to allow 0 values like free child tickets)
+    has_prices = costs.get("lift_adult_daily") is not None and costs.get("lift_child_daily") is not None
+    price_details = ""
+    if has_prices:
+        adult = costs.get("lift_adult_daily", 0)
+        child = costs.get("lift_child_daily", 0)
+        price_details = f"Adult: ${adult}, Child: ${child}" + (" (free)" if child == 0 else "")
+    else:
+        price_details = "Missing lift prices"
     data_results.append(CheckResult(
         check_id="has_lift_prices",
         label="Has lift prices",
         description="Has adult and child daily lift ticket prices",
         passed=has_prices,
-        details="Has lift prices" if has_prices else "Missing lift prices",
+        details=price_details,
     ))
 
     # has_family_score
-    has_score = metrics.get("family_score") is not None
+    has_score = metrics.get("family_overall_score") is not None
     data_results.append(CheckResult(
         check_id="has_family_score",
         label="Has family score",
         description="Has overall family friendliness score",
         passed=has_score,
-        details=f"Score: {metrics.get('family_score')}/10" if has_score else "No family score",
+        details=f"Score: {metrics.get('family_overall_score')}/10" if has_score else "No family score",
+    ))
+
+    # has_best_age_range
+    has_age_range = metrics.get("best_age_min") is not None and metrics.get("best_age_max") is not None
+    data_results.append(CheckResult(
+        check_id="has_best_age_range",
+        label="Has age range",
+        description="Has best_age_min and best_age_max for family planning",
+        passed=has_age_range,
+        details=f"Ages {metrics.get('best_age_min')}-{metrics.get('best_age_max')}" if has_age_range else "No age range",
+    ))
+
+    # has_lodging_prices (use 'is not None' to allow 0 values)
+    has_lodging = costs.get("lodging_mid_nightly") is not None
+    lodging_details = f"${costs.get('lodging_mid_nightly')}/night" if has_lodging else "No lodging prices"
+    data_results.append(CheckResult(
+        check_id="has_lodging_prices",
+        label="Has lodging prices",
+        description="Has at least mid-range lodging price",
+        passed=has_lodging,
+        details=lodging_details,
     ))
 
     # has_perfect_if
@@ -1123,6 +1156,8 @@ async def queue_quality_improvements(
             "has_terrain_data": "research_terrain",
             "has_lift_prices": "research_prices",
             "has_family_score": "calculate_family_score",
+            "has_best_age_range": "research_age_range",
+            "has_lodging_prices": "research_lodging_prices",
             "has_perfect_if": "generate_perfect_if",
             "has_skip_if": "generate_skip_if",
             "has_official_link": "find_official_link",

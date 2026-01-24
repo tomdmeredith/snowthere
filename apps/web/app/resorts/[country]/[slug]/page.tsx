@@ -12,7 +12,6 @@ import { CostTable } from '@/components/resort/CostTable'
 import { SkiCalendar } from '@/components/resort/SkiCalendar'
 import { FAQSection } from '@/components/resort/FAQSection'
 import { TrailMap } from '@/components/resort/TrailMap'
-import { LastUpdated } from '@/components/resort/LastUpdated'
 import { HeroImage } from '@/components/resort/HeroImage'
 import { TerrainBreakdown } from '@/components/resort/TerrainBreakdown'
 import { ContentRenderer } from '@/components/resort/ContentRenderer'
@@ -532,11 +531,6 @@ export default async function ResortPage({ params }: Props) {
         <div className="grid gap-12 lg:grid-cols-3">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-16">
-            {/* Last Updated */}
-            {(resort.last_refreshed || resort.updated_at) && (
-              <LastUpdated date={resort.last_refreshed || resort.updated_at} />
-            )}
-
             {/* Quick Take */}
             {content?.quick_take && (
               <div className="animate-in animate-in-2">
@@ -546,17 +540,6 @@ export default async function ResortPage({ params }: Props) {
                   skipIf={metrics?.skip_if || []}
                 />
               </div>
-            )}
-
-            {/* Quick Score Summary */}
-            {metrics && (
-              <QuickScoreSummary
-                familyScore={metrics.family_overall_score}
-                bestAgeMin={metrics.best_age_min}
-                bestAgeMax={metrics.best_age_max}
-                perfectIf={metrics.perfect_if || []}
-                skipIf={metrics.skip_if || []}
-              />
             )}
 
             {/* The Numbers Table */}
@@ -695,6 +678,7 @@ export default async function ResortPage({ params }: Props) {
                   bestAgeMax={metrics.best_age_max}
                   perfectIf={metrics.perfect_if || []}
                   skipIf={metrics.skip_if || []}
+                  lastUpdated={resort.last_refreshed || resort.updated_at}
                 />
               )}
 

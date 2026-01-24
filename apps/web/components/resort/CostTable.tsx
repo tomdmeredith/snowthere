@@ -6,7 +6,10 @@ interface CostTableProps {
 }
 
 const formatCurrency = (amount: number | null, currency: string) => {
-  if (!amount) return '—'
+  // Use 'is null' check to allow 0 values (e.g., free child tickets)
+  if (amount === null || amount === undefined) return '—'
+  // Handle 0 specially (free)
+  if (amount === 0) return 'Free'
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: currency,
