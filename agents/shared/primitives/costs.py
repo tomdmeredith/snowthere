@@ -197,9 +197,11 @@ async def get_pass_network_pricing(
     resort_id = resort_response.data[0]["id"]
 
     # Check for pass associations
+    # Note: ski_passes table only has name, type, website_url, purchase_url
+    # No adult_price/child_price columns - pass pricing not stored in DB
     pass_response = (
         client.table("resort_passes")
-        .select("access_type, ski_passes(name, adult_price, child_price)")
+        .select("access_type, ski_passes(name, type)")
         .eq("resort_id", resort_id)
         .execute()
     )
@@ -207,29 +209,19 @@ async def get_pass_network_pricing(
     if not pass_response.data:
         return CostResult(success=False, error="Not on any pass network")
 
-    # Find best pass pricing (e.g., if on Epic, use Epic pricing as reference)
-    costs = {}
+    # We can confirm the resort is on a pass network, but we don't have pass prices
+    # in the database. Return pass info for context but no pricing.
+    pass_names = []
     for pass_entry in pass_response.data:
         pass_info = pass_entry.get("ski_passes", {})
-        if pass_info.get("adult_price"):
-            # Convert pass price to approximate daily rate (assuming 7-day trip)
-            daily_adult = round(pass_info["adult_price"] / 7, 2)
-            if "lift_adult_daily" not in costs or daily_adult < costs["lift_adult_daily"]:
-                costs["lift_adult_daily"] = daily_adult
-        if pass_info.get("child_price"):
-            daily_child = round(pass_info["child_price"] / 7, 2)
-            if "lift_child_daily" not in costs or daily_child < costs["lift_child_daily"]:
-                costs["lift_child_daily"] = daily_child
+        if pass_info.get("name"):
+            pass_names.append(pass_info["name"])
 
-    if not costs:
-        return CostResult(success=False, error="No pricing on pass")
-
+    # Pass network strategy can't provide pricing since we don't store pass prices
+    # Return failure so we fall through to other strategies
     return CostResult(
-        success=True,
-        costs=costs,
-        currency="USD",  # Pass prices are typically in USD
-        source="pass_network",
-        confidence=0.6,  # Lower confidence - derived from pass price
+        success=False,
+        error=f"On pass network ({', '.join(pass_names)}) but pass prices not in DB",
     )
 
 
