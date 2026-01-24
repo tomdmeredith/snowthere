@@ -76,8 +76,17 @@ from .decision_maker import handle_error
 
 
 def slugify(name: str) -> str:
-    """Convert resort name to URL slug."""
-    return name.lower().replace(" ", "-").replace("'", "").replace(".", "")
+    """Convert resort name to URL-safe ASCII slug.
+
+    Uses unidecode to transliterate Unicode to ASCII (e.g., Kitzbühel → kitzbuhel).
+    This prevents duplicate resorts from different slug encodings.
+    """
+    try:
+        from unidecode import unidecode
+        ascii_name = unidecode(name)
+    except ImportError:
+        ascii_name = name
+    return ascii_name.lower().replace(" ", "-").replace("'", "").replace(".", "")
 
 
 def calculate_confidence(research_data: dict[str, Any]) -> float:

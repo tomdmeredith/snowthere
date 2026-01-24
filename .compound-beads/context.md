@@ -5,18 +5,24 @@
 
 ## Current Round
 
-**Round 5.9.5: Pipeline Confidence Fix** (completed 2026-01-24)
+**Round 5.9.5: Pipeline Bug Fixes** (completed 2026-01-24)
 - Type: bug fix
 - Status: Completed
-- Goal: Fix stale confidence score after cost acquisition
+- Goal: Fix confidence score and duplicate resort bugs
 
-**Problem**: Confidence score was calculated at line 274 (before cost acquisition) and never recalculated after. This caused misleading metrics like "88% quality check but 0.16 confidence" in logs.
+**Bug 1: Stale Confidence Score**
+- Problem: Confidence calculated before cost acquisition, never recalculated after
+- Effect: "88% quality but 0.16 confidence" in logs
+- Fix: Recalculate confidence after cost acquisition succeeds
 
-**Root Cause**: `calculate_confidence()` weighs price data at 0.4 (40% of score), but was only called once before cost acquisition ran.
+**Bug 2: Duplicate Resorts from Unicode Slugs**
+- Problem: `slugify()` didn't transliterate Unicode (Kitzbühel → kitzbühel instead of kitzbuhel)
+- Effect: Same resort created twice with different slug encodings
+- Fix: Added `unidecode` to slugify function for ASCII transliteration
 
-**Fix**: Added recalculation of confidence after successful cost acquisition in `agents/pipeline/runner.py` (lines 417-424).
-
-**Verification**: Next pipeline run will show confidence score that properly reflects acquired cost data.
+**Note on "only 2 resorts ran"**:
+- Expected behavior: mixed selection = 1 discovery + 0 quality (45-day cooling off) + 1 stale + 0 queue
+- Quality items have intentional 45-day cooling off to prevent infinite loops
 
 ## Round 5.9.4: Sidebar Polish (Completed)
 
