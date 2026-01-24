@@ -108,7 +108,7 @@ export function TrailMap({ resortName, country, data, latitude, longitude }: Tra
   const hasData = data && data.quality !== 'none'
   const hasOsmData = hasData && data.piste_count > 0
   const hasOnlyOfficialLink = hasData && data.piste_count === 0 && data.official_map_url
-  const qualityStyle = qualityStyles[data?.quality || 'none']
+  const qualityStyle = qualityStyles[data?.quality || 'none'] || qualityStyles['none']
 
   return (
     <section id="trail-map" className="space-y-6">
