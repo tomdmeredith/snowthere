@@ -141,7 +141,7 @@ async function getResorts(): Promise<ResortWithMetrics[]> {
       )
     `)
     .eq('status', 'published')
-    .order('name')
+    .order('family_overall_score', { ascending: false, nullsFirst: false, foreignTable: 'resort_family_metrics' })
 
   if (error) {
     console.error('Error fetching resorts:', error)

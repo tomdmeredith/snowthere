@@ -24,6 +24,7 @@ async function getFeaturedResorts() {
       images:resort_images(image_url, image_type)
     `)
     .eq('status', 'published')
+    .order('family_overall_score', { ascending: false, nullsFirst: false, foreignTable: 'resort_family_metrics' })
     .limit(4)
 
   return resorts || []

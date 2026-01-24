@@ -668,8 +668,8 @@ export default async function ResortPage({ params }: Props) {
           </div>
 
           {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-8 space-y-6">
+          <aside className="lg:col-span-1 max-w-full overflow-hidden">
+            <div className="lg:sticky lg:top-8 space-y-6">
               {/* Family Score Card - Top of sidebar */}
               {metrics && (
                 <QuickScoreSummary
@@ -682,8 +682,8 @@ export default async function ResortPage({ params }: Props) {
                 />
               )}
 
-              {/* Cost Summary Card */}
-              {costs && <CostTable costs={costs} />}
+              {/* Cost Summary Card - Hidden until data quality improves */}
+              {/* {costs && <CostTable costs={costs} />} */}
 
               {/* Ski Passes Section */}
               {resort.passes.length > 0 && (
@@ -811,7 +811,7 @@ export default async function ResortPage({ params }: Props) {
                 </div>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
       </div>
 
