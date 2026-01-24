@@ -542,12 +542,13 @@ export default async function ResortPage({ params }: Props) {
               </div>
             )}
 
-            {/* The Numbers Table */}
+            {/* The Numbers Table - Hidden until data quality improves
             {metrics && (
               <div className="animate-in animate-in-3">
                 <FamilyMetricsTable metrics={metrics} />
               </div>
             )}
+            */}
 
             {/* Terrain Breakdown Visual */}
             {metrics?.terrain_beginner_pct != null &&
@@ -669,7 +670,7 @@ export default async function ResortPage({ params }: Props) {
 
           {/* Sidebar */}
           <aside className="lg:col-span-1 max-w-full overflow-hidden">
-            <div className="lg:sticky lg:top-8 space-y-6">
+            <div className="lg:sticky lg:top-24 space-y-6">
               {/* Family Score Card - Top of sidebar */}
               {metrics && (
                 <QuickScoreSummary

@@ -171,6 +171,7 @@
 
   html {
     scroll-behavior: smooth;
+    scroll-padding-top: 5rem; /* 80px = navbar (64px) + margin (16px) */
   }
 
   body {
