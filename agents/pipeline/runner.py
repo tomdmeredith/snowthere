@@ -413,6 +413,17 @@ async def run_resort_pipeline(
                     "confidence": cost_result.confidence,
                 }
                 print(f"✓ Cost Acquisition: {cost_result.source} (confidence: {cost_result.confidence:.2f})")
+
+                # Recalculate overall confidence with updated cost data
+                confidence = calculate_confidence(research_data)
+                result["confidence"] = confidence
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="confidence_recalculated",
+                    reasoning=f"Recalculated confidence after cost acquisition: {confidence:.2f}",
+                    metadata={"confidence": confidence, "trigger": "cost_acquisition_complete"},
+                )
             else:
                 log_reasoning(
                     task_id=None,

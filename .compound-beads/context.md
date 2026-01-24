@@ -5,10 +5,22 @@
 
 ## Current Round
 
-**Round 5.9.4: Sidebar Polish** (completed 2026-01-23)
-- Type: frontend polish
+**Round 5.9.5: Pipeline Confidence Fix** (completed 2026-01-24)
+- Type: bug fix
 - Status: Completed
-- Goal: Hide incomplete data tables, fix sidebar UX
+- Goal: Fix stale confidence score after cost acquisition
+
+**Problem**: Confidence score was calculated at line 274 (before cost acquisition) and never recalculated after. This caused misleading metrics like "88% quality check but 0.16 confidence" in logs.
+
+**Root Cause**: `calculate_confidence()` weighs price data at 0.4 (40% of score), but was only called once before cost acquisition ran.
+
+**Fix**: Added recalculation of confidence after successful cost acquisition in `agents/pipeline/runner.py` (lines 417-424).
+
+**Verification**: Next pipeline run will show confidence score that properly reflects acquired cost data.
+
+## Round 5.9.4: Sidebar Polish (Completed)
+
+**Goal**: Hide incomplete data tables, fix sidebar UX
 
 **Accomplishments**:
 - Hidden FamilyMetricsTable ("The Numbers") - incomplete data showing dashes
