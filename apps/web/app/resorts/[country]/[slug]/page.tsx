@@ -528,7 +528,7 @@ export default async function ResortPage({ params }: Props) {
 
       {/* Content */}
       <div className="container-page py-12 lg:py-16">
-        <div className="grid gap-12 lg:grid-cols-3">
+        <div className="grid gap-12 lg:grid-cols-3 items-start">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-16">
             {/* Quick Take */}
@@ -706,14 +706,7 @@ export default async function ResortPage({ params }: Props) {
                 </div>
               )}
 
-              {/* Useful Links Section */}
-              {links && links.length > 0 && (
-                <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">
-                  <UsefulLinks links={links} resortSlug={resort.slug} />
-                </div>
-              )}
-
-              {/* Quick Links - Design-5 Card */}
+              {/* Jump to Section - Design-5 Card */}
               <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">
                 <h3 className="font-display text-lg font-bold text-dark-800 mb-5">
                   Jump to Section
@@ -791,6 +784,13 @@ export default async function ResortPage({ params }: Props) {
                   )}
                 </nav>
               </div>
+
+              {/* Useful Links Section */}
+              {links && links.length > 0 && (
+                <div className="bg-white rounded-3xl shadow-card border border-dark-100 p-6">
+                  <UsefulLinks links={links} resortSlug={resort.slug} />
+                </div>
+              )}
 
               {/* Newsletter CTA - Design-5 Playful Card */}
               <div className="relative overflow-hidden p-8" style={{ borderRadius: '32px', background: 'linear-gradient(145deg, rgba(149, 225, 211, 0.15) 0%, rgba(255, 107, 107, 0.08) 100%)', border: '2px solid rgba(149, 225, 211, 0.3)' }}>
