@@ -131,6 +131,10 @@ export function clearResortLinkCache(): void {
  * Pre-process multiple content sections with resort links
  * Useful for server components that need to process all sections at once
  *
+ * SEO best practice: Each resort is linked only once across ALL sections
+ * (first mention wins). This avoids link spam and follows Google's guidance
+ * that only the first link to a URL carries anchor text weight.
+ *
  * @param sections - Object with section names as keys and HTML content as values
  * @param excludeResort - Resort name to exclude from linking
  * @returns Same structure with links injected
@@ -143,11 +147,13 @@ export async function injectResortLinksInSections<T extends Record<string, strin
   if (resorts.length === 0) return sections
 
   const result = { ...sections }
+  // Track which resorts have been linked across ALL sections
+  const linkedSlugs = new Set<string>()
 
   for (const key of Object.keys(result) as (keyof T)[]) {
     const html = result[key]
     if (typeof html === 'string' && html.trim()) {
-      result[key] = injectResortLinksInHtml(html, resorts, excludeResort) as T[keyof T]
+      result[key] = injectResortLinksInHtml(html, resorts, excludeResort, linkedSlugs) as T[keyof T]
     }
   }
 
@@ -156,11 +162,14 @@ export async function injectResortLinksInSections<T extends Record<string, strin
 
 /**
  * Internal helper that injects links given pre-loaded resort data
+ *
+ * @param linkedSlugs - Set of resort slugs already linked (mutated to track state)
  */
 function injectResortLinksInHtml(
   html: string,
   resorts: ResortLinkData[],
-  excludeResort?: string
+  excludeResort?: string,
+  linkedSlugs: Set<string> = new Set()
 ): string {
   let result = html
 
@@ -169,7 +178,20 @@ function injectResortLinksInHtml(
       continue
     }
 
+    // SEO best practice: only link each resort once per page
+    if (linkedSlugs.has(resort.slug)) {
+      continue
+    }
+
+    // Use a flag to track if we linked this resort in this pass
+    let linkedThisResort = false
+
     result = result.replace(resort.pattern, (match, _captured, offset) => {
+      // Only link the first occurrence
+      if (linkedThisResort || linkedSlugs.has(resort.slug)) {
+        return match
+      }
+
       const before = result.slice(0, offset)
       const openTags = (before.match(/<a\b/gi) || []).length
       const closeTags = (before.match(/<\/a>/gi) || []).length
@@ -180,6 +202,8 @@ function injectResortLinksInHtml(
 
       const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
       const href = `/resorts/${countrySlug}/${resort.slug}`
+      linkedThisResort = true
+      linkedSlugs.add(resort.slug)
       return `<a href="${href}" class="resort-link">${match}</a>`
     })
   }
@@ -187,43 +211,27 @@ function injectResortLinksInHtml(
   return result
 }
 
+/**
+ * Inject resort links into a single HTML content string
+ *
+ * SEO best practice: Each resort is linked only once (first mention wins).
+ *
+ * @param html - The HTML content to process
+ * @param excludeResort - Resort name to exclude (don't link current resort's own name)
+ * @param linkedSlugs - Optional set to track already-linked resorts across multiple calls
+ * @returns HTML with resort names turned into links
+ */
 export async function injectResortLinks(
   html: string,
-  excludeResort?: string
+  excludeResort?: string,
+  linkedSlugs?: Set<string>
 ): Promise<string> {
   const resorts = await getResortLinkData()
 
   if (resorts.length === 0) return html
 
-  let result = html
+  // Track which resorts have been linked (use provided set or create new)
+  const linked = linkedSlugs || new Set<string>()
 
-  for (const resort of resorts) {
-    // Skip if this is the current page's resort (don't self-link)
-    if (excludeResort && resort.name.toLowerCase() === excludeResort.toLowerCase()) {
-      continue
-    }
-
-    // Replace matches with links
-    result = result.replace(resort.pattern, (match, _captured, offset) => {
-      // Safety check: Don't link if already inside an existing <a> tag
-      // Count opening and closing <a> tags before this position
-      const before = result.slice(0, offset)
-      const openTags = (before.match(/<a\b/gi) || []).length
-      const closeTags = (before.match(/<\/a>/gi) || []).length
-
-      if (openTags > closeTags) {
-        // We're inside an <a> tag, don't create nested link
-        return match
-      }
-
-      // Build the link URL
-      const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
-      const href = `/resorts/${countrySlug}/${resort.slug}`
-
-      // Return the linked version (preserve original case of the match)
-      return `<a href="${href}" class="resort-link">${match}</a>`
-    })
-  }
-
-  return result
+  return injectResortLinksInHtml(html, resorts, excludeResort, linked)
 }

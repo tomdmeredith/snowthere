@@ -325,13 +325,16 @@ export default async function ResortPage({ params }: Props) {
   const faqs = content?.faqs as { question: string; answer: string }[] | null
 
   // Pre-process content sections with resort links (auto-link mentions of other resorts)
+  // SEO best practice: Each resort is linked only once per page (first mention wins)
+  // We share linkedSlugs across all sections to avoid duplicate links
+  const linkedSlugs = new Set<string>()
   const linkedContent = {
-    getting_there: content?.getting_there ? await injectResortLinks(content.getting_there as string, resort.name) : null,
-    where_to_stay: content?.where_to_stay ? await injectResortLinks(content.where_to_stay as string, resort.name) : null,
-    lift_tickets: content?.lift_tickets ? await injectResortLinks(content.lift_tickets as string, resort.name) : null,
-    on_mountain: content?.on_mountain ? await injectResortLinks(content.on_mountain as string, resort.name) : null,
-    off_mountain: content?.off_mountain ? await injectResortLinks(content.off_mountain as string, resort.name) : null,
-    parent_reviews_summary: content?.parent_reviews_summary ? await injectResortLinks(content.parent_reviews_summary as string, resort.name) : null,
+    getting_there: content?.getting_there ? await injectResortLinks(content.getting_there as string, resort.name, linkedSlugs) : null,
+    where_to_stay: content?.where_to_stay ? await injectResortLinks(content.where_to_stay as string, resort.name, linkedSlugs) : null,
+    lift_tickets: content?.lift_tickets ? await injectResortLinks(content.lift_tickets as string, resort.name, linkedSlugs) : null,
+    on_mountain: content?.on_mountain ? await injectResortLinks(content.on_mountain as string, resort.name, linkedSlugs) : null,
+    off_mountain: content?.off_mountain ? await injectResortLinks(content.off_mountain as string, resort.name, linkedSlugs) : null,
+    parent_reviews_summary: content?.parent_reviews_summary ? await injectResortLinks(content.parent_reviews_summary as string, resort.name, linkedSlugs) : null,
   }
 
   // Find hero and atmosphere images
