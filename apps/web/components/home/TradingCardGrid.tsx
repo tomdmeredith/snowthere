@@ -10,16 +10,16 @@ interface Resort {
   name: string
   slug: string
   country: string
-  region: string
+  region: string | null
   family_metrics?: {
-    family_overall_score?: number
-    best_age_min?: number
-    best_age_max?: number
-  }
+    family_overall_score?: number | null
+    best_age_min?: number | null
+    best_age_max?: number | null
+  }[] | null
   images?: {
     image_url: string
     image_type: string
-  }[]
+  }[] | null
 }
 
 interface TradingCardGridProps {
@@ -65,11 +65,19 @@ export function TradingCardGrid({ resorts }: TradingCardGridProps) {
               const heroImage = resort.images?.find(img => img.image_type === 'hero')?.image_url
                 || resort.images?.[0]?.image_url
 
+              // Transform family_metrics array to single object for TradingCard
+              const metrics = Array.isArray(resort.family_metrics)
+                ? resort.family_metrics[0]
+                : resort.family_metrics
+
               return (
                 <div key={resort.id} className="w-full sm:w-[280px] max-w-[320px]">
                   <TradingCard
                     number={index + 1}
-                    resort={resort}
+                    resort={{
+                      ...resort,
+                      family_metrics: metrics,
+                    }}
                     color={getTradingCardColor(index)}
                     baseRotation={getTradingCardRotation(index, displayResorts.length)}
                     image={heroImage}
@@ -115,7 +123,7 @@ export function TradingCardGrid({ resorts }: TradingCardGridProps) {
             href="/resorts"
             className="inline-flex items-center gap-2 bg-coral-500 hover:bg-coral-600 text-white px-8 py-4 rounded-full font-bold text-lg shadow-coral hover:shadow-coral-lg hover:scale-105 transition-all"
           >
-            See All 3,000+ Resorts
+            Browse All Resorts
             <motion.span
               animate={{ x: [0, 4, 0] }}
               transition={{ repeat: Infinity, duration: 1.5 }}

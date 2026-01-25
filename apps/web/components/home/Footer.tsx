@@ -10,11 +10,13 @@ const FOOTER_LINKS = [
   { href: '/terms', label: 'Terms' },
 ]
 
-const SOCIAL_LINKS = [
-  { href: '#', label: 'Instagram', emoji: '📸' },
-  { href: '#', label: 'Twitter', emoji: '🐦' },
-  { href: '#', label: 'Facebook', emoji: '📘' },
-]
+// Social links hidden until accounts are created
+// TODO: Add real social account URLs when ready
+// const SOCIAL_LINKS = [
+//   { href: 'https://instagram.com/snowthere', label: 'Instagram', emoji: '📸' },
+//   { href: 'https://twitter.com/snowthere', label: 'Twitter', emoji: '🐦' },
+//   { href: 'https://facebook.com/snowthere', label: 'Facebook', emoji: '📘' },
+// ]
 
 export function Footer() {
   return (
@@ -50,7 +52,8 @@ export function Footer() {
           ))}
         </div>
 
-        {/* Social icons */}
+        {/* Social icons - hidden until accounts are created */}
+        {/* TODO: Uncomment when social accounts exist
         <div className="flex justify-center gap-6 mb-10">
           {SOCIAL_LINKS.map((link) => (
             <Link
@@ -63,6 +66,7 @@ export function Footer() {
             </Link>
           ))}
         </div>
+        */}
 
         {/* Copyright */}
         <div className="text-center">

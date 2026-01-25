@@ -13,12 +13,12 @@ interface TradingCardProps {
     name: string
     slug: string
     country: string
-    region: string
+    region: string | null
     family_metrics?: {
-      family_overall_score?: number
-      best_age_min?: number
-      best_age_max?: number
-    }
+      family_overall_score?: number | null
+      best_age_min?: number | null
+      best_age_max?: number | null
+    } | null
   }
   color: string
   baseRotation: number

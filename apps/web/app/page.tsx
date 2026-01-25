@@ -11,7 +11,17 @@ import { ValueStory } from '@/components/home/ValueStory'
 import { WhatMakesUsDifferent } from '@/components/home/WhatMakesUsDifferent'
 import { EveryGuideIncludes } from '@/components/home/EveryGuideIncludes'
 
-async function getFeaturedResorts() {
+interface FeaturedResort {
+  id: string
+  name: string
+  slug: string
+  country: string
+  region: string | null
+  family_metrics: { family_overall_score: number | null; best_age_min: number | null; best_age_max: number | null }[] | null
+  images: { image_url: string; image_type: string }[] | null
+}
+
+async function getFeaturedResorts(): Promise<FeaturedResort[]> {
   const { data: resorts } = await supabase
     .from('resorts')
     .select(`
@@ -25,10 +35,18 @@ async function getFeaturedResorts() {
     `)
     .eq('status', 'published')
     .not('resort_family_metrics.family_overall_score', 'is', null)
-    .order('family_overall_score', { ascending: false, foreignTable: 'resort_family_metrics' })
-    .limit(4)
+    .limit(20)
 
-  return resorts || []
+  if (!resorts || resorts.length === 0) return []
+
+  // Sort by family score in JS (Supabase foreignTable ordering is unreliable)
+  const sorted = (resorts as FeaturedResort[]).sort((a, b) => {
+    const scoreA = a.family_metrics?.[0]?.family_overall_score ?? 0
+    const scoreB = b.family_metrics?.[0]?.family_overall_score ?? 0
+    return scoreB - scoreA
+  })
+
+  return sorted.slice(0, 4)
 }
 
 export default async function HomePage() {
