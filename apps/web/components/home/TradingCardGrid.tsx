@@ -5,17 +5,20 @@ import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { TradingCard, getTradingCardColor, getTradingCardRotation } from './TradingCard'
 
+interface FamilyMetrics {
+  family_overall_score?: number | null
+  best_age_min?: number | null
+  best_age_max?: number | null
+}
+
 interface Resort {
   id: string
   name: string
   slug: string
   country: string
   region: string | null
-  family_metrics?: {
-    family_overall_score?: number | null
-    best_age_min?: number | null
-    best_age_max?: number | null
-  }[] | null
+  // Supabase returns object for 1:1, array for 1:many - handle both
+  family_metrics?: FamilyMetrics | FamilyMetrics[] | null
   images?: {
     image_url: string
     image_type: string

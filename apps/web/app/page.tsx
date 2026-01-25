@@ -11,13 +11,20 @@ import { ValueStory } from '@/components/home/ValueStory'
 import { WhatMakesUsDifferent } from '@/components/home/WhatMakesUsDifferent'
 import { EveryGuideIncludes } from '@/components/home/EveryGuideIncludes'
 
+interface FamilyMetrics {
+  family_overall_score: number | null
+  best_age_min: number | null
+  best_age_max: number | null
+}
+
 interface FeaturedResort {
   id: string
   name: string
   slug: string
   country: string
   region: string | null
-  family_metrics: { family_overall_score: number | null; best_age_min: number | null; best_age_max: number | null }[] | null
+  // Supabase returns object for 1:1, array for 1:many - handle both
+  family_metrics: FamilyMetrics | FamilyMetrics[] | null
   images: { image_url: string; image_type: string }[] | null
 }
 
@@ -39,10 +46,19 @@ async function getFeaturedResorts(): Promise<FeaturedResort[]> {
 
   if (!resorts || resorts.length === 0) return []
 
+  // Helper to extract score from family_metrics (handles both object and array)
+  const getScore = (metrics: FamilyMetrics | FamilyMetrics[] | null): number => {
+    if (!metrics) return 0
+    if (Array.isArray(metrics)) {
+      return metrics[0]?.family_overall_score ?? 0
+    }
+    return metrics.family_overall_score ?? 0
+  }
+
   // Sort by family score in JS (Supabase foreignTable ordering is unreliable)
   const sorted = (resorts as FeaturedResort[]).sort((a, b) => {
-    const scoreA = a.family_metrics?.[0]?.family_overall_score ?? 0
-    const scoreB = b.family_metrics?.[0]?.family_overall_score ?? 0
+    const scoreA = getScore(a.family_metrics)
+    const scoreB = getScore(b.family_metrics)
     return scoreB - scoreA
   })
 
