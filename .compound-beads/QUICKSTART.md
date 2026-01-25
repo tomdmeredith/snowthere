@@ -1,22 +1,22 @@
 # Snowthere Quick Start
 
-**Round 5.9.6**: Growth Mode (completed 2026-01-24)
-**Type**: config change
-**Status**: Complete, needs deploy
+**Round 5.9.8**: Site Stabilization (completed 2026-01-25)
+**Type**: bug fixes
+**Status**: Complete
 
 **Recent**:
-- R5.9.6: Increased throughput - 8 resorts/run, 70% discovery priority
-- R5.9.5: Fixed confidence score + duplicate resort bugs
-- R5.9.4: Hidden FamilyMetricsTable, fixed sticky sidebar
+- R5.9.8: Fixed homepage ranking (family_metrics object/array), sidebar layout, social placeholders
+- R5.9.7: Site polish - taglines, voice improvements, location display
+- R5.9.6: Growth mode - 8 resorts/run, 70% discovery priority
 
-**Growth Changes (R5.9.6)**:
-- `max_resorts`: 4 → 8
-- `discovery_pct`: 30% → 70%
-- Expected: ~6 resorts/run (5 new + 1 stale refresh)
-- ~250 discovery candidates available
+**Latest Fixes (R5.9.8)**:
+- Homepage TOP PICKS now correctly sorted by family score (9/10 before 8/10)
+- Root cause: Supabase returns family_metrics as object, not array
+- Sidebar: Jump to Section above Useful Links, columns top-aligned
+- Social link placeholders hidden until accounts created
+- "3,000+ Resorts" CTA changed to "Browse All Resorts"
 
 **Pending**:
-- Commit and push for Railway deploy
 - Round 5 remaining: cron alerts, accessibility, trademark notices
 - Round 6: Homepage redesign
 

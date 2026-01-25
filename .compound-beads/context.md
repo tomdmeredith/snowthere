@@ -1,13 +1,51 @@
 # Snowthere Context
 
-> Last synced: 2026-01-24
+> Last synced: 2026-01-25
 > Agent: compound-beads v2.0
 
 ## Current Round
 
-**Round 5.9.6: Growth Mode** (completed 2026-01-24)
-- Type: config change
+**Round 5.9.8: Site Stabilization** (completed 2026-01-25)
+- Type: bug fixes
 - Status: Completed
+- Goal: Fix critical UX issues found in site audit
+
+**Accomplishments**:
+- Fixed homepage ranking: 9/10 resorts now appear before 8/10
+  - Root cause: Supabase returns `family_metrics` as object (1:1), not array
+  - Fix: Added `getScore()` helper to handle both object and array formats
+- Fixed sidebar layout on resort pages:
+  - Jump to Section now appears above Useful Links
+  - Left/right columns now top-aligned (`items-start` on grid)
+- Hidden social link placeholders in Footer (no accounts yet)
+- Changed "See All 3,000+ Resorts" to "Browse All Resorts"
+- Set homepage to `force-dynamic` for fresh data on each request
+
+**Key Files Changed**:
+- `apps/web/app/page.tsx` - Homepage ranking fix, dynamic rendering
+- `apps/web/components/home/TradingCardGrid.tsx` - Interface fix
+- `apps/web/components/home/Footer.tsx` - Social links hidden
+- `apps/web/app/resorts/[country]/[slug]/page.tsx` - Sidebar order/alignment
+
+**Arc Narrative**:
+- We started believing: The homepage sorting code was correct
+- We ended believing: Supabase's foreign table data structure differs from TypeScript expectations
+- The transformation: From "sorting bug" → "data shape mismatch between DB and code"
+
+## Round 5.9.7: Site Polish (Completed 2026-01-24)
+
+**Goal**: Visual polish, taglines, voice improvements
+
+**Accomplishments**:
+- Added taglines to resort cards and hero sections
+- Fixed voice pattern post-processing
+- Location display improvements (region, country)
+- Courchevel and Niseko images added
+- Archived Kitzbühel duplicate
+
+## Round 5.9.6: Growth Mode (Completed 2026-01-24)
+
+- Type: config change
 - Goal: Increase pipeline throughput to grow the site faster
 
 **Changes**:
@@ -204,6 +242,8 @@ From Round 4 (Production Launch):
 
 ## Recent Commits
 
-- `6b9804c` feat: Add extraction layer and voice pattern post-processing
-- `0cfa695` fix: P0 critical bugs - ghost resorts, low confidence publishing
-- `17966de` fix: Handle dict context in generate_tagline
+- `9f3736c` fix: Sort resorts by family score (handle object/array family_metrics)
+- `4b405a1` fix: Sidebar layout - Jump to Section above Useful Links, align top
+- `33bd6c0` fix: Round 5.9.8 - Homepage ranking, hide social placeholders
+- `c13e6ca` feat: Round 5.9.7 - Site polish, taglines, and voice improvements
+- `6d4eddb` feat: Growth mode - 8 resorts/run with 70% discovery priority
