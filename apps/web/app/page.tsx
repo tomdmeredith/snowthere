@@ -49,6 +49,9 @@ async function getFeaturedResorts(): Promise<FeaturedResort[]> {
   return sorted.slice(0, 4)
 }
 
+// Revalidate homepage every hour to pick up new featured resorts
+export const revalidate = 3600
+
 export default async function HomePage() {
   const featuredResorts = await getFeaturedResorts()
 
