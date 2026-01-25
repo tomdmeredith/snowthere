@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { ResortWithDetails } from '@/lib/database.types'
 import { createSanitizedHTML } from '@/lib/sanitize'
+import { injectResortLinks } from '@/lib/resort-linker'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { QuickTake } from '@/components/resort/QuickTake'
@@ -306,7 +307,7 @@ export async function generateStaticParams() {
   }))
 }
 
-export const revalidate = 3600 // Revalidate every hour (ISR)
+export const revalidate = 43200 // Revalidate every 12 hours (ISR) - pipeline triggers on-demand when content changes
 
 export default async function ResortPage({ params }: Props) {
   const resort = await getResort(params.country, params.slug)
@@ -322,6 +323,16 @@ export default async function ResortPage({ params }: Props) {
   const metrics = resort.family_metrics
   const costs = resort.costs
   const faqs = content?.faqs as { question: string; answer: string }[] | null
+
+  // Pre-process content sections with resort links (auto-link mentions of other resorts)
+  const linkedContent = {
+    getting_there: content?.getting_there ? await injectResortLinks(content.getting_there as string, resort.name) : null,
+    where_to_stay: content?.where_to_stay ? await injectResortLinks(content.where_to_stay as string, resort.name) : null,
+    lift_tickets: content?.lift_tickets ? await injectResortLinks(content.lift_tickets as string, resort.name) : null,
+    on_mountain: content?.on_mountain ? await injectResortLinks(content.on_mountain as string, resort.name) : null,
+    off_mountain: content?.off_mountain ? await injectResortLinks(content.off_mountain as string, resort.name) : null,
+    parent_reviews_summary: content?.parent_reviews_summary ? await injectResortLinks(content.parent_reviews_summary as string, resort.name) : null,
+  }
 
   // Find hero and atmosphere images
   const images = (resort as any).images || []
@@ -562,35 +573,35 @@ export default async function ResortPage({ params }: Props) {
               )}
 
             {/* Getting There */}
-            {content?.getting_there && (
+            {linkedContent.getting_there && (
               <section id="getting-there">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>✈️</span>
                   <span>Getting There</span>
                 </h2>
-                <ContentRenderer html={content.getting_there} />
+                <ContentRenderer html={linkedContent.getting_there} />
               </section>
             )}
 
             {/* Where to Stay */}
-            {content?.where_to_stay && (
+            {linkedContent.where_to_stay && (
               <section id="where-to-stay">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>🏠</span>
                   <span>Where to Stay</span>
                 </h2>
-                <ContentRenderer html={content.where_to_stay} />
+                <ContentRenderer html={linkedContent.where_to_stay} />
               </section>
             )}
 
             {/* Lift Tickets & Passes */}
-            {content?.lift_tickets && (
+            {linkedContent.lift_tickets && (
               <section id="lift-tickets">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>🎟️</span>
                   <span>Lift Tickets & Passes</span>
                 </h2>
-                <ContentRenderer html={content.lift_tickets} />
+                <ContentRenderer html={linkedContent.lift_tickets} />
                 {resort.passes.length > 0 && (
                   <div className="mt-8">
                     <h3 className="font-display font-semibold text-dark-800 mb-4">
@@ -618,13 +629,13 @@ export default async function ResortPage({ params }: Props) {
             )}
 
             {/* On the Mountain */}
-            {content?.on_mountain && (
+            {linkedContent.on_mountain && (
               <section id="on-mountain">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>⛷️</span>
                   <span>On the Mountain</span>
                 </h2>
-                <ContentRenderer html={content.on_mountain} />
+                <ContentRenderer html={linkedContent.on_mountain} />
               </section>
             )}
 
@@ -638,13 +649,13 @@ export default async function ResortPage({ params }: Props) {
             />
 
             {/* Off the Mountain */}
-            {content?.off_mountain && (
+            {linkedContent.off_mountain && (
               <section id="off-mountain">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>☕</span>
                   <span>Off the Mountain</span>
                 </h2>
-                <ContentRenderer html={content.off_mountain} />
+                <ContentRenderer html={linkedContent.off_mountain} />
               </section>
             )}
 
@@ -654,13 +665,13 @@ export default async function ResortPage({ params }: Props) {
             )}
 
             {/* Parent Reviews */}
-            {content?.parent_reviews_summary && (
+            {linkedContent.parent_reviews_summary && (
               <section id="reviews">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>💬</span>
                   <span>What Parents Say</span>
                 </h2>
-                <ContentRenderer html={content.parent_reviews_summary} />
+                <ContentRenderer html={linkedContent.parent_reviews_summary} />
               </section>
             )}
 

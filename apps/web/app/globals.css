@@ -529,6 +529,25 @@
     color: rgb(var(--dark-600));
   }
 
+  /* ============================================
+     RESORT LINKS - Auto-linked resort mentions
+     Subtle underline that fits within prose flow
+     ============================================ */
+  .resort-link {
+    @apply text-coral-600 no-underline;
+    text-decoration: underline;
+    text-decoration-color: rgb(var(--coral-300));
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    @apply transition-all duration-200;
+  }
+
+  .resort-link:hover {
+    @apply text-coral-700;
+    text-decoration-color: rgb(var(--coral-500));
+    text-decoration-thickness: 2px;
+  }
+
   /* Tables in prose-family */
   .prose-family :where(table):not(:where([class~="not-prose"] *)) {
     @apply w-full rounded-xl overflow-hidden border border-dark-100 my-6;

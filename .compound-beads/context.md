@@ -5,7 +5,38 @@
 
 ## Current Round
 
-**Round 5.9.8: Site Stabilization** (completed 2026-01-25)
+**Round 5.10: Internal Linking** (in progress 2026-01-25)
+- Type: feature
+- Status: Implementation complete, testing blocked by sitemap.ts bug
+- Goal: Auto-link resort names in content to improve SEO, GEO, and user navigation
+
+**Accomplishments**:
+- Created `apps/web/lib/resort-linker.ts` - auto-links resort names mentioned in content
+- Module-level caching for resort lookup (shared across renders)
+- Name variant matching (St./Sankt/Saint, Mont/Mount)
+- Word-boundary regex matching (avoids partial matches)
+- Excludes self-linking (current resort name not linked on its own page)
+- Safety check for existing links (doesn't double-link)
+- Pre-processes content server-side in page.tsx
+- Added `.resort-link` styling with coral underline
+- Changed ISR revalidation from 1 hour to 12 hours
+
+**Key Files Changed**:
+- `apps/web/lib/resort-linker.ts` (NEW)
+- `apps/web/app/resorts/[country]/[slug]/page.tsx` (MODIFIED)
+- `apps/web/components/resort/ContentRenderer.tsx` (MODIFIED)
+- `apps/web/app/globals.css` (MODIFIED)
+
+**Blocker**: Next.js 14.1.0 sitemap bug preventing dev server testing
+- Error: "Cannot define route with same specificity as optional catch-all"
+- Fix: Convert sitemap.ts to route handler pattern
+
+**Arc Narrative**:
+- We started believing: Internal linking needs a complex agent system with databases, APIs, Claude-generated anchor text
+- We ended believing: The user's actual need is simple: when content mentions a resort, make it clickable
+- The transformation: From "build a system" → "add a utility function"
+
+## Round 5.9.8: Site Stabilization (completed 2026-01-25)
 - Type: bug fixes
 - Status: Completed
 - Goal: Fix critical UX issues found in site audit
@@ -222,6 +253,14 @@ From Round 4 (Production Launch):
 ### Decimal Scores
 - Migrate `family_overall_score` from INTEGER to DECIMAL(3,1)
 - Enable nuanced rankings (8.6, 8.7, etc.)
+
+### Internal Linking Enhancements (Low Priority)
+> Build only if data shows need - Round 5.10 baseline is sufficient
+
+- Click tracking for internal links (if we need to measure link CTR)
+- JSON-LD `relatedLink` schema (if AI citation testing shows schema helps)
+- "Also mentioned" sidebar section (if users request more discovery)
+- Link hover preview showing destination (if users want to see where links go)
 
 ## Key Files
 

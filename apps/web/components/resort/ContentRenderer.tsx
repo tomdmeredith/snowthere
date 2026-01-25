@@ -26,10 +26,10 @@ interface ParsedContent {
  */
 export function ContentRenderer({ html, className = 'prose-family' }: ContentRendererProps) {
   const parsedContent = useMemo(() => {
-    // Sanitize HTML first
+    // Sanitize HTML first (allow class for resort-link styling)
     const sanitized = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ['p', 'strong', 'em', 'ul', 'ol', 'li', 'h3', 'h4', 'a', 'br'],
-      ALLOWED_ATTR: ['href', 'target', 'rel'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
     })
 
     // Split content by paragraph tags and strong/bold patterns
