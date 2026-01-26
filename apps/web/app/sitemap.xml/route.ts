@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase'
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
+const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com').trim()
 
 interface Resort {
   slug: string
