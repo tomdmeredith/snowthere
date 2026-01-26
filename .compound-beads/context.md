@@ -1,9 +1,64 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26 (Round 8)
+> Last synced: 2026-01-26 (Round 8.1)
 > Agent: compound-beads v2.0
 
 ## Current Round
+
+**Round 8.1: Comprehensive Site Audit & Fixes** ✅ COMPLETE
+- Type: Bug fixes + missing pages
+- Status: Complete - /about, /contact, /api/contact created
+- Goal: Fix critical 404s on footer links discovered during comprehensive audit
+
+### Round 8.1: Site Audit & Fixes (Completed 2026-01-26)
+
+**Problem Statement:**
+Comprehensive site audit revealed critical issues:
+- `/about` returned 404 (linked in footer)
+- `/contact` returned 404 (linked in footer)
+- No mechanism for visitors to contact the team
+
+**Audit Coverage:**
+| Area | Status | Notes |
+|------|--------|-------|
+| Homepage | ✅ Pass | All sections load correctly, age selector works |
+| /resorts | ✅ Pass | 29 resorts across 8 countries displayed |
+| /guides | ✅ Pass | "Coming Soon" state (expected) |
+| /quiz | ✅ Pass | 7-question flow works with progress tracking |
+| Resort pages | ✅ Pass | All content sections render, internal links work |
+| Newsletter signup | ✅ Pass | /api/subscribe returns 200, GA4 event fires |
+| GA4 tracking | ✅ Pass | page_view, scroll, form_start, newsletter_signup, click events |
+| Outbound click tracking | ✅ Pass | External links fire click event with outbound=true |
+| /privacy | ✅ Pass | Page loads correctly |
+| /terms | ✅ Pass | Page loads with trademark notice anchor |
+| /about | ❌→✅ | Was 404, now created |
+| /contact | ❌→✅ | Was 404, now created |
+
+**Files Created:**
+- `apps/web/app/about/page.tsx` - About page with mission, research process, trust signals
+- `apps/web/app/contact/page.tsx` - Contact page with form
+- `apps/web/components/ContactForm.tsx` - Client component for contact form
+- `apps/web/app/api/contact/route.ts` - Contact form API endpoint
+- `supabase/migrations/029_contact_submissions.sql` - Database table for submissions
+
+**About Page Sections:**
+1. Our Mission - Help families plan ski trips
+2. What We Do - Complete trip guides with costs, ages, tips
+3. How We Research - AI-assisted with human review
+4. Why Trust Snowthere - Honest, real numbers, global, parent-focused
+
+**Contact Form Features:**
+- Fields: name, email, subject (dropdown), message
+- Subject options: resort question, suggestion, feedback, correction, general, other
+- Rate limiting: 3 requests/minute per IP
+- Input sanitization: HTML stripping, max length 5000 chars
+- Stored in `contact_submissions` table with IP, user agent, referrer
+
+**Deployment Required:**
+- [ ] Commit and push to main (Vercel auto-deploy)
+- [ ] Run migration 029_contact_submissions.sql via Supabase Dashboard
+
+---
 
 **Round 8: Quick Takes Redesign** ✅ COMPLETE
 - Type: Content quality improvement

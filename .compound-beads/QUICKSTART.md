@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 8**: Quick Takes Redesign ✅ COMPLETE
-**Type**: Content quality improvement
-**Status**: Editorial Verdict Model for Quick Takes, forbidden phrase detection, specificity scoring
+**Round 8.1**: Comprehensive Site Audit & Fixes ✅ COMPLETE
+**Type**: Bug fixes + missing pages
+**Status**: Created /about, /contact pages + /api/contact endpoint + contact_submissions migration
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -13,22 +13,27 @@
 - Autonomous operation
 
 **Recent**:
-- R7.4: **GA4 click tracking** - `lib/analytics.ts`, `trackOutboundClick()` in UsefulLinks
+- R8.1: **Comprehensive Audit Fixes**
+  - Created `/about` page with mission, research process, trust signals
+  - Created `/contact` page with form (name, email, subject, message)
+  - Created `/api/contact` endpoint with rate limiting + validation
+  - Created `ContactForm.tsx` client component
+  - Created migration `029_contact_submissions.sql`
+  - Fixed critical 404s on footer links
 - R8: **Quick Take redesign** - Editorial Verdict Model replaces generic prompts
-  - New primitive: `quick_take.py` with `generate_quick_take()`, `calculate_specificity_score()`
-  - Context extraction: `extract_quick_take_context()` in intelligence.py
-  - Quality gates: Word count (80-120), specificity > 0.6, no forbidden phrases
-  - Forbidden phrases: 31 phrases detected and blocked (e.g., "Here's the thing", "amazing")
-  - Pipeline integration: Stage 3.1-3.3 in runner.py
 
 **Next**:
+- Deploy changes to Vercel (commit + push)
+- Run migration 029_contact_submissions.sql on Supabase
 - R7.2: Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual signup
 - R9: ChatGPT GPT & API - Family Ski Trip Planner custom GPT
 
 **Key Files**:
-- Quick Take primitive: `agents/shared/primitives/quick_take.py`
-- Context extraction: `agents/shared/primitives/intelligence.py` (extract_quick_take_context)
-- Pipeline: `agents/pipeline/runner.py` (Stages 3.1-3.3)
+- About page: `apps/web/app/about/page.tsx`
+- Contact page: `apps/web/app/contact/page.tsx`
+- Contact API: `apps/web/app/api/contact/route.ts`
+- Contact form: `apps/web/components/ContactForm.tsx`
+- Migration: `supabase/migrations/029_contact_submissions.sql`
 - Strategic plan: `/.claude/plans/snuggly-herding-liskov.md`
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

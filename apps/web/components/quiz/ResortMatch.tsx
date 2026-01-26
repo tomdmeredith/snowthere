@@ -33,7 +33,8 @@ const PRICE_INDICATORS: Record<string, { icons: number; label: string }> = {
 export function ResortMatchCard({ match, rank, delay = 0 }: ResortMatchProps) {
   const medal = RANK_MEDALS[rank] || RANK_MEDALS[3]
   const priceInfo = PRICE_INDICATORS[match.priceLevel] || PRICE_INDICATORS['mid']
-  const matchPercent = Math.round(match.matchScore * 100)
+  // matchScore is already 0-100 from scoring algorithm
+  const matchPercent = Math.round(match.matchScore)
 
   return (
     <motion.div
