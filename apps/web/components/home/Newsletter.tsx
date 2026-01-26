@@ -17,20 +17,45 @@ export function Newsletter() {
 
     setStatus('submitting')
 
-    // Track newsletter signup in Google Analytics
-    if (typeof window !== 'undefined' && window.gtag) {
-      window.gtag('event', 'newsletter_signup', {
-        event_category: 'engagement',
-        event_label: 'homepage_newsletter',
-        value: 1,
+    try {
+      // Call subscribe API
+      const response = await fetch('/api/subscribe', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          source: 'homepage_newsletter',
+          source_detail: window.location.pathname,
+        }),
       })
-    }
 
-    // TODO: Add actual newsletter signup API call here
-    // For now, simulate success
-    await new Promise((resolve) => setTimeout(resolve, 500))
-    setStatus('success')
-    setEmail('')
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Subscription failed')
+      }
+
+      // Track newsletter signup in Google Analytics
+      if (typeof window !== 'undefined' && window.gtag) {
+        window.gtag('event', 'newsletter_signup', {
+          event_category: 'engagement',
+          event_label: 'homepage_newsletter',
+          value: 1,
+          reactivated: data.reactivated ? 'yes' : 'no',
+          existing: data.existing ? 'yes' : 'no',
+        })
+      }
+
+      setStatus('success')
+      setEmail('')
+    } catch (error) {
+      console.error('Newsletter signup error:', error)
+      setStatus('error')
+      // Reset to idle after showing error briefly
+      setTimeout(() => setStatus('idle'), 3000)
+    }
   }
 
   return (
@@ -77,6 +102,13 @@ export function Newsletter() {
                   <p className="text-white font-semibold flex items-center justify-center gap-2">
                     You&apos;re in! Check your inbox.
                     <span className="text-xl" aria-hidden="true">🎉</span>
+                  </p>
+                </div>
+              ) : status === 'error' ? (
+                <div className="bg-red-500/20 backdrop-blur-sm rounded-full px-8 py-4 max-w-md mx-auto">
+                  <p className="text-white font-semibold flex items-center justify-center gap-2">
+                    Oops! Something went wrong. Try again?
+                    <span className="text-xl" aria-hidden="true">😅</span>
                   </p>
                 </div>
               ) : (

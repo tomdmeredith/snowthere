@@ -39,14 +39,30 @@
 - `agents/shared/primitives/intelligence.py` - `extract_region()` primitive
 - `agents/pipeline/runner.py` - Region extraction integration
 
-### Round 6.2: Email System with Resend (Pending)
-- Agent-native email system (not ConvertKit/Buttondown)
-- Supabase tables: subscribers, email_sequences, email_sends, email_templates
-- New primitives: add_subscriber(), send_email(), trigger_sequence()
+### Round 6.2: Email System Foundation (Completed 2026-01-26)
+- Created migration 026_email_system.sql with 7 tables:
+  - subscribers: Core email list with referral tracking
+  - email_templates: Reusable email templates
+  - email_sequences: Automated email flows
+  - email_sequence_steps: Individual steps within sequences
+  - email_sends: Audit log of all emails sent
+  - subscriber_sequence_progress: Track subscriber progress
+  - referral_rewards: Morning Brew style referral tracking
+- Created /api/subscribe endpoint with:
+  - Rate limiting (5 requests/minute per IP)
+  - Email validation
+  - Reactivation for unsubscribed users
+  - Referral code lookup
+  - Auto-generated referral codes via DB trigger
+- Wired Newsletter.tsx to call /api/subscribe
+
+**Migration Pending**: Run `026_email_system.sql` via Supabase Dashboard
 
 ### Round 6.3: Lead Magnet & Welcome Sequence (Pending)
 - Family Ski Trip Checklist PDF
+- Resend API integration
 - Welcome email series (Days 0, 2, 4, 7, 14)
+- Email primitives: add_subscriber(), send_email(), trigger_sequence()
 
 ---
 
