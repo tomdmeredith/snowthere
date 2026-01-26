@@ -58,6 +58,8 @@ export function FAQSection({ faqs }: FAQSectionProps) {
       <div className="space-y-4">
         {faqs.map((faq, index) => {
           const isOpen = openIndex === index
+          const panelId = `faq-panel-${index}`
+          const headingId = `faq-heading-${index}`
           return (
             <div
               key={index}
@@ -67,28 +69,36 @@ export function FAQSection({ faqs }: FAQSectionProps) {
                   : 'bg-gradient-to-br from-dark-50/80 to-white border border-dark-100 shadow-card hover:shadow-card-hover hover:border-teal-200'
               }`}
             >
-              <button
-                onClick={() => setOpenIndex(isOpen ? null : index)}
-                className="w-full flex items-start justify-between text-left gap-4 p-6"
-                aria-expanded={isOpen}
-              >
-                <span className={`font-display font-semibold leading-relaxed transition-colors duration-300 ${
-                  isOpen ? 'text-teal-700' : 'text-dark-800'
-                }`}>
-                  {faq.question}
-                </span>
-                <span
-                  className={`flex-shrink-0 p-2 rounded-xl transition-all duration-300 ${
-                    isOpen
-                      ? 'bg-gradient-to-br from-teal-400 to-teal-500 text-white rotate-180 shadow-teal'
-                      : 'bg-dark-100 text-dark-500 hover:bg-teal-100 hover:text-teal-600'
-                  }`}
+              <h3 className="m-0">
+                <button
+                  id={headingId}
+                  onClick={() => setOpenIndex(isOpen ? null : index)}
+                  className="w-full flex items-start justify-between text-left gap-4 p-6"
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
                 >
-                  <ChevronDown className="w-5 h-5" />
-                </span>
-              </button>
+                  <span className={`font-display font-semibold leading-relaxed transition-colors duration-300 ${
+                    isOpen ? 'text-teal-700' : 'text-dark-800'
+                  }`}>
+                    {faq.question}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={`flex-shrink-0 p-2 rounded-xl transition-all duration-300 ${
+                      isOpen
+                        ? 'bg-gradient-to-br from-teal-400 to-teal-500 text-white rotate-180 shadow-teal'
+                        : 'bg-dark-100 text-dark-500 hover:bg-teal-100 hover:text-teal-600'
+                    }`}
+                  >
+                    <ChevronDown className="w-5 h-5" />
+                  </span>
+                </button>
+              </h3>
 
               <div
+                id={panelId}
+                role="region"
+                aria-labelledby={headingId}
                 className={`grid transition-all duration-300 ease-out ${
                   isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}

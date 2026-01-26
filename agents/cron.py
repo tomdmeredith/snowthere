@@ -60,6 +60,7 @@ def validate_environment():
     """
     from shared.config import settings
     from shared.supabase_client import get_supabase_client
+    from shared.primitives.alerts import alert_startup_failure
 
     print("Validating environment...")
     errors = []
@@ -86,6 +87,8 @@ def validate_environment():
         print("❌ STARTUP VALIDATION FAILED:")
         for e in errors:
             print(f"  - {e}")
+        # Send Slack alert before exiting
+        alert_startup_failure(errors)
         sys.exit(1)
 
     # Warn about missing optional vars
@@ -100,12 +103,15 @@ def validate_environment():
         print("✓ Supabase connection verified")
     except ValueError as e:
         print(f"❌ Configuration error: {e}")
+        alert_startup_failure([f"Configuration error: {e}"])
         sys.exit(1)
     except ConnectionError as e:
         print(f"❌ Supabase connection failed: {e}")
+        alert_startup_failure([f"Supabase connection failed: {e}"])
         sys.exit(1)
     except Exception as e:
         print(f"❌ Unexpected error connecting to Supabase: {e}")
+        alert_startup_failure([f"Unexpected Supabase error: {e}"])
         sys.exit(1)
 
     print("✓ Environment validation passed\n")

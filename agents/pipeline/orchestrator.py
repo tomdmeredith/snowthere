@@ -41,6 +41,8 @@ from shared.primitives import (
     log_reasoning,
     log_cost,
     alert_pipeline_summary,
+    alert_pipeline_error,
+    alert_budget_warning,
 )
 from shared.supabase_client import get_supabase_client
 
@@ -705,6 +707,13 @@ async def run_daily_pipeline(
         metadata={"run_id": run_id, "daily_spend": daily_spend, "remaining": remaining_budget},
     )
 
+    # Check if budget is getting high (75% threshold)
+    alert_budget_warning(
+        current_spend=daily_spend,
+        daily_limit=settings.daily_budget_limit,
+        threshold_pct=0.75,
+    )
+
     # =========================================================================
     # STEP 1.1: Escalate Stuck Quality Items
     # =========================================================================
@@ -946,6 +955,14 @@ async def run_daily_pipeline(
                     "error": str(e),
                     "traceback": traceback.format_exc(),
                 },
+            )
+
+            # Send Slack alert for this error
+            alert_pipeline_error(
+                error_type=type(e).__name__,
+                error_message=str(e),
+                resort_name=resort_name,
+                task_id=run_id,
             )
 
             # Mark discovery candidate as rejected on error

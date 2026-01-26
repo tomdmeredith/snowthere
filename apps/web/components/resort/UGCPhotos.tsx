@@ -130,6 +130,9 @@ export function UGCPhotos({
       {/* Photo Carousel */}
       <div
         ref={scrollRef}
+        role="region"
+        aria-label={`${title}, ${photos.length} photos`}
+        aria-roledescription="carousel"
         className="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory scrollbar-hide pb-2"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
       >
@@ -205,6 +208,8 @@ function Lightbox({
   onNavigate: (index: number) => void
 }) {
   const photo = photos[currentIndex]
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -226,13 +231,54 @@ function Lightbox({
     }
   }, [])
 
+  // Focus trap: focus the close button when lightbox opens
+  useEffect(() => {
+    closeButtonRef.current?.focus()
+  }, [])
+
+  // Focus trap: keep focus within lightbox
+  useEffect(() => {
+    const dialog = dialogRef.current
+    if (!dialog) return
+
+    const focusableElements = dialog.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )
+    const firstElement = focusableElements[0] as HTMLElement
+    const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement
+
+    const handleTab = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab') return
+
+      if (e.shiftKey) {
+        if (document.activeElement === firstElement) {
+          e.preventDefault()
+          lastElement?.focus()
+        }
+      } else {
+        if (document.activeElement === lastElement) {
+          e.preventDefault()
+          firstElement?.focus()
+        }
+      }
+    }
+
+    dialog.addEventListener('keydown', handleTab)
+    return () => dialog.removeEventListener('keydown', handleTab)
+  }, [])
+
   return (
     <div
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Photo ${currentIndex + 1} of ${photos.length} at ${resortName}`}
       className="fixed inset-0 z-50 flex items-center justify-center bg-dark-900/95 backdrop-blur-sm"
       onClick={onClose}
     >
       {/* Close button */}
       <button
+        ref={closeButtonRef}
         onClick={onClose}
         className="absolute top-4 right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
         aria-label="Close lightbox"

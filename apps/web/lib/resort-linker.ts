@@ -66,7 +66,7 @@ function generateNameVariants(name: string): string[] {
     }
   }
 
-  return [...new Set(variants)]
+  return Array.from(new Set(variants))
 }
 
 /**
@@ -92,7 +92,7 @@ export async function getResortLinkData(): Promise<ResortLinkData[]> {
     return []
   }
 
-  const resorts: ResortLinkData[] = data.map((r) => {
+  const resorts: ResortLinkData[] = (data as { name: string; slug: string; country: string }[]).map((r) => {
     const variants = generateNameVariants(r.name)
     // Create pattern that matches any variant, case-insensitive, word-boundary
     const patternStr = variants.map((v) => escapeRegex(v)).join('|')

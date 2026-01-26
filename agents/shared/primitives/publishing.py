@@ -12,6 +12,7 @@ from typing import Any
 from ..config import settings
 from ..supabase_client import get_supabase_client
 from .system import log_reasoning
+from .alerts import alert_pipeline_error
 
 
 # =============================================================================
@@ -288,6 +289,11 @@ def revalidate_page(path: str) -> dict[str, Any]:
                 }
 
     except Exception as e:
+        # Send alert for revalidation failure
+        alert_pipeline_error(
+            error_type="RevalidationFailed",
+            error_message=f"Failed to revalidate {path}: {str(e)}",
+        )
         return {
             "success": False,
             "path": path,

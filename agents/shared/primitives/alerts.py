@@ -140,6 +140,67 @@ def alert_pipeline_error(
     )
 
 
+def alert_budget_warning(
+    current_spend: float,
+    daily_limit: float,
+    threshold_pct: float = 0.75,
+) -> bool:
+    """
+    Send an alert when budget usage exceeds threshold.
+
+    Args:
+        current_spend: Current daily spend in dollars
+        daily_limit: Daily budget limit in dollars
+        threshold_pct: Percentage threshold to trigger alert (default 75%)
+
+    Returns:
+        True if alert was sent, False if below threshold or failed
+    """
+    if daily_limit <= 0:
+        return False
+
+    pct_used = current_spend / daily_limit
+    if pct_used < threshold_pct:
+        return False
+
+    remaining = daily_limit - current_spend
+    severity = "error" if pct_used >= 0.95 else "warning"
+
+    return send_slack_alert(
+        title=f"Budget Alert: {pct_used:.0%} Used",
+        message=(
+            f"*Daily budget usage is high*\n"
+            f"• Spent: ${current_spend:.2f}\n"
+            f"• Limit: ${daily_limit:.2f}\n"
+            f"• Remaining: ${remaining:.2f}"
+        ),
+        severity=severity,
+        metadata={"percentage_used": f"{pct_used:.1%}", "remaining": f"${remaining:.2f}"},
+    )
+
+
+def alert_startup_failure(errors: list[str]) -> bool:
+    """
+    Send an alert when pipeline startup validation fails.
+
+    Args:
+        errors: List of validation error messages
+
+    Returns:
+        True if sent successfully, False otherwise
+    """
+    return send_slack_alert(
+        title="Pipeline Startup Failed",
+        message=(
+            f"*Environment validation failed*\n"
+            f"The daily pipeline could not start due to configuration issues:\n"
+            + "\n".join(f"• {e}" for e in errors)
+        ),
+        severity="error",
+        metadata={"error_count": str(len(errors))},
+    )
+
+
 def alert_pipeline_summary(
     total_processed: int,
     successful: int,

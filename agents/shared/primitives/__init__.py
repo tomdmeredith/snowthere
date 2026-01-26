@@ -123,6 +123,8 @@ from .alerts import (
     send_slack_alert,
     alert_pipeline_error,
     alert_pipeline_summary,
+    alert_budget_warning,
+    alert_startup_failure,
 )
 
 # Intelligence primitives (Agent Native reasoning)
@@ -426,6 +428,8 @@ __all__ = [
     "send_slack_alert",
     "alert_pipeline_error",
     "alert_pipeline_summary",
+    "alert_budget_warning",
+    "alert_startup_failure",
     # Intelligence - Data quality
     "assess_data_quality",
     "QualityAssessment",

@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { ResortWithDetails } from '@/lib/database.types'
 import { createSanitizedHTML } from '@/lib/sanitize'
@@ -386,7 +387,7 @@ export default async function ResortPage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-white">
+    <main id="main-content" className="min-h-screen bg-white">
       {/* SkiResort Schema for SEO/GEO */}
       <script
         type="application/ld+json"
@@ -506,10 +507,13 @@ export default async function ResortPage({ params }: Props) {
                   {/* Colored border frame - Design-5 */}
                   <div className="absolute -inset-3 bg-gradient-to-br from-[#FF6B6B] via-[#FFE066] to-[#4ECDC4] rounded-3xl" />
                   <div className="relative aspect-[4/3] rounded-2xl overflow-hidden shadow-2xl">
-                    <img
+                    <Image
                       src={heroImage.image_url}
                       alt={heroImage.alt_text || `${resort.name} ski resort`}
-                      className="w-full h-full object-cover"
+                      fill
+                      priority
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
                     />
                   </div>
                   {/* Fun fact bubble */}

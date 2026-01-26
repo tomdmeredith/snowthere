@@ -69,9 +69,15 @@ export function Footer() {
         */}
 
         {/* Copyright */}
-        <div className="text-center">
+        <div className="text-center space-y-2">
           <p className="text-dark-400 text-sm">
             © {new Date().getFullYear()} snowthere. Made with ❄️
+          </p>
+          <p className="text-dark-500 text-xs">
+            All ski pass and resort names are trademarks of their respective owners.{' '}
+            <Link href="/terms#trademark-notice" className="underline hover:text-dark-300 transition-colors">
+              Trademark notice
+            </Link>
           </p>
         </div>
       </div>

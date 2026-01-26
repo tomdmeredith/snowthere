@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Plus_Jakarta_Sans, Fraunces, Caveat } from 'next/font/google'
 import './globals.css'
 import { CookieConsent } from '@/components/CookieConsent'
+import { WebVitalsReporter } from '@/components/WebVitalsReporter'
 
 // SPIELPLATZ Design System Typography
 // Plus Jakarta Sans - Swiss-inspired geometry with rounded terminals (body text, UI)
@@ -71,6 +72,9 @@ export default function RootLayout({
       <head>
         {/* Skier emoji favicon */}
         <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎿</text></svg>" />
+        {/* Preconnect to Google Fonts for faster font loading (LCP optimization) */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Google Analytics is loaded via CookieConsent component after user consent */}
       </head>
       <body className="font-sans bg-white text-dark-800">
@@ -85,6 +89,7 @@ export default function RootLayout({
           {children}
         </div>
         <CookieConsent />
+        <WebVitalsReporter />
       </body>
     </html>
   )

@@ -203,7 +203,7 @@ export default async function CountryResortsPage({ params, searchParams }: PageP
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-white">
+      <main id="main-content" className="min-h-screen bg-white">
         {/* Breadcrumb */}
         <nav className="bg-dark-50 py-4 border-b border-dark-100">
           <div className="container-page">

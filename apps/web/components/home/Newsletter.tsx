@@ -65,12 +65,18 @@ export function Newsletter() {
                 Designed for families, never spammy.
               </p>
 
+              {/* Form status - live region for screen readers */}
+              <div aria-live="polite" aria-atomic="true" role="status" className="sr-only">
+                {status === 'success' && 'Successfully subscribed! Check your inbox.'}
+                {status === 'error' && 'There was an error. Please try again.'}
+              </div>
+
               {/* Form */}
               {status === 'success' ? (
                 <div className="bg-white/20 backdrop-blur-sm rounded-full px-8 py-4 max-w-md mx-auto">
                   <p className="text-white font-semibold flex items-center justify-center gap-2">
                     You&apos;re in! Check your inbox.
-                    <span className="text-xl">🎉</span>
+                    <span className="text-xl" aria-hidden="true">🎉</span>
                   </p>
                 </div>
               ) : (

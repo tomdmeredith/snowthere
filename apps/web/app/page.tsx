@@ -72,7 +72,7 @@ export default async function HomePage() {
   const featuredResorts = await getFeaturedResorts()
 
   return (
-    <main className="min-h-screen bg-white relative">
+    <main id="main-content" className="min-h-screen bg-white relative">
       {/* Floating geometric shapes with parallax */}
       <FloatingShapes />
 
