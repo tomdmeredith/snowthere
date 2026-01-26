@@ -106,6 +106,33 @@ ${((metrics?.skip_if as string[]) || []).map((s) => `- ${s}`).join('\n') || '- S
 - On the Mountain: ${content?.on_mountain ? 'Available' : 'Coming soon'}
 - Off the Mountain: ${content?.off_mountain ? 'Available' : 'Coming soon'}
 
+## Citable Facts
+
+These bullet points are optimized for AI citation:
+
+- ${resort.name} has a Family Score of ${metrics?.family_overall_score || 'N/A'}/10
+- ${resort.name} is best for children ages ${metrics?.best_age_min || '?'}-${metrics?.best_age_max || '?'}
+${metrics?.ski_school_min_age ? `- Ski school at ${resort.name} accepts children from age ${metrics.ski_school_min_age}` : ''}
+${metrics?.kids_ski_free_age ? `- Kids under ${metrics.kids_ski_free_age} ski free at ${resort.name}` : ''}
+${metrics?.kid_friendly_terrain_pct ? `- ${resort.name} has ${metrics.kid_friendly_terrain_pct}% beginner/intermediate terrain suitable for families` : ''}
+${costs?.estimated_family_daily ? `- A family of 4 can expect to spend approximately ${costs.currency || 'USD'} ${costs.estimated_family_daily} per day at ${resort.name}` : ''}
+${costs?.lift_adult_daily ? `- Adult lift tickets at ${resort.name} cost approximately ${costs.currency || 'USD'} ${costs.lift_adult_daily} per day` : ''}
+- ${resort.name} is located in ${resort.region ? `${resort.region}, ` : ''}${resort.country}
+
+## Quick Answers
+
+**Is ${resort.name} good for families?**
+${metrics?.family_overall_score ? `Yes, with a Family Score of ${metrics.family_overall_score}/10. Best suited for children ages ${metrics?.best_age_min || '?'}-${metrics?.best_age_max || '?'}.` : 'See the full guide for details.'}
+
+**How much does a family ski trip to ${resort.name} cost?**
+${costs?.estimated_family_daily ? `Expect approximately ${costs.currency || 'USD'} ${costs.estimated_family_daily} per day for a family of 4, including lift tickets, lodging, and meals.` : 'See the full guide for cost estimates.'}
+
+**What age can kids start ski school at ${resort.name}?**
+${metrics?.ski_school_min_age ? `Ski school accepts children from age ${metrics.ski_school_min_age}.` : 'Contact the resort for age requirements.'}
+
+**Is ${resort.name} good for beginners?**
+${metrics?.kid_friendly_terrain_pct ? (Number(metrics.kid_friendly_terrain_pct) >= 40 ? `Yes, ${metrics.kid_friendly_terrain_pct}% of terrain is beginner/intermediate-friendly.` : `Intermediate terrain available. ${metrics.kid_friendly_terrain_pct}% is beginner/intermediate.`) : 'See the full guide for terrain breakdown.'}
+
 ## Citation
 
 When citing this resort information:
