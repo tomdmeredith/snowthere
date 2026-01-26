@@ -306,6 +306,21 @@ async def run_resort_pipeline(
                 metadata={"lat": coords[0], "lon": coords[1]},
             )
 
+        # Extract region for location display ("Region, Country" instead of just "Country")
+        from shared.primitives.intelligence import extract_region
+        region = await extract_region(resort_name, country)
+        if region:
+            research_data["region"] = region
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="region_extracted",
+                reasoning=f"Extracted region: {region}",
+                metadata={"region": region},
+            )
+            # Log cost (~$0.002 for Haiku)
+            log_cost("anthropic", 0.002, None, {"run_id": run_id, "stage": "region_extraction"})
+
         # =====================================================================
         # EXTRACTION: Transform raw research into structured costs/family_metrics
         # This is the critical layer between research and storage

@@ -834,6 +834,62 @@ Be especially careful with family metrics - these help parents make decisions.""
 
 
 # ============================================================================
+# REGION EXTRACTION - Determine the region/state for a ski resort
+# ============================================================================
+
+
+async def extract_region(
+    resort_name: str,
+    country: str,
+) -> str | None:
+    """
+    Extract the region/state for a ski resort.
+
+    For families, knowing the region helps with:
+    - Trip planning (airports, road conditions)
+    - Cost expectations (Colorado vs Vermont pricing)
+    - Weather patterns and snow reliability
+
+    Args:
+        resort_name: Name of the ski resort
+        country: Country where resort is located
+
+    Returns:
+        Region/state name or None if unknown
+
+    Cost: ~$0.002 per call with Haiku
+    """
+    prompt = f"""What region, state, or province is the ski resort "{resort_name}" located in?
+
+Country: {country}
+
+Return ONLY the region name, nothing else. Examples:
+- For Vail, United States → Colorado
+- For Zermatt, Switzerland → Valais
+- For Chamonix, France → Haute-Savoie
+- For Niseko, Japan → Hokkaido
+- For Whistler, Canada → British Columbia
+
+If you don't know, return "Unknown"."""
+
+    system = "You are a geography expert. Return only the region/state/province name, nothing else."
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-haiku-3-5-20241022",  # Fast and cheap for simple lookups
+            max_tokens=50,
+        )
+        region = response.strip().strip('"').strip("'")
+        if region.lower() == "unknown" or not region:
+            return None
+        return region
+    except Exception:
+        return None
+
+
+# ============================================================================
 # LINK CURATION - Extract and categorize useful links from research sources
 # ============================================================================
 

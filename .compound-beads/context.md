@@ -1,9 +1,54 @@
 # Snowthere Context
 
-> Last synced: 2026-01-25
+> Last synced: 2026-01-26
 > Agent: compound-beads v2.0
 
 ## Current Round
+
+**Round 6: AI Discoverability & Infrastructure** (in progress)
+- Type: Strategic implementation
+- Status: Round 6.1 + 6.4 complete, continuing to 6.2
+- Goal: AI discoverability, email system, location display fixes
+
+**North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
+
+**Guiding Principles**:
+- Agent-native (atomic primitives, composable, full parity)
+- Probabilistic for nuance, deterministic for correctness
+- SEO/GEO optimized
+- Autonomous operation
+
+**Strategic Plan**: `/.claude/plans/snuggly-herding-liskov.md`
+
+### Round 6.1: AI Crawler Access (Completed 2026-01-26)
+- Added AI crawler user agents to robots.ts: OAI-SearchBot, Perplexity-User, Google-Extended, Meta-ExternalAgent, cohere-ai
+- Enhanced per-resort llms.txt with "Citable Facts" and "Quick Answers" sections for GEO optimization
+- Commit: `eb6d205`
+
+### Round 6.4: Location Display Fix (Completed 2026-01-26)
+- Issue: Resorts displayed "Country" only, should show "Region, Country"
+- Root cause: Region not extracted during pipeline research phase
+- Fix: Added `extract_region()` primitive to intelligence.py (uses Claude Haiku)
+- Integrated region extraction into runner.py after coordinates extraction
+- TradingCard and resort page hero already had correct display logic
+- New resorts will now have region data populated automatically
+
+**Key Files Changed**:
+- `apps/web/app/robots.ts` - AI crawler user agents
+- `apps/web/app/resorts/[country]/[slug]/llms.txt/route.ts` - Citable Facts, Quick Answers
+- `agents/shared/primitives/intelligence.py` - `extract_region()` primitive
+- `agents/pipeline/runner.py` - Region extraction integration
+
+### Round 6.2: Email System with Resend (Pending)
+- Agent-native email system (not ConvertKit/Buttondown)
+- Supabase tables: subscribers, email_sequences, email_sends, email_templates
+- New primitives: add_subscriber(), send_email(), trigger_sequence()
+
+### Round 6.3: Lead Magnet & Welcome Sequence (Pending)
+- Family Ski Trip Checklist PDF
+- Welcome email series (Days 0, 2, 4, 7, 14)
+
+---
 
 **Round 5.11-5.14: Compliance & Polish** (completed 2026-01-25)
 - Type: infrastructure + accessibility
