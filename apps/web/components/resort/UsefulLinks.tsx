@@ -1,6 +1,7 @@
 'use client'
 
 import { ExternalLink } from 'lucide-react'
+import { trackOutboundClick } from '@/lib/analytics'
 
 interface ResortLink {
   id: string
@@ -96,6 +97,16 @@ export function UsefulLinks({ links, resortSlug }: UsefulLinksProps) {
                       target="_blank"
                       rel={link.is_affiliate ? 'noopener sponsored' : 'noopener noreferrer'}
                       className="flex items-center justify-between p-3 rounded-xl bg-white border border-dark-100 hover:border-coral-200 hover:bg-coral-50/30 transition-all group"
+                      onClick={() => {
+                        trackOutboundClick({
+                          url: targetUrl,
+                          linkText: link.title,
+                          category,
+                          isAffiliate: link.is_affiliate ?? false,
+                          affiliateProgram: link.is_affiliate ? 'booking.com' : undefined, // TODO: Add affiliate_program to link data
+                          resortSlug,
+                        })
+                      }}
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-dark-800 group-hover:text-coral-600 transition-colors truncate">

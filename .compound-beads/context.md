@@ -1,13 +1,13 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26 (Round 7.3)
+> Last synced: 2026-01-26 (Round 7.4)
 > Agent: compound-beads v2.0
 
 ## Current Round
 
 **Round 7: External Linking & Affiliate System** (In Progress)
 - Type: Strategic implementation
-- Status: R7.1 + R7.3 complete, pending affiliate setup + GA4 tracking
+- Status: R7.1 + R7.3 + R7.4 complete, pending manual affiliate signup
 - Goal: External linking via Google Places, affiliate URL integration, link click tracking
 
 ### Round 7.1: External Linking Infrastructure (Completed 2026-01-26)
@@ -94,10 +94,62 @@ Integrated external link injection as Stage 4.9 in the pipeline runner, processi
 - `agents/pipeline/runner.py` - Stage 4.9 integration
 - `agents/shared/primitives/__init__.py` - New exports
 
-**Next Steps (R7.2, R7.4):**
-- Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual
-- Add GOOGLE_PLACES_API_KEY to Railway for Google Places API calls
-- Add outbound link click tracking via GA4 events
+**Infrastructure Verified (2026-01-26):**
+- GOOGLE_PLACES_API_KEY already configured in Railway
+- Migrations 027/028 applied successfully
+- affiliate_config seeded with Booking.com, Ski.com, Liftopia placeholders
+
+**Next Steps (R7.2):**
+- Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual signup
+
+### Round 7.4: GA4 Outbound Click Tracking (Completed 2026-01-26)
+
+**Problem Statement:**
+External links were being rendered and clicked, but no visibility into which links users actually engage with. Need analytics to understand link performance and affiliate revenue potential.
+
+**Solution:**
+Created analytics utility with GA4 event tracking, integrated into UsefulLinks component.
+
+**Files Created:**
+- `apps/web/lib/analytics.ts` (NEW):
+  - `trackOutboundClick()` - Track external link clicks with category, affiliate status, resort context
+  - `trackNewsletterSignup()` - Newsletter signup events
+  - `trackQuizComplete()` - Quiz completion events
+  - `trackResortView()` - Enhanced resort page views
+  - Respects cookie consent (checks if gtag exists)
+  - Uses `transport_type: 'beacon'` for reliable tracking on navigation
+
+**Files Modified:**
+- `apps/web/components/resort/UsefulLinks.tsx`:
+  - Added onClick handler calling `trackOutboundClick()`
+  - Tracks: url, linkText, category, isAffiliate, affiliateProgram, resortSlug
+
+**GA4 Event Parameters:**
+```javascript
+{
+  event_category: 'outbound',
+  event_label: linkText,
+  link_url: url,
+  link_domain: 'extracted-from-url',
+  link_category: 'lodging|dining|activity|etc',
+  is_affiliate: true|false,
+  affiliate_program: 'booking.com|ski.com|etc',
+  resort_slug: 'zermatt|park-city|etc',
+  transport_type: 'beacon'
+}
+```
+
+**Key Files:**
+- `apps/web/lib/analytics.ts` - Analytics utility
+- `apps/web/components/resort/UsefulLinks.tsx` - Click tracking integration
+
+**Round 7 Complete Tasks:**
+- R7.1: External links infrastructure (migrations, primitives)
+- R7.3: Pipeline link injection (Stage 4.9)
+- R7.4: GA4 outbound click tracking
+
+**Remaining:**
+- R7.2: Manual affiliate program signups (Booking.com, Ski.com, Liftopia)
 
 ---
 
