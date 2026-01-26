@@ -991,6 +991,78 @@ async def run_resort_pipeline(
         print(f"⚠️  Link curation skipped for {resort_name}: {e}", file=sys.stderr)
 
     # =========================================================================
+    # STAGE 4.9: External Link Injection (Hotels, Restaurants, etc.)
+    # =========================================================================
+    # Part of Round 7.3: Inject links to hotels, restaurants, ski schools, etc.
+    # Uses Google Places API for entity resolution and affiliate URL transformation.
+    try:
+        from shared.primitives.external_links import inject_links_in_content_sections
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="start_external_link_injection",
+            reasoning=f"Injecting external links (hotels, restaurants, etc.) for {resort_name}",
+        )
+
+        modified_content, injected_links = await inject_links_in_content_sections(
+            content=content,
+            resort_name=resort_name,
+            country=country,
+        )
+
+        if injected_links:
+            # Update content with injected links
+            content = modified_content
+            # Re-save content to database with new links
+            update_resort_content(resort_id, content)
+
+            # Count affiliate links for logging
+            affiliate_count = sum(1 for link in injected_links if link.is_affiliate)
+
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="external_link_injection_complete",
+                reasoning=f"Injected {len(injected_links)} external links ({affiliate_count} affiliate) for {resort_name}",
+                metadata={
+                    "total_links": len(injected_links),
+                    "affiliate_links": affiliate_count,
+                    "by_type": {
+                        link.entity_type: sum(1 for l in injected_links if l.entity_type == link.entity_type)
+                        for link in injected_links
+                    },
+                    "entities_linked": [link.entity_name for link in injected_links],
+                },
+            )
+
+            result["stages"]["external_link_injection"] = {
+                "status": "complete",
+                "links_injected": len(injected_links),
+                "affiliate_links": affiliate_count,
+                "entities": [link.entity_name for link in injected_links[:5]],  # Top 5 for brevity
+            }
+            print(f"✓ External Links: {len(injected_links)} links ({affiliate_count} affiliate)")
+
+        else:
+            result["stages"]["external_link_injection"] = {
+                "status": "no_entities",
+                "reason": "No linkable entities found in content",
+            }
+            print(f"⚠️  External Links: No entities found for {resort_name}")
+
+    except Exception as e:
+        # External link injection is non-critical - continue without it
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="external_link_injection_failed",
+            reasoning=f"External link injection failed (non-critical): {e}",
+        )
+        result["stages"]["external_link_injection"] = {"status": "skipped", "error": str(e)}
+        print(f"⚠️  External links skipped for {resort_name}: {e}", file=sys.stderr)
+
+    # =========================================================================
     # STAGE 4.7: Perfect Page Quality Gate
     # =========================================================================
     # Philosophy: Quality checklist ensures every page meets the "gold standard"

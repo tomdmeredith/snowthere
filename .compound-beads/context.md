@@ -1,13 +1,13 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26 (Round 7.1)
+> Last synced: 2026-01-26 (Round 7.3)
 > Agent: compound-beads v2.0
 
 ## Current Round
 
 **Round 7: External Linking & Affiliate System** (In Progress)
 - Type: Strategic implementation
-- Status: R7.1 infrastructure complete, pending affiliate setup
+- Status: R7.1 + R7.3 complete, pending affiliate setup + GA4 tracking
 - Goal: External linking via Google Places, affiliate URL integration, link click tracking
 
 ### Round 7.1: External Linking Infrastructure (Completed 2026-01-26)
@@ -58,6 +58,46 @@ Content mentions hotels, restaurants, ski schools - but no clickable links. Miss
 - `agents/shared/primitives/external_links.py`
 - `agents/shared/primitives/intelligence.py` (extract_linkable_entities)
 - `agents/shared/primitives/__init__.py`
+
+### Round 7.3: Pipeline Link Injection (Completed 2026-01-26)
+
+**Problem Statement:**
+R7.1 created the primitives for external link resolution, but they weren't integrated into the autonomous pipeline. Hotel/restaurant mentions in content remained unlinked.
+
+**Solution:**
+Integrated external link injection as Stage 4.9 in the pipeline runner, processing content sections to automatically inject Google Places / affiliate links.
+
+**Primitives Created:**
+- `agents/shared/primitives/external_links.py` (MODIFIED):
+  - `InjectedLink` dataclass - Record of link injection
+  - `LinkInjectionResult` dataclass - Result with modified content
+  - `inject_external_links()` - Inject links into single section
+  - `inject_links_in_content_sections()` - Process all sections
+
+**Pipeline Integration:**
+- `agents/pipeline/runner.py` - Added Stage 4.9: External Link Injection
+  - Processes sections in priority order: where_to_stay, on_mountain, off_mountain, etc.
+  - Max 3 links per section to avoid over-linking
+  - First mention only (SEO best practice)
+  - Proper rel attributes: sponsored (affiliate), nofollow (maps)
+  - Logs injection stats to audit log
+
+**SEO Rules Enforced:**
+- First mention only - no redundant links
+- Affiliate links: `rel="sponsored noopener"`
+- Google Maps links: `rel="nofollow noopener"`
+- Other external: `rel="nofollow noopener noreferrer"`
+- Content re-saved to database after injection
+
+**Key Files:**
+- `agents/shared/primitives/external_links.py` - inject_external_links(), inject_links_in_content_sections()
+- `agents/pipeline/runner.py` - Stage 4.9 integration
+- `agents/shared/primitives/__init__.py` - New exports
+
+**Next Steps (R7.2, R7.4):**
+- Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual
+- Add GOOGLE_PLACES_API_KEY to Railway for Google Places API calls
+- Add outbound link click tracking via GA4 events
 
 ---
 

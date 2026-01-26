@@ -323,6 +323,8 @@ from .external_links import (
     # Data classes
     ResolvedEntity,
     AffiliateConfig,
+    InjectedLink,
+    LinkInjectionResult,
     # Cache operations
     clear_expired_cache as clear_entity_cache,
     # Google Places
@@ -331,6 +333,9 @@ from .external_links import (
     lookup_affiliate_url,
     # Main resolution
     resolve_entity_link,
+    # Link injection (Round 7.3)
+    inject_external_links,
+    inject_links_in_content_sections,
     # Click tracking
     log_link_click,
     get_click_stats,

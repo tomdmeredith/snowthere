@@ -608,3 +608,247 @@ def clear_expired_cache() -> int:
     except Exception as e:
         print(f"Failed to clear expired cache: {e}")
         return 0
+
+
+# ============================================================================
+# LINK INJECTION
+# ============================================================================
+
+
+@dataclass
+class InjectedLink:
+    """Record of a link injection."""
+
+    entity_name: str
+    entity_type: str
+    original_text: str
+    url: str
+    is_affiliate: bool
+    affiliate_program: str | None = None
+    rel_attribute: str = ""
+
+
+@dataclass
+class LinkInjectionResult:
+    """Result of link injection operation."""
+
+    modified_content: str
+    links_injected: list[InjectedLink]
+    injection_count: int
+    entities_not_resolved: list[str]
+    success: bool = True
+    error: str | None = None
+
+
+async def inject_external_links(
+    html_content: str,
+    resort_name: str,
+    country: str,
+    section_name: str | None = None,
+    already_linked: set[str] | None = None,
+    max_links_per_section: int = 5,
+) -> LinkInjectionResult:
+    """Inject external links into HTML content.
+
+    Extracts linkable entities, resolves them via Google Places / affiliates,
+    and injects links into the first mention of each entity.
+
+    Part of Round 7.3: Content Link Injection.
+
+    Args:
+        html_content: HTML content to inject links into
+        resort_name: Name of the resort for context
+        country: Country for context/disambiguation
+        section_name: Optional section name for logging
+        already_linked: Set of entity names already linked (to avoid duplicates)
+        max_links_per_section: Maximum links to inject per section
+
+    Returns:
+        LinkInjectionResult with modified content and injection details
+
+    SEO Rules:
+    - First mention only (no redundant links)
+    - Affiliate links use rel="sponsored noopener"
+    - Google Maps links use rel="nofollow noopener"
+    - Other external links use rel="nofollow noopener noreferrer"
+    """
+    from .intelligence import extract_linkable_entities
+
+    if already_linked is None:
+        already_linked = set()
+
+    injected_links: list[InjectedLink] = []
+    not_resolved: list[str] = []
+    modified_content = html_content
+    location_context = f"{resort_name}, {country}"
+
+    try:
+        # Extract entities from content
+        extraction_result = await extract_linkable_entities(
+            content=html_content,
+            resort_name=resort_name,
+            country=country,
+            section_name=section_name,
+        )
+
+        if not extraction_result.entities:
+            return LinkInjectionResult(
+                modified_content=html_content,
+                links_injected=[],
+                injection_count=0,
+                entities_not_resolved=[],
+                success=True,
+            )
+
+        # Process entities in order of first mention
+        entities_sorted = sorted(
+            extraction_result.entities,
+            key=lambda e: e.first_mention_offset,
+        )
+
+        links_added = 0
+
+        for entity in entities_sorted:
+            # Skip if already linked or max reached
+            if entity.name.lower() in {name.lower() for name in already_linked}:
+                continue
+            if links_added >= max_links_per_section:
+                break
+
+            # Skip low confidence extractions
+            if entity.confidence < 0.6:
+                continue
+
+            # Resolve entity to links
+            resolved = await resolve_entity_link(
+                name=entity.name,
+                entity_type=entity.entity_type,
+                location_context=location_context,
+                include_affiliate=True,
+            )
+
+            if not resolved or resolved.confidence < 0.5:
+                not_resolved.append(entity.name)
+                continue
+
+            # Determine which URL to use (affiliate > direct > maps)
+            link_url = resolved.affiliate_url or resolved.direct_url or resolved.maps_url
+            is_affiliate = bool(resolved.affiliate_url)
+            is_ugc = bool(not resolved.affiliate_url and not resolved.direct_url and resolved.maps_url)
+
+            if not link_url:
+                not_resolved.append(entity.name)
+                continue
+
+            # Build the link HTML
+            rel_attr = get_rel_attribute(is_affiliate=is_affiliate, is_ugc=is_ugc)
+            link_html = f'<a href="{link_url}" rel="{rel_attr}" target="_blank">{entity.name}</a>'
+
+            # Inject link at first mention (case-insensitive, word boundary)
+            # Use regex to find first mention not already in a link
+            pattern = rf'(?<!["\'>])(?<!/)\b({re.escape(entity.name)})\b(?![^<]*</a>)'
+            match = re.search(pattern, modified_content, re.IGNORECASE)
+
+            if match:
+                # Replace first occurrence only
+                original_text = match.group(1)
+                link_html_with_original = f'<a href="{link_url}" rel="{rel_attr}" target="_blank">{original_text}</a>'
+
+                modified_content = (
+                    modified_content[:match.start(1)]
+                    + link_html_with_original
+                    + modified_content[match.end(1):]
+                )
+
+                injected_links.append(
+                    InjectedLink(
+                        entity_name=entity.name,
+                        entity_type=entity.entity_type,
+                        original_text=original_text,
+                        url=link_url,
+                        is_affiliate=is_affiliate,
+                        affiliate_program=resolved.affiliate_program,
+                        rel_attribute=rel_attr,
+                    )
+                )
+
+                already_linked.add(entity.name)
+                links_added += 1
+
+        return LinkInjectionResult(
+            modified_content=modified_content,
+            links_injected=injected_links,
+            injection_count=len(injected_links),
+            entities_not_resolved=not_resolved,
+            success=True,
+        )
+
+    except Exception as e:
+        return LinkInjectionResult(
+            modified_content=html_content,
+            links_injected=[],
+            injection_count=0,
+            entities_not_resolved=[],
+            success=False,
+            error=str(e),
+        )
+
+
+async def inject_links_in_content_sections(
+    content: dict[str, str],
+    resort_name: str,
+    country: str,
+) -> tuple[dict[str, str], list[InjectedLink]]:
+    """Inject external links across multiple content sections.
+
+    Processes sections in order, tracking already-linked entities to avoid
+    redundant links across sections.
+
+    Args:
+        content: Dict of section_name -> HTML content
+        resort_name: Resort name for context
+        country: Country for context
+
+    Returns:
+        Tuple of (modified_content_dict, all_injected_links)
+    """
+    # Define which sections to process and in what order
+    # (earlier sections get priority for first-mention links)
+    section_order = [
+        "where_to_stay",
+        "on_mountain",
+        "off_mountain",
+        "getting_there",
+        "lift_tickets",
+        "parent_reviews_summary",
+    ]
+
+    # Skip sections not suitable for external links
+    skip_sections = {"quick_take", "faqs", "seo_meta", "tagline"}
+
+    already_linked: set[str] = set()
+    all_injected_links: list[InjectedLink] = []
+    modified_content = dict(content)
+
+    for section_name in section_order:
+        if section_name not in content or section_name in skip_sections:
+            continue
+
+        html_content = content[section_name]
+        if not html_content or not isinstance(html_content, str):
+            continue
+
+        result = await inject_external_links(
+            html_content=html_content,
+            resort_name=resort_name,
+            country=country,
+            section_name=section_name,
+            already_linked=already_linked,
+            max_links_per_section=3,  # Limit per section to avoid over-linking
+        )
+
+        if result.success:
+            modified_content[section_name] = result.modified_content
+            all_injected_links.extend(result.links_injected)
+
+    return modified_content, all_injected_links
