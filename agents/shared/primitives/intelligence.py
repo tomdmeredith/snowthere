@@ -1038,3 +1038,146 @@ Skip paywalled, login-required, or spam sites."""
             success=False,
             error=f"Link curation failed: {e}",
         )
+
+
+# ============================================================================
+# ENTITY EXTRACTION - Find linkable entities in resort content
+# ============================================================================
+
+
+@dataclass
+class ExtractedEntity:
+    """An entity extracted from content that could be linked."""
+
+    name: str
+    entity_type: str  # hotel, restaurant, ski_school, rental, activity, grocery
+    context_snippet: str  # The sentence where it was found
+    confidence: float  # How confident we are this is a real entity
+    first_mention_offset: int  # Character offset of first mention
+
+
+@dataclass
+class EntityExtractionResult:
+    """Result of entity extraction from content."""
+
+    entities: list[ExtractedEntity]
+    entity_count: int
+    extraction_confidence: float
+
+
+async def extract_linkable_entities(
+    content: str,
+    resort_name: str,
+    country: str,
+    section_name: str | None = None,
+) -> EntityExtractionResult:
+    """
+    Extract linkable entities from resort content.
+
+    Identifies hotels, restaurants, ski schools, rental shops, and other
+    entities that could be linked to external sites or Google Maps.
+
+    Part of Round 7: External Linking & Affiliate System.
+
+    Args:
+        content: HTML or plain text content to analyze
+        resort_name: Name of the resort for context
+        country: Country for context/disambiguation
+        section_name: Optional section name for better context
+
+    Returns:
+        EntityExtractionResult with list of extracted entities
+
+    Cost: ~$0.005 per call with Sonnet
+    """
+    # Strip HTML tags for analysis but preserve structure hints
+    import re
+    clean_content = re.sub(r'<[^>]+>', ' ', content)
+    clean_content = re.sub(r'\s+', ' ', clean_content).strip()
+
+    if len(clean_content) < 50:
+        return EntityExtractionResult(
+            entities=[],
+            entity_count=0,
+            extraction_confidence=0.0,
+        )
+
+    prompt = f"""Extract linkable entities from this resort content.
+
+RESORT: {resort_name}, {country}
+{f"SECTION: {section_name}" if section_name else ""}
+
+CONTENT:
+{clean_content[:5000]}
+
+ENTITY TYPES TO FIND:
+- hotel: Specific hotels, lodges, chalets by name (e.g., "Hotel Schweizerhof", "The Lodge at Vail")
+- restaurant: Restaurants, cafes, mountain huts by name (e.g., "Chez Vrony", "Mid-Mountain Lodge")
+- ski_school: Named ski school programs (e.g., "Ski School Zermatt", "Burton Learn to Ride")
+- rental: Named rental shops (e.g., "Julen Sport", "Christy Sports")
+- activity: Named activity providers (e.g., "Glacier Paradise", "Snowmass Tubing Hill")
+- grocery: Named grocery/convenience stores (e.g., "Coop", "SPAR")
+
+RULES:
+- Only extract SPECIFIC NAMED entities (not generic mentions like "ski school" or "restaurants")
+- Include the surrounding sentence as context_snippet
+- Set confidence based on how certain this is a real, linkable business
+- Report the character position of first mention
+- Do NOT extract the resort name itself
+
+Return JSON:
+{{
+    "entities": [
+        {{
+            "name": "Hotel Schweizerhof",
+            "entity_type": "hotel",
+            "context_snippet": "Families love staying at the Hotel Schweizerhof for its central location.",
+            "confidence": 0.9,
+            "first_mention_offset": 45
+        }},
+        ...
+    ],
+    "extraction_confidence": 0.8
+}}"""
+
+    system = """You are an entity extraction specialist for travel content.
+Find specific, named businesses and locations that could be linked to Google Maps or websites.
+Be conservative - only extract entities you're confident are real, named businesses.
+Generic mentions like "the ski school" or "local restaurants" should NOT be extracted."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-sonnet-4-20250514",
+            max_tokens=2000,
+        )
+
+        parsed = _parse_json_response(response)
+        raw_entities = parsed.get("entities", [])
+
+        entities = []
+        for e in raw_entities:
+            if not e.get("name") or not e.get("entity_type"):
+                continue
+            entities.append(ExtractedEntity(
+                name=e["name"],
+                entity_type=e["entity_type"],
+                context_snippet=e.get("context_snippet", ""),
+                confidence=float(e.get("confidence", 0.5)),
+                first_mention_offset=int(e.get("first_mention_offset", 0)),
+            ))
+
+        return EntityExtractionResult(
+            entities=entities,
+            entity_count=len(entities),
+            extraction_confidence=float(parsed.get("extraction_confidence", 0.7)),
+        )
+
+    except Exception as e:
+        print(f"Entity extraction failed: {e}")
+        return EntityExtractionResult(
+            entities=[],
+            entity_count=0,
+            extraction_confidence=0.0,
+        )

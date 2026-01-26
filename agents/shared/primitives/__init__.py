@@ -318,6 +318,33 @@ from .approval import (
     REQUIRED_SECTIONS,
 )
 
+# External linking primitives (Google Places, affiliates)
+from .external_links import (
+    # Data classes
+    ResolvedEntity,
+    AffiliateConfig,
+    # Cache operations
+    clear_expired_cache as clear_entity_cache,
+    # Google Places
+    resolve_google_place,
+    # Affiliate URLs
+    lookup_affiliate_url,
+    # Main resolution
+    resolve_entity_link,
+    # Click tracking
+    log_link_click,
+    get_click_stats,
+    # Utilities
+    get_rel_attribute,
+)
+
+# Entity extraction from intelligence
+from .intelligence import (
+    extract_linkable_entities,
+    ExtractedEntity,
+    EntityExtractionResult,
+)
+
 # Linking primitives (Similar resorts, internal links)
 from .linking import (
     # Constants
@@ -617,4 +644,24 @@ __all__ = [
     # Official Images - Cleanup
     "delete_ai_generated_images",
     "count_ai_generated_images",
+    # External Links - Data classes
+    "ResolvedEntity",
+    "AffiliateConfig",
+    # External Links - Cache operations
+    "clear_entity_cache",
+    # External Links - Google Places
+    "resolve_google_place",
+    # External Links - Affiliate URLs
+    "lookup_affiliate_url",
+    # External Links - Main resolution
+    "resolve_entity_link",
+    # External Links - Click tracking
+    "log_link_click",
+    "get_click_stats",
+    # External Links - Utilities
+    "get_rel_attribute",
+    # Entity Extraction
+    "extract_linkable_entities",
+    "ExtractedEntity",
+    "EntityExtractionResult",
 ]

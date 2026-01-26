@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 6**: AI Discoverability & Infrastructure (in progress)
+**Round 7.1**: External Linking Infrastructure ✅ IN PROGRESS
 **Type**: Strategic implementation
-**Status**: Round 6.1-6.4 complete, RESEND_API_KEY env vars pending
+**Status**: Primitives and migrations ready, pending affiliate setup
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -13,22 +13,22 @@
 - Autonomous operation
 
 **Recent**:
-- R6.1: AI crawler access (OAI-SearchBot, Perplexity-User, Google-Extended, Meta-ExternalAgent, cohere-ai)
-- R6.1: Per-resort llms.txt enhanced with "Citable Facts" and "Quick Answers"
-- R6.2: Email system foundation - migration 026, /api/subscribe endpoint, Newsletter.tsx wired
-- R6.3: Lead magnet complete - Resend primitives, 5 welcome emails, cron integration
-- R6.3: **Database seeded** - 5 email templates, 1 welcome sequence, 5 sequence steps
-- R6.4: Location display fix - added `extract_region()` primitive to populate region data
+- R6.6: **Email compliance fixes** - unsubscribe endpoint, template variables, sequence trigger, physical address
+- R7.1: **Migration 027** - entity_link_cache table for Google Places caching
+- R7.1: **Migration 028** - affiliate_config table for affiliate programs + link_click_log for analytics
+- R7.1: **external_links.py** - Google Places resolution, affiliate URL lookup, link click tracking
+- R7.1: **Entity extraction** - `extract_linkable_entities()` in intelligence.py finds hotels, restaurants, etc. in content
 
 **Next**:
-- Add RESEND_API_KEY to Railway and Vercel environments
-- R7: External Linking & Affiliate System
+- R7.2: Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual
+- R7.2: Add GOOGLE_PLACES_API_KEY to Railway for external link resolution
+- R7.3: Integrate entity link injection into pipeline Stage 4.9
+- R7.4: Add outbound link click tracking via GA4 events
 
 **Key Files**:
 - Strategic plan: `/.claude/plans/snuggly-herding-liskov.md`
-- Email primitives: `agents/shared/primitives/email.py`
-- Welcome templates: `agents/templates/welcome_*.html`
-- Migration: `supabase/migrations/026_email_system.sql`
-- Seed: `supabase/seed_email_sequences.sql`
+- External links: `agents/shared/primitives/external_links.py`
+- Entity extraction: `agents/shared/primitives/intelligence.py` (extract_linkable_entities)
+- Migrations: `supabase/migrations/027_entity_link_cache.sql`, `028_affiliate_config.sql`
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

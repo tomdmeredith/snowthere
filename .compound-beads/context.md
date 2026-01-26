@@ -1,13 +1,69 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26
+> Last synced: 2026-01-26 (Round 7.1)
 > Agent: compound-beads v2.0
 
 ## Current Round
 
-**Round 6: AI Discoverability & Infrastructure** (in progress)
+**Round 7: External Linking & Affiliate System** (In Progress)
 - Type: Strategic implementation
-- Status: Round 6.1-6.4 complete, Round 7 next
+- Status: R7.1 infrastructure complete, pending affiliate setup
+- Goal: External linking via Google Places, affiliate URL integration, link click tracking
+
+### Round 7.1: External Linking Infrastructure (Completed 2026-01-26)
+
+**Problem Statement:**
+Content mentions hotels, restaurants, ski schools - but no clickable links. Missing:
+- User value (quick access to booking, maps)
+- SEO signals (outbound links show authority)
+- Revenue opportunity (affiliate links)
+
+**Migrations Created:**
+- `027_entity_link_cache.sql` - Cache for Google Places API lookups
+  - Stores place_id (indefinite TTL), resolved names, direct URLs, maps URLs
+  - Entity types: hotel, restaurant, ski_school, rental, activity, grocery
+  - Unique constraint on (name_normalized, entity_type, location_context)
+- `028_affiliate_config.sql` - Affiliate program configuration
+  - Stores program settings: url_template, affiliate_id, tracking_param, domains
+  - Seeded with Booking.com, Ski.com, Liftopia placeholders
+  - `link_click_log` table for analytics
+
+**Primitives Created:**
+- `agents/shared/primitives/external_links.py` (NEW):
+  - `resolve_google_place()` - Resolve entity to Google Places data
+  - `lookup_affiliate_url()` - Transform direct URL to affiliate URL
+  - `resolve_entity_link()` - Main entry point combining Places + affiliate
+  - `log_link_click()` - Track outbound clicks
+  - `get_click_stats()` - Analytics queries
+  - `get_rel_attribute()` - SEO-correct rel values (sponsored, nofollow)
+  - `clear_expired_cache()` - Maintenance
+
+- `agents/shared/primitives/intelligence.py` (MODIFIED):
+  - `extract_linkable_entities()` - Find hotels, restaurants, etc. in content
+  - `ExtractedEntity` dataclass with name, type, context_snippet, confidence
+  - `EntityExtractionResult` dataclass
+
+**Exports Added:**
+- `agents/shared/primitives/__init__.py` updated with all new exports
+
+**Next Steps (R7.2-R7.4):**
+- Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual process
+- Add GOOGLE_PLACES_API_KEY to Railway environment
+- Integrate entity link injection into pipeline Stage 4.9
+- Add outbound link click tracking via GA4 events
+
+**Key Files:**
+- `supabase/migrations/027_entity_link_cache.sql`
+- `supabase/migrations/028_affiliate_config.sql`
+- `agents/shared/primitives/external_links.py`
+- `agents/shared/primitives/intelligence.py` (extract_linkable_entities)
+- `agents/shared/primitives/__init__.py`
+
+---
+
+**Round 6: AI Discoverability & Infrastructure** ✅ COMPLETE
+- Type: Strategic implementation
+- Status: All tasks complete - email system fully operational
 - Goal: AI discoverability, email system, location display fixes
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
@@ -85,10 +141,50 @@
 - `agents/templates/welcome_day14.html` - Ready to pick
 - `supabase/seed_email_sequences.sql` - Welcome sequence seed data
 
-**Pending**:
-- Run migration 026_email_system.sql via Supabase Dashboard
-- Run seed_email_sequences.sql via Supabase Dashboard
-- Add RESEND_API_KEY to Railway and Vercel environments
+### Round 6.5: Email System Deployment (Completed 2026-01-26)
+- Ran migration 026_email_system.sql via Supabase Dashboard
+- Ran seed_email_sequences.sql to create 5 templates + welcome sequence
+- Added RESEND_API_KEY to Railway and Vercel environments
+- Configured domain verification in Resend:
+  - DKIM: TXT record `resend._domainkey` → verified
+  - SPF: TXT record `send` → verified
+  - MX: `send` → `feedback-smtp.us-east-1.amazonses.com` → verified
+- snowthere.com is now fully verified in Resend for email sending
+- Email system ready for production use (subscribers → welcome sequence → Resend delivery)
+
+### Round 6.6: Email Compliance Fixes (Completed 2026-01-26)
+
+**Critical Issues Found:**
+1. Unsubscribe endpoint didn't exist (CAN-SPAM violation)
+2. Template variables ({{name}}, {{email}}) weren't being substituted
+3. Welcome sequence wasn't triggered on signup (delayed 24+ hours)
+4. Email footers missing physical address (CAN-SPAM requirement)
+
+**Fixes Implemented:**
+- Created `/api/unsubscribe` endpoint (POST for unsubscribe, GET redirects to page)
+- Created `/unsubscribe` page with confirmation UI
+- Added `substitute_template_variables()` function to email.py
+- Updated `advance_sequences()` to substitute variables before sending
+- Updated `/api/subscribe` to trigger welcome sequence immediately
+- Added physical address (2261 Market Street #5072, San Francisco, CA 94114) to all 5 email templates
+
+**Key Files Created/Modified:**
+- `apps/web/app/api/unsubscribe/route.ts` (NEW) - Unsubscribe API
+- `apps/web/app/unsubscribe/page.tsx` (NEW) - Unsubscribe confirmation page
+- `agents/shared/primitives/email.py` - Template variable substitution
+- `apps/web/app/api/subscribe/route.ts` - Trigger welcome sequence
+- `agents/templates/welcome_*.html` (5 files) - Physical address in footers
+
+**Compliance Status:**
+- ✅ Unsubscribe link works
+- ✅ Physical address in every email
+- ✅ Clear sender identity
+- ✅ Template variables substituted
+- ✅ Welcome sequence triggers immediately
+
+**Future Work (Not Critical):**
+- Resend webhooks for bounce/complaint tracking (when 1000+ subscribers)
+- Batch sending optimization (when 500+ subscribers)
 
 ---
 
