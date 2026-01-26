@@ -5,31 +5,56 @@
 
 ## Current Round
 
-**Round 5.10: Internal Linking** (in progress 2026-01-25)
+**Round 5.11-5.14: Compliance & Polish** (completed 2026-01-25)
+- Type: infrastructure + accessibility
+- Status: Complete, deployed to production
+- Goal: Cron alerts, accessibility (WCAG 2.1 AA), Core Web Vitals, trademark notices
+
+**Accomplishments**:
+- **5.11 Cron Alerts**: `alert_budget_warning()`, `alert_startup_failure()`, per-resort error alerts, revalidation failure alerts
+- **5.12 Accessibility**: Skip link targets on all pages, lightbox focus trap + ARIA, FAQ accordion headings, newsletter live region, mobile menu ARIA
+- **5.13 Trademark**: Footer notice linking to /terms#trademark-notice
+- **5.14 Core Web Vitals**: web-vitals package, WebVitalsReporter component (consent-aware), preconnect hints, hero image optimized with next/image
+
+**Key Files Changed**:
+- `agents/shared/primitives/alerts.py` - New alert primitives
+- `agents/cron.py`, `agents/pipeline/orchestrator.py` - Alert integration
+- `apps/web/components/WebVitalsReporter.tsx` (NEW)
+- `apps/web/lib/web-vitals.ts` (NEW)
+- Multiple accessibility fixes across components
+
+**Arc Narrative**:
+- We started believing: These 4 items are separate compliance checkboxes
+- We ended believing: They form an integrated observability and quality layer
+- The transformation: From "compliance tasks" → "quality infrastructure"
+
+---
+
+**Round 5.10: Internal Linking** (completed 2026-01-25)
 - Type: feature
-- Status: Implementation complete, testing blocked by sitemap.ts bug
+- Status: Complete, deployed to production
 - Goal: Auto-link resort names in content to improve SEO, GEO, and user navigation
 
 **Accomplishments**:
 - Created `apps/web/lib/resort-linker.ts` - auto-links resort names mentioned in content
 - Module-level caching for resort lookup (shared across renders)
-- Name variant matching (St./Sankt/Saint, Mont/Mount)
+- Name variant matching (St./Sankt/Saint, Mont/Mount, hyphenated names)
+- Hyphenated resort support: "Lech-Zürs" matches "Lech" or "Zürs" separately
 - Word-boundary regex matching (avoids partial matches)
 - Excludes self-linking (current resort name not linked on its own page)
 - Safety check for existing links (doesn't double-link)
+- **SEO deduplication**: Each resort linked only once per page (first mention wins)
+- Shared `linkedSlugs` tracking across all content sections
 - Pre-processes content server-side in page.tsx
 - Added `.resort-link` styling with coral underline
 - Changed ISR revalidation from 1 hour to 12 hours
+- Fixed Next.js 14.1.0 sitemap bug (converted to route handler pattern)
 
 **Key Files Changed**:
 - `apps/web/lib/resort-linker.ts` (NEW)
 - `apps/web/app/resorts/[country]/[slug]/page.tsx` (MODIFIED)
-- `apps/web/components/resort/ContentRenderer.tsx` (MODIFIED)
+- `apps/web/app/sitemap.xml/route.ts` (NEW - replaced sitemap.ts)
 - `apps/web/app/globals.css` (MODIFIED)
-
-**Blocker**: Next.js 14.1.0 sitemap bug preventing dev server testing
-- Error: "Cannot define route with same specificity as optional catch-all"
-- Fix: Convert sitemap.ts to route handler pattern
 
 **Arc Narrative**:
 - We started believing: Internal linking needs a complex agent system with databases, APIs, Claude-generated anchor text
@@ -200,15 +225,15 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 
 **Key Insight**: Primitives should be atomic; agents query, not receive massive lists.
 
-## Round 5: Compliance & Polish (In Progress)
+## Round 5: Compliance & Polish (Completed 2026-01-25)
 
 **Goal**: Monitoring, accessibility, final polish
 
-**Remaining tasks**:
-- [ ] Cron failure alerts
-- [ ] Accessibility audit (WCAG 2.1 AA)
-- [ ] Trademark notices for ski pass logos
-- [ ] Performance optimization (Core Web Vitals)
+**Completed tasks**:
+- [x] Cron failure alerts (5.11)
+- [x] Accessibility audit - WCAG 2.1 AA (5.12)
+- [x] Trademark notices (5.13)
+- [x] Core Web Vitals reporting (5.14)
 
 ## Round 4: Production Launch (Completed)
 
@@ -222,16 +247,14 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 
 ## Active Tasks
 
-From Round 5 (Compliance & Polish):
-1. Cron failure alerts
-2. Accessibility audit (WCAG 2.1 AA)
-3. Trademark notices for ski pass logos
-4. Performance optimization (Core Web Vitals)
+**Round 6: Homepage Redesign** (next)
+- Finalize homepage design direction
+- Implement new homepage components
+- A/B test conversion
 
-From Round 4 (Production Launch):
-1. Newsletter signup API integration
-2. Run first automated batch (10-20 resorts)
-3. Monitor and iterate
+**Future Work** (moved from Round 4):
+- Newsletter signup API integration
+- Monitor and iterate on pipeline quality
 
 ## Future Work (Round 6+)
 
@@ -281,8 +304,8 @@ From Round 4 (Production Launch):
 
 ## Recent Commits
 
+- `f7390ed` Round 5.11-5.14: Cron alerts, accessibility, CWV, trademark
+- `e764dac` SEO fix: Link each resort only once per page (first mention wins)
+- `483a43c` Round 5.10: Auto-link resort names in content
 - `9f3736c` fix: Sort resorts by family score (handle object/array family_metrics)
 - `4b405a1` fix: Sidebar layout - Jump to Section above Useful Links, align top
-- `33bd6c0` fix: Round 5.9.8 - Homepage ranking, hide social placeholders
-- `c13e6ca` feat: Round 5.9.7 - Site polish, taglines, and voice improvements
-- `6d4eddb` feat: Growth mode - 8 resorts/run with 70% discovery priority

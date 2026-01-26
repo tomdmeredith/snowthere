@@ -1,23 +1,26 @@
 # Snowthere Quick Start
 
-**Round 5.9.8**: Site Stabilization (completed 2026-01-25)
-**Type**: bug fixes
-**Status**: Complete
+**Round 5**: Compliance & Polish (completed 2026-01-25)
+**Type**: infrastructure + accessibility
+**Status**: Complete, deployed to production
 
 **Recent**:
-- R5.9.8: Fixed homepage ranking (family_metrics object/array), sidebar layout, social placeholders
-- R5.9.7: Site polish - taglines, voice improvements, location display
-- R5.9.6: Growth mode - 8 resorts/run, 70% discovery priority
+- R5.11-5.14: Cron alerts, accessibility (WCAG 2.1 AA), CWV reporting, trademark notices
+- R5.10: Auto-link resort names in content (SEO/GEO improvement)
+- R5.9.8: Fixed homepage ranking, sidebar layout, social placeholders
 
-**Latest Fixes (R5.9.8)**:
-- Homepage TOP PICKS now correctly sorted by family score (9/10 before 8/10)
-- Root cause: Supabase returns family_metrics as object, not array
-- Sidebar: Jump to Section above Useful Links, columns top-aligned
-- Social link placeholders hidden until accounts created
-- "3,000+ Resorts" CTA changed to "Browse All Resorts"
+**Latest (R5.11-5.14)**:
+- Slack alerts: startup failures, per-resort errors, budget warnings (75%+), revalidation failures
+- Accessibility: skip links, focus traps, ARIA roles, live regions
+- Core Web Vitals: web-vitals package reporting CLS/FCP/INP/LCP/TTFB to GA4
+- Trademark: footer notice linking to /terms#trademark-notice
+- Hero images optimized with next/image + priority
 
-**Pending**:
-- Round 5 remaining: cron alerts, accessibility, trademark notices
+**Next**:
 - Round 6: Homepage redesign
+
+**Future**:
+- Newsletter signup API integration
+- Monitor and iterate on pipeline
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

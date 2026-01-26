@@ -1,7 +1,7 @@
 # Family Ski Directory - Agent Handoff Document
 
-> Last Updated: 2026-01-22
-> Current Round: 5.1 (Agent-Native Scalability)
+> Last Updated: 2026-01-25
+> Current Round: 6 (Homepage Redesign) - pending
 
 ## Quick Context
 
@@ -145,19 +145,17 @@ family-ski-directory/
 - [x] Vercel deployment with ISR (www.snowthere.com)
 - [x] Google Search Console setup + sitemap
 - [x] Google Analytics setup + link to GSC
-- [ ] Newsletter signup API integration
-- [ ] Run first automated batch (10-20 resorts)
-- [ ] Monitor and iterate
+- [x] Run automated batches (pipeline running daily, 30+ resorts published)
 
-### Round 5: Compliance & Polish
+### Round 5: Compliance & Polish ✅
 > Monitoring, accessibility, final polish
 
-- [ ] Cron failure alerts
-- [ ] Accessibility audit (WCAG 2.1 AA)
-- [ ] Trademark notices for ski pass logos
-- [ ] Performance optimization (Core Web Vitals)
+- [x] Cron failure alerts (5.11)
+- [x] Accessibility audit - WCAG 2.1 AA (5.12)
+- [x] Trademark notices (5.13)
+- [x] Core Web Vitals reporting (5.14)
 
-### Round 5.1: Agent-Native Scalability ✅ (Current - Completed 2026-01-22)
+### Round 5.1: Agent-Native Scalability ✅ (Completed 2026-01-22)
 > Scale duplicate detection to 3000+ resorts, improve UGC photo reliability
 
 **Problem Solved:** Decision maker was putting ALL resort names in Claude's prompt (~22,500 tokens at 3000 resorts). This doesn't scale and violated agent-native principles.
@@ -180,12 +178,18 @@ family-ski-directory/
 - Google Places: Place IDs can be cached indefinitely, photos cannot
 - Transliteration graceful fallback ensures production stability
 
-### Round 6: Homepage Redesign (Future)
+### Round 6: Homepage Redesign (Next)
 > Implement chosen design from concepts
 
 - [ ] Finalize homepage design direction
 - [ ] Implement new homepage components
 - [ ] A/B test conversion
+
+### Future Work
+> Moved from earlier rounds
+
+- [ ] Newsletter signup API integration
+- [ ] Monitor and iterate on pipeline quality
 
 ---
 
@@ -595,8 +599,8 @@ cd agents && python cron.py --dry-run --max-resorts 2
 ```
 
 **Immediate Next Steps:**
-- Round 5 remaining: cron failure alerts, accessibility audit, trademark notices
-- Round 6 pending: Homepage redesign
+- Round 5 complete (cron alerts, accessibility, CWV, trademark)
+- Round 6: Homepage redesign
 
 ---
 
