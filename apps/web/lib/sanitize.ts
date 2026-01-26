@@ -1,22 +1,13 @@
-import DOMPurify from 'isomorphic-dompurify'
-
-// Configure DOMPurify hook to add security attributes to links
-// This runs once when the module is loaded
-DOMPurify.addHook('afterSanitizeAttributes', (node) => {
-  if (node.tagName === 'A') {
-    node.setAttribute('target', '_blank')
-    node.setAttribute('rel', 'noopener noreferrer')
-  }
-})
+import sanitizeHtml from 'sanitize-html'
 
 /**
  * Sanitize HTML content to prevent XSS attacks.
- * Uses DOMPurify with strict configuration suitable for user-generated or AI-generated content.
+ * Uses sanitize-html with strict configuration suitable for user-generated or AI-generated content.
  */
 export function sanitizeHTML(dirty: string): string {
-  return DOMPurify.sanitize(dirty, {
+  return sanitizeHtml(dirty, {
     // Allow common formatting tags
-    ALLOWED_TAGS: [
+    allowedTags: [
       'p', 'br', 'strong', 'em', 'b', 'i', 'u',
       'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
       'ul', 'ol', 'li',
@@ -25,16 +16,29 @@ export function sanitizeHTML(dirty: string): string {
       'blockquote', 'code', 'pre',
     ],
     // Only allow safe attributes
-    ALLOWED_ATTR: [
-      'href', 'target', 'rel', 'class', 'id',
-      'colspan', 'rowspan', 'scope',
-    ],
+    allowedAttributes: {
+      'a': ['href', 'target', 'rel', 'class'],
+      '*': ['class', 'id'],
+      'th': ['colspan', 'rowspan', 'scope'],
+      'td': ['colspan', 'rowspan'],
+    },
     // Force all links to open in new tab with security attributes
-    ADD_ATTR: ['target', 'rel'],
-    // Enforce noopener noreferrer on links
-    FORBID_ATTR: ['style', 'onclick', 'onerror', 'onload'],
-    // Remove script and other dangerous tags completely
-    FORBID_TAGS: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input'],
+    transformTags: {
+      'a': (tagName, attribs) => ({
+        tagName,
+        attribs: {
+          ...attribs,
+          target: '_blank',
+          rel: 'noopener noreferrer',
+        },
+      }),
+    },
+    // Don't allow any protocols except http, https, mailto
+    allowedSchemes: ['http', 'https', 'mailto'],
+    // Remove empty or whitespace-only tags
+    exclusiveFilter: (frame) => {
+      return !frame.text.trim() && !['br', 'hr'].includes(frame.tag)
+    },
   })
 }
 

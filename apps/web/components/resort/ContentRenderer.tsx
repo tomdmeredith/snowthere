@@ -1,11 +1,11 @@
 'use client'
 
 import { useMemo } from 'react'
-import DOMPurify from 'isomorphic-dompurify'
 import { ProTipCallout } from './ProTipCallout'
 import { WarningCallout } from './WarningCallout'
 
 interface ContentRendererProps {
+  /** HTML content - must be pre-sanitized server-side via lib/sanitize.ts */
   html: string
   className?: string
 }
@@ -19,6 +19,9 @@ interface ParsedContent {
  * Renders HTML content with automatic extraction of Pro Tips and Warnings
  * into visual callout components.
  *
+ * IMPORTANT: Content must be sanitized server-side before passing to this component.
+ * Use sanitizeHTML() from lib/sanitize.ts in server components/pages.
+ *
  * Detects patterns like:
  * - "Pro tip:" or "Pro Tip:" followed by text
  * - "Warning:" or "Heads up:" followed by text
@@ -26,11 +29,8 @@ interface ParsedContent {
  */
 export function ContentRenderer({ html, className = 'prose-family' }: ContentRendererProps) {
   const parsedContent = useMemo(() => {
-    // Sanitize HTML first (allow class for resort-link styling)
-    const sanitized = DOMPurify.sanitize(html, {
-      ALLOWED_TAGS: ['p', 'strong', 'em', 'ul', 'ol', 'li', 'h3', 'h4', 'a', 'br'],
-      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
-    })
+    // Content is pre-sanitized server-side - just use it directly
+    const sanitized = html
 
     // Split content by paragraph tags and strong/bold patterns
     const segments: ParsedContent[] = []
