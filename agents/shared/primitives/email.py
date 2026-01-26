@@ -43,6 +43,30 @@ DEFAULT_FROM_EMAIL = "Snowthere <hello@snowthere.com>"
 DEFAULT_REPLY_TO = "hello@snowthere.com"
 
 
+def substitute_template_variables(content: str, variables: dict[str, Any]) -> str:
+    """
+    Substitute template variables in content.
+
+    Supports both {{variable}} and {{ variable }} syntax.
+
+    Args:
+        content: Template content with {{variable}} placeholders
+        variables: Dict mapping variable names to values
+
+    Returns:
+        Content with variables substituted
+    """
+    import re
+
+    result = content
+    for key, value in variables.items():
+        # Handle both {{key}} and {{ key }} (with optional spaces)
+        pattern = r'\{\{\s*' + re.escape(key) + r'\s*\}\}'
+        result = re.sub(pattern, str(value) if value else '', result)
+
+    return result
+
+
 @dataclass
 class EmailResult:
     """Result of an email operation."""
@@ -425,12 +449,30 @@ async def advance_sequences() -> SequenceStepResult:
             errors.append(f"Missing template for step {next_step_num}")
             continue
 
+        # Prepare template variables for substitution
+        template_vars = {
+            "name": subscriber.get("name") or "there",  # Fallback to "Hey there!" if no name
+            "email": subscriber["email"],
+            "referral_code": subscriber.get("referral_code", ""),
+        }
+
+        # Substitute variables in template content
+        html_content = substitute_template_variables(
+            template["body_html"], template_vars
+        )
+        text_content = None
+        if template.get("body_text"):
+            text_content = substitute_template_variables(
+                template["body_text"], template_vars
+            )
+        subject = substitute_template_variables(template["subject"], template_vars)
+
         # Send email
         result = await send_email(
             to=subscriber["email"],
-            subject=template["subject"],
-            html=template["body_html"],
-            text=template.get("body_text"),
+            subject=subject,
+            html=html_content,
+            text=text_content,
             subscriber_id=subscriber["id"],
             template_id=template["id"],
             sequence_id=sequence["id"],

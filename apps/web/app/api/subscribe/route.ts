@@ -161,12 +161,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: Trigger welcome sequence via email primitive
-    // For now, the sequence will be triggered by the daily cron job
-    // that checks for new subscribers without sequence progress
+    // Trigger welcome sequence
+    // Look up the welcome sequence and start the subscriber on it
+    const { data: welcomeSequence } = await supabase
+      .from('email_sequences')
+      .select('id')
+      .eq('name', 'welcome')
+      .eq('status', 'active')
+      .single()
 
-    // TODO: Send welcome email via Resend
-    // await sendWelcomeEmail(email, name)
+    if (welcomeSequence) {
+      // Start subscriber on the welcome sequence
+      // Set next_send_at to now for immediate processing by cron
+      const { error: sequenceError } = await supabase
+        .from('subscriber_sequence_progress')
+        .insert({
+          subscriber_id: newSubscriber.id,
+          sequence_id: welcomeSequence.id,
+          current_step: 0,
+          started_at: new Date().toISOString(),
+          next_send_at: new Date().toISOString(), // Ready for immediate send
+          status: 'active',
+        })
+
+      if (sequenceError) {
+        // Log but don't fail the signup - sequence can be triggered later
+        console.error('Failed to start welcome sequence:', sequenceError)
+      }
+    }
 
     return NextResponse.json({
       success: true,
