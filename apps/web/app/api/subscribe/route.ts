@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { sendWelcomeEmail } from '@/lib/email'
 
 // Lazy initialization to avoid build-time errors
 let _supabaseAdmin: SupabaseClient | null = null
@@ -109,6 +110,9 @@ export async function POST(request: NextRequest) {
           )
         }
 
+        // Send welcome back email
+        await sendWelcomeEmail(email.toLowerCase().trim(), name?.trim(), undefined)
+
         return NextResponse.json({
           success: true,
           message: 'Welcome back! Your subscription has been reactivated.',
@@ -159,6 +163,18 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to subscribe. Please try again.' },
         { status: 500 }
       )
+    }
+
+    // Send welcome email immediately (don't wait for cron)
+    const emailResult = await sendWelcomeEmail(
+      email.toLowerCase().trim(),
+      name?.trim(),
+      newSubscriber.referral_code
+    )
+
+    if (!emailResult.success) {
+      // Log but don't fail signup - they're subscribed, email can be retried
+      console.error('Failed to send welcome email:', emailResult.error)
     }
 
     // Trigger welcome sequence
