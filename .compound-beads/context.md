@@ -7,7 +7,7 @@
 
 **Round 6: AI Discoverability & Infrastructure** (in progress)
 - Type: Strategic implementation
-- Status: Round 6.1 + 6.4 complete, continuing to 6.2
+- Status: Round 6.1-6.4 complete, Round 7 next
 - Goal: AI discoverability, email system, location display fixes
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
@@ -58,11 +58,37 @@
 
 **Migration Pending**: Run `026_email_system.sql` via Supabase Dashboard
 
-### Round 6.3: Lead Magnet & Welcome Sequence (Pending)
-- Family Ski Trip Checklist PDF
-- Resend API integration
-- Welcome email series (Days 0, 2, 4, 7, 14)
-- Email primitives: add_subscriber(), send_email(), trigger_sequence()
+### Round 6.3: Lead Magnet & Welcome Sequence (Completed 2026-01-26)
+- Created `agents/shared/primitives/email.py` with Resend API integration:
+  - `send_email()` - Send via Resend API with tracking
+  - `add_subscriber()` - Add to list with referral handling
+  - `remove_subscriber()` - Soft delete/unsubscribe
+  - `trigger_sequence()` - Start subscriber on sequence
+  - `advance_sequences()` - Cron job to send due emails
+  - `get_sequence_stats()` - Analytics for sequences
+- Added `resend_api_key` to config.py settings
+- Created 5 welcome email templates (HTML):
+  - Day 0: Family Ski Trip Checklist
+  - Day 2: Alps vs Colorado cost comparison
+  - Day 4: Kids ages guide
+  - Day 7: Epic vs Ikon simplified
+  - Day 14: Ready to pick your resort
+- Created `supabase/seed_email_sequences.sql` to seed templates and sequence
+- Integrated `advance_sequences()` into daily cron.py
+
+**Key Files Created**:
+- `agents/shared/primitives/email.py` - Resend email primitives
+- `agents/templates/welcome_checklist.html` - Day 0 checklist email
+- `agents/templates/welcome_day2.html` - Alps vs Colorado
+- `agents/templates/welcome_day4.html` - Kids ages
+- `agents/templates/welcome_day7.html` - Epic vs Ikon
+- `agents/templates/welcome_day14.html` - Ready to pick
+- `supabase/seed_email_sequences.sql` - Welcome sequence seed data
+
+**Pending**:
+- Run migration 026_email_system.sql via Supabase Dashboard
+- Run seed_email_sequences.sql via Supabase Dashboard
+- Add RESEND_API_KEY to Railway and Vercel environments
 
 ---
 

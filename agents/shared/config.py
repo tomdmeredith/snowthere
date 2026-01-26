@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     # Slack Alerts
     slack_webhook_url: str | None = None  # Incoming webhook for cron alerts
 
+    # Email (Resend)
+    resend_api_key: str | None = None  # Transactional email via Resend
+
     # Agent Settings
     default_model: str = "claude-sonnet-4-20250514"  # Fast decisions
     content_model: str = "claude-opus-4-5-20251101"  # Quality content

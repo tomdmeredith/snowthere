@@ -51,6 +51,37 @@ from datetime import datetime
 from pipeline import run_daily_pipeline, run_single_resort
 
 
+async def run_email_sequences() -> dict:
+    """Run email sequence advancement for all due subscribers.
+
+    Returns a dict with results suitable for logging.
+    """
+    from shared.primitives.email import advance_sequences
+
+    print("Advancing email sequences...")
+    try:
+        result = await advance_sequences()
+        if result.success:
+            print(f"✓ Email sequences: {result.message}")
+        else:
+            print(f"⚠️  Email sequences: {result.message}")
+            if result.errors:
+                for error in result.errors[:5]:  # Show first 5 errors
+                    print(f"    - {error}")
+        return {
+            "success": result.success,
+            "emails_sent": result.emails_sent,
+            "errors": result.errors,
+        }
+    except Exception as e:
+        print(f"❌ Email sequences failed: {e}")
+        return {
+            "success": False,
+            "emails_sent": 0,
+            "errors": [str(e)],
+        }
+
+
 def validate_environment():
     """Validate all required environment variables and connections.
 
@@ -120,6 +151,10 @@ def validate_environment():
 def main():
     # Validate environment FIRST - fail fast before incurring API costs
     validate_environment()
+
+    # Run email sequences (independent of content pipeline)
+    # This advances subscribers through welcome sequences, sends due emails
+    email_result = asyncio.run(run_email_sequences())
 
     parser = argparse.ArgumentParser(
         description="Snowthere autonomous content generation pipeline"
@@ -218,11 +253,14 @@ def main():
             force_discovery=args.force_discovery,
         ))
 
+    # Add email results to output
+    result["email_sequences"] = email_result
+
     # Output results
     if args.json:
         print(json.dumps(result, indent=2, default=str))
     else:
-        print_human_readable(result, single_resort=bool(args.resort))
+        print_human_readable(result, single_resort=bool(args.resort), email_result=email_result)
 
     # Exit with appropriate code
     status = result.get("status", "unknown")
@@ -242,11 +280,22 @@ def main():
         sys.exit(1)
 
 
-def print_human_readable(result: dict, single_resort: bool = False):
+def print_human_readable(result: dict, single_resort: bool = False, email_result: dict | None = None):
     """Print results in a human-readable format."""
     print(f"\n{'='*60}")
     print("RESULTS")
     print(f"{'='*60}\n")
+
+    # Email sequences
+    if email_result:
+        emails_sent = email_result.get("emails_sent", 0)
+        if emails_sent > 0:
+            print(f"Email Sequences: {emails_sent} email(s) sent")
+        else:
+            print("Email Sequences: No emails due")
+        if email_result.get("errors"):
+            print(f"  Errors: {len(email_result['errors'])}")
+        print()
 
     print(f"Status: {result.get('status', 'unknown').upper()}")
 
