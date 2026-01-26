@@ -348,6 +348,25 @@ from .intelligence import (
     extract_linkable_entities,
     ExtractedEntity,
     EntityExtractionResult,
+    # Quick Take context extraction (Round 8)
+    extract_quick_take_context,
+    QuickTakeContextResult,
+)
+
+# Quick Take generation primitives (Round 8)
+from .quick_take import (
+    # Data classes
+    QuickTakeContext,
+    QuickTakeResult,
+    # Main generation
+    generate_quick_take,
+    regenerate_quick_take_if_invalid,
+    # Quality metrics
+    calculate_specificity_score,
+    check_forbidden_phrases,
+    validate_quick_take,
+    # Constants
+    FORBIDDEN_PHRASES,
 )
 
 # Linking primitives (Similar resorts, internal links)
@@ -669,4 +688,16 @@ __all__ = [
     "extract_linkable_entities",
     "ExtractedEntity",
     "EntityExtractionResult",
+    # Quick Take Context Extraction (Round 8)
+    "extract_quick_take_context",
+    "QuickTakeContextResult",
+    # Quick Take Generation (Round 8)
+    "QuickTakeContext",
+    "QuickTakeResult",
+    "generate_quick_take",
+    "regenerate_quick_take_if_invalid",
+    "calculate_specificity_score",
+    "check_forbidden_phrases",
+    "validate_quick_take",
+    "FORBIDDEN_PHRASES",
 ]

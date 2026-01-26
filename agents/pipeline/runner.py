@@ -42,6 +42,11 @@ from shared.primitives import (
     generate_faq,
     generate_seo_meta,
     generate_tagline,
+    # Quick Take (Round 8 - Editorial Verdict Model)
+    generate_quick_take,
+    QuickTakeContext,
+    QuickTakeResult,
+    extract_quick_take_context,
     # Quality
     score_resort_page,
     # Database
@@ -553,14 +558,128 @@ async def run_resort_pipeline(
             task_id=None,
             agent_name="pipeline_runner",
             action="start_content_generation",
-            reasoning="Generating content sections in instagram_mom voice",
+            reasoning="Generating content sections in snowthere_guide voice",
         )
 
         content = {}
 
-        # Generate each section
+        # =====================================================================
+        # STAGE 3.1: Extract Quick Take Context (Round 8)
+        # =====================================================================
+        # Extract editorial inputs for the new Quick Take model
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="start_quick_take_context",
+            reasoning=f"Extracting editorial context for Quick Take: {resort_name}",
+        )
+
+        qt_context_result = await extract_quick_take_context(
+            resort_name=resort_name,
+            country=country,
+            research_data=research_data,
+        )
+
+        # Log cost (~$0.01 for Sonnet)
+        log_cost("anthropic", 0.01, None, {"run_id": run_id, "stage": "quick_take_context"})
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="quick_take_context_complete",
+            reasoning=f"Extracted Quick Take context (confidence: {qt_context_result.extraction_confidence:.2f})",
+            metadata={
+                "unique_angle": qt_context_result.unique_angle,
+                "primary_weakness": qt_context_result.primary_weakness,
+                "extraction_confidence": qt_context_result.extraction_confidence,
+            },
+        )
+
+        # =====================================================================
+        # STAGE 3.2: Generate Quick Take (Round 8 - Editorial Verdict Model)
+        # =====================================================================
+        family_metrics = research_data.get("family_metrics", {})
+        family_score = family_metrics.get("family_overall_score")
+
+        # Build Quick Take context from research + extracted editorial inputs
+        qt_context = QuickTakeContext(
+            resort_name=resort_name,
+            country=country,
+            region=research_data.get("region"),
+            family_score=family_score,
+            best_age_min=family_metrics.get("best_age_min"),
+            best_age_max=family_metrics.get("best_age_max"),
+            # Editorial inputs from extraction
+            unique_angle=qt_context_result.unique_angle,
+            signature_experience=qt_context_result.signature_experience,
+            primary_strength=qt_context_result.primary_strength,
+            primary_weakness=qt_context_result.primary_weakness,
+            who_should_skip=qt_context_result.who_should_skip,
+            memorable_detail=qt_context_result.memorable_detail,
+            price_context=qt_context_result.price_context,
+            # Additional context
+            terrain_pct_beginner=family_metrics.get("kid_friendly_terrain_pct"),
+            has_ski_school=True,  # Most resorts have ski schools
+            ski_school_min_age=family_metrics.get("ski_school_min_age"),
+            has_childcare=family_metrics.get("has_childcare", False),
+            kids_ski_free_age=family_metrics.get("kids_ski_free_age"),
+        )
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="start_quick_take_generation",
+            reasoning=f"Generating Quick Take with Editorial Verdict Model for {resort_name}",
+        )
+
+        quick_take_result = await generate_quick_take(
+            context=qt_context,
+            voice_profile="snowthere_guide",
+        )
+
+        # Log cost (~$0.10 for Opus)
+        log_cost("anthropic", 0.10, None, {"run_id": run_id, "stage": "quick_take_generation"})
+
+        # Store Quick Take in content
+        content["quick_take"] = quick_take_result.quick_take_html
+        content["perfect_if"] = quick_take_result.perfect_if
+        content["skip_if"] = quick_take_result.skip_if
+
+        # Log quality metrics
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="quick_take_complete",
+            reasoning=f"Quick Take generated: {quick_take_result.word_count} words, specificity {quick_take_result.specificity_score:.2f}, valid: {quick_take_result.is_valid}",
+            metadata={
+                "word_count": quick_take_result.word_count,
+                "specificity_score": quick_take_result.specificity_score,
+                "forbidden_phrases": quick_take_result.forbidden_phrases_found,
+                "is_valid": quick_take_result.is_valid,
+                "validation_errors": quick_take_result.validation_errors,
+                "perfect_if_count": len(quick_take_result.perfect_if),
+                "skip_if_count": len(quick_take_result.skip_if),
+            },
+        )
+
+        result["stages"]["quick_take"] = {
+            "status": "complete" if quick_take_result.is_valid else "quality_issues",
+            "word_count": quick_take_result.word_count,
+            "specificity_score": quick_take_result.specificity_score,
+            "is_valid": quick_take_result.is_valid,
+            "validation_errors": quick_take_result.validation_errors,
+        }
+
+        if quick_take_result.is_valid:
+            print(f"✓ Quick Take: {quick_take_result.word_count} words, specificity {quick_take_result.specificity_score:.2f}")
+        else:
+            print(f"⚠️  Quick Take quality issues: {', '.join(quick_take_result.validation_errors[:2])}")
+
+        # =====================================================================
+        # STAGE 3.3: Generate Other Content Sections
+        # =====================================================================
+        # Note: quick_take is now generated separately above
         sections = [
-            "quick_take",
             "getting_there",
             "where_to_stay",
             "lift_tickets",
@@ -570,14 +689,10 @@ async def run_resort_pipeline(
         ]
 
         # Add resort_name, country, and defaults for template formatting
-        # Extract family_score from research if available, otherwise use placeholder
-        family_metrics = research_data.get("family_metrics", {})
-        family_score = family_metrics.get("family_overall_score", "N/A")
-
         content_context = {
             "resort_name": resort_name,
             "country": country,
-            "family_score": family_score,
+            "family_score": family_score if family_score else "N/A",
             # Trail map data for content generation
             "trail_map": trail_map_data,
             # Memory insights from past runs
@@ -617,10 +732,11 @@ async def run_resort_pipeline(
             voice_profile="snowthere_guide",
         )
 
-        # Log content generation cost (~$0.80 for Claude API)
-        log_cost("anthropic", 0.80, None, {"run_id": run_id, "stage": "content_generation"})
+        # Log content generation cost (~$0.70 for Claude API, Quick Take logged separately)
+        log_cost("anthropic", 0.70, None, {"run_id": run_id, "stage": "content_generation"})
 
-        result["stages"]["content"] = {"status": "complete", "sections": len(sections)}
+        # Total sections = 6 regular + 1 quick_take (generated earlier)
+        result["stages"]["content"] = {"status": "complete", "sections": len(sections) + 1}
 
         log_reasoning(
             task_id=None,

@@ -1,11 +1,91 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26 (Round 7.4)
+> Last synced: 2026-01-26 (Round 8)
 > Agent: compound-beads v2.0
 
 ## Current Round
 
-**Round 7: External Linking & Affiliate System** (In Progress)
+**Round 8: Quick Takes Redesign** ✅ COMPLETE
+- Type: Content quality improvement
+- Status: Complete - Editorial Verdict Model implemented
+- Goal: Replace generic Quick Takes with specific, memorable, honest content
+
+### Round 8: Quick Takes Redesign (Completed 2026-01-26)
+
+**Problem Statement:**
+Quick Takes were generic and formulaic. Many started with "Here's the thing about..." - violating our voice principles. Lacked specificity, honesty about downsides, and memorable details.
+
+**Solution - Editorial Verdict Model:**
+New 4-part structure replacing generic prompts:
+1. **THE HOOK** (1 sentence) - Specific, memorable insight
+2. **THE CONTEXT** (1-2 sentences) - Why this matters for YOUR family
+3. **THE TENSION** (1-2 sentences) - What's the catch? Be honest.
+4. **THE VERDICT** (1 sentence) - Clear recommendation
+
+**Files Created:**
+- `agents/shared/primitives/quick_take.py` (NEW):
+  - `QuickTakeContext` dataclass - Input context with editorial fields
+  - `QuickTakeResult` dataclass - Generated content with quality metrics
+  - `generate_quick_take()` - Main generation function using Opus
+  - `calculate_specificity_score()` - Measures how specific vs generic content is
+  - `check_forbidden_phrases()` - Detects 31 banned phrases
+  - `validate_quick_take()` - Quality gate enforcement
+  - `FORBIDDEN_PHRASES` - List of 31 banned phrases
+
+**Files Modified:**
+- `agents/shared/primitives/intelligence.py`:
+  - `extract_quick_take_context()` - Extract editorial inputs from research
+  - `QuickTakeContextResult` dataclass - Editorial extraction results
+
+- `agents/pipeline/runner.py`:
+  - Added Stage 3.1: Quick Take Context Extraction
+  - Added Stage 3.2: Quick Take Generation (Editorial Verdict Model)
+  - Stage 3.3: Other Content Sections (unchanged)
+  - Removed "quick_take" from generic sections loop
+
+- `agents/shared/primitives/__init__.py`:
+  - Added all Quick Take exports
+
+**Quality Gates:**
+| Gate | Threshold | Purpose |
+|------|-----------|---------|
+| Word count | 80-120 words | Concise but complete |
+| Specificity score | > 0.6 | Specific beats generic |
+| Forbidden phrases | 0 | No lazy writing |
+| Perfect if conditions | >= 2 | Clear recommendations |
+| Skip if conditions | >= 1 | Honest about downsides |
+
+**Forbidden Phrases (31 total):**
+- Generic openers: "here's the thing", "let's be real", "the truth is"
+- Empty superlatives: "world-class", "stunning", "amazing", "incredible"
+- Marketing speak: "hidden gem", "must-visit", "bucket list"
+- Generic qualifiers: "perfect for families", "great for families"
+
+**Specificity Scoring:**
+Positive signals (increase score):
+- Numbers (ages, percentages, costs, distances)
+- Age references ("ages 5-10", "under 6")
+- Comparisons ("half the cost of Aspen")
+- Proper nouns (specific hotels, lifts, restaurants)
+
+Negative signals (decrease score):
+- Generic adjectives (great, nice, beautiful)
+- Vague quantifiers (many, various, several)
+- Hedge words (might, could, perhaps)
+
+**Pipeline Cost:**
+- Quick Take context extraction: ~$0.01 (Sonnet)
+- Quick Take generation: ~$0.10 (Opus)
+- Total additional cost per resort: ~$0.11
+
+**Key Files:**
+- `agents/shared/primitives/quick_take.py` - Core primitive
+- `agents/shared/primitives/intelligence.py` - Context extraction
+- `agents/pipeline/runner.py` - Pipeline integration
+
+---
+
+**Round 7: External Linking & Affiliate System** ✅ COMPLETE (except manual R7.2)
 - Type: Strategic implementation
 - Status: R7.1 + R7.3 + R7.4 complete, pending manual affiliate signup
 - Goal: External linking via Google Places, affiliate URL integration, link click tracking

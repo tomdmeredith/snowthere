@@ -1181,3 +1181,158 @@ Generic mentions like "the ski school" or "local restaurants" should NOT be extr
             entity_count=0,
             extraction_confidence=0.0,
         )
+
+
+# ============================================================================
+# QUICK TAKE CONTEXT EXTRACTION - Editorial inputs for Quick Take generation
+# ============================================================================
+
+
+@dataclass
+class QuickTakeContextResult:
+    """Editorial inputs extracted from research for Quick Take generation.
+
+    These are the "soul" of the Quick Take - specific, memorable details
+    that make the content authentic rather than generic.
+    """
+
+    # Core editorial inputs (all should be specific, not generic)
+    unique_angle: str | None = None  # What makes this resort DIFFERENT?
+    signature_experience: str | None = None  # The ONE thing families remember
+    primary_strength: str | None = None  # Best thing about this resort
+    primary_weakness: str | None = None  # REQUIRED - every resort has one
+    who_should_skip: str | None = None  # Clear "not for you if..."
+    memorable_detail: str | None = None  # Sensory/experiential hook
+
+    # Comparative context
+    price_context: str | None = None  # "Half the cost of Aspen"
+    similar_to: str | None = None  # "Similar vibe to X, but..."
+    better_than_for: str | None = None  # "Better than X for families because..."
+
+    # Quality
+    extraction_confidence: float = 0.0
+    extraction_reasoning: str = ""
+
+
+async def extract_quick_take_context(
+    resort_name: str,
+    country: str,
+    research_data: dict[str, Any],
+) -> QuickTakeContextResult:
+    """Extract editorial context for Quick Take generation.
+
+    This is the intelligence layer that turns raw research into
+    the specific, memorable details that make Quick Takes authentic.
+
+    Part of Round 8: Quick Takes Redesign.
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        research_data: Raw research data from search_resort_info()
+
+    Returns:
+        QuickTakeContextResult with editorial inputs
+
+    Cost: ~$0.01 per call with Sonnet
+    """
+    # Build a summary of research for Claude to analyze
+    research_summary = json.dumps(research_data, indent=2, default=str)[:8000]
+
+    prompt = f"""Extract editorial context for a Quick Take about {resort_name}, {country}.
+
+RESEARCH DATA:
+{research_summary}
+
+I need you to extract SPECIFIC, MEMORABLE details - not generic observations.
+
+REQUIRED OUTPUTS:
+
+1. UNIQUE_ANGLE: What makes this resort DIFFERENT from others?
+   - NOT: "Great views" or "Family-friendly"
+   - YES: "Car-free village where kids can roam safely" or "Access to Italian ski area for lunch"
+
+2. SIGNATURE_EXPERIENCE: The ONE thing families remember years later
+   - NOT: "Fun skiing" or "Nice slopes"
+   - YES: "The fondue hut at the top of the gondola" or "Skiing through the covered bridge"
+
+3. PRIMARY_STRENGTH: The best thing about this resort for families
+   - Be specific about WHY it's a strength
+   - Include numbers/data when available
+
+4. PRIMARY_WEAKNESS: What's the honest downside? (REQUIRED - every resort has one)
+   - NOT: "Nothing" or "Could be better"
+   - YES: "30-minute transfer from village to main ski area" or "Expensive on-mountain dining"
+
+5. WHO_SHOULD_SKIP: Clear "not for you if..." statement
+   - Be direct about deal-breakers
+   - Example: "Families wanting slope-side lodging" or "Budget travelers ($$$ terrain)"
+
+6. MEMORABLE_DETAIL: A sensory or experiential hook
+   - Something they can visualize or feel
+   - Example: "Cobblestone streets lit by gas lamps" or "Hot chocolate stop with Matterhorn views"
+
+7. PRICE_CONTEXT: How does cost compare? (if data available)
+   - Example: "Half the cost of Aspen" or "Premium pricing, premium experience"
+
+Return JSON:
+{{
+    "unique_angle": "...",
+    "signature_experience": "...",
+    "primary_strength": "...",
+    "primary_weakness": "...",
+    "who_should_skip": "...",
+    "memorable_detail": "...",
+    "price_context": "...",
+    "similar_to": "Resort it's most like, if applicable",
+    "better_than_for": "Better than [X] for families because...",
+    "confidence": 0.0-1.0,
+    "reasoning": "Brief explanation of extraction quality"
+}}
+
+If information isn't available in the research, use null (not a generic placeholder).
+"""
+
+    system = """You are an editorial researcher extracting the SOUL of a ski resort.
+
+Your job: Find the specific, memorable details that make authentic travel writing.
+
+Rules:
+- Be SPECIFIC, not generic. "Beautiful views" is useless. "Matterhorn views from every lift" is specific.
+- Be HONEST about weaknesses. Families trust honest assessments.
+- Use NUMBERS when available. "35% beginner terrain" beats "lots of beginner terrain."
+- Capture SENSORY details. What will they see, feel, experience?
+- Think COMPARATIVELY. How is this different from other resorts?
+
+Generic output is a failure. Specific, memorable output is success."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-sonnet-4-20250514",
+            max_tokens=1500,
+        )
+
+        parsed = _parse_json_response(response)
+
+        return QuickTakeContextResult(
+            unique_angle=parsed.get("unique_angle"),
+            signature_experience=parsed.get("signature_experience"),
+            primary_strength=parsed.get("primary_strength"),
+            primary_weakness=parsed.get("primary_weakness"),
+            who_should_skip=parsed.get("who_should_skip"),
+            memorable_detail=parsed.get("memorable_detail"),
+            price_context=parsed.get("price_context"),
+            similar_to=parsed.get("similar_to"),
+            better_than_for=parsed.get("better_than_for"),
+            extraction_confidence=float(parsed.get("confidence", 0.5)),
+            extraction_reasoning=parsed.get("reasoning", ""),
+        )
+
+    except Exception as e:
+        print(f"Quick Take context extraction failed: {e}")
+        return QuickTakeContextResult(
+            extraction_confidence=0.0,
+            extraction_reasoning=f"Extraction failed: {e}",
+        )
