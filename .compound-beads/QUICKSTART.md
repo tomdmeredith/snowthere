@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 8.3**: Quiz Audit + Region Backfill ✅ COMPLETE
+**Round 8.3**: Quiz Audit + Region Backfill ✅ DEPLOYED & TESTED
 **Type**: UX + Algorithm + Data Quality
-**Status**: Built, ready to deploy
+**Status**: Live on production, all tests passing
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -28,9 +28,9 @@
 - R8.1: **Comprehensive Audit Fixes** - Created /about, /contact pages
 
 **Next**:
-- Deploy R8.3 changes
-- Test quiz with different profiles to verify differentiation
 - R7.2: Apply to affiliate programs (Booking.com, Ski.com, Liftopia)
+- R9: Add more resorts to improve algorithm differentiation
+- Consider: Location-based "Quick getaway" recommendations
 
 **Key Files**:
 - Quiz scoring: `apps/web/lib/quiz/scoring.ts`
