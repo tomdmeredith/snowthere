@@ -6,6 +6,14 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+/**
+ * Family Score type - DECIMAL(3,1) in database
+ * Range: 1.0 - 10.0 (90 discrete values)
+ * Calculated deterministically from resort metrics
+ * @see /methodology for scoring formula
+ */
+export type FamilyScore = number
+
 export interface Database {
   public: {
     Tables: {
@@ -53,9 +61,15 @@ export interface Database {
           trail_map_data?: Json | null
         }
       }
+      /**
+       * Resort family metrics with decimal scores
+       * Score fields are DECIMAL(3,1) ranging from 1.0 to 10.0
+       * @see /methodology for scoring formula
+       */
       resort_family_metrics: {
         Row: {
           resort_id: string
+          /** Decimal score 1.0-10.0 - see /methodology */
           family_overall_score: number | null
           best_age_min: number | null
           best_age_max: number | null

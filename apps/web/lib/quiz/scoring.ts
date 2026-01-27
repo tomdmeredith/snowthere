@@ -461,6 +461,74 @@ export function generateMatchReason(
   }
 }
 
+/**
+ * Select top-N matches with diversity constraints.
+ *
+ * Prevents homogeneous results by ensuring:
+ * - Max 2 resorts from the same country in top 3
+ * - First 2 picks should be from different countries and price tiers
+ *
+ * This follows Netflix/Spotify recommendation best practices for
+ * "serendipitous diversity" in top-N lists.
+ */
+function selectDiverseTopMatches(
+  scoredResorts: ResortMatch[],
+  topN: number = 3
+): ResortMatch[] {
+  if (scoredResorts.length <= topN) {
+    return scoredResorts
+  }
+
+  const result: ResortMatch[] = []
+  const countriesSeen = new Set<string>()
+  const priceTiersSeen = new Set<string>()
+
+  // Already sorted by matchScore descending
+  for (const resort of scoredResorts) {
+    if (result.length >= topN) break
+
+    // Allow max 2 from the same country
+    const countryCount = result.filter((r) => r.country === resort.country).length
+    if (countryCount >= 2) continue
+
+    // For first 2 picks, prefer diversity in country AND price tier
+    if (result.length < 2) {
+      const hasCountry = countriesSeen.has(resort.country)
+      const hasPriceTier = priceTiersSeen.has(resort.priceLevel)
+
+      // Skip if we've already seen this country (for position 1)
+      // Allow some flexibility for position 2 if scores are very close
+      if (hasCountry && result.length === 1) {
+        // Allow same country only if score is within 5 points of top match
+        const scoreDiff = result[0].matchScore - resort.matchScore
+        if (scoreDiff > 5) continue
+      }
+
+      // Skip if we've already seen this price tier (for position 1)
+      if (hasPriceTier && result.length === 1) {
+        const scoreDiff = result[0].matchScore - resort.matchScore
+        if (scoreDiff > 10) continue
+      }
+    }
+
+    result.push(resort)
+    countriesSeen.add(resort.country)
+    priceTiersSeen.add(resort.priceLevel)
+  }
+
+  // If we couldn't fill with diversity constraints, fill with top scores
+  if (result.length < topN) {
+    for (const resort of scoredResorts) {
+      if (result.length >= topN) break
+      if (!result.find((r) => r.id === resort.id)) {
+        result.push(resort)
+      }
+    }
+  }
+
+  return result
+}
+
 // Main function to compute quiz results
 export function computeQuizResults(
   answers: QuizAnswers,
@@ -517,8 +585,9 @@ export function computeQuizResults(
     })
     .sort((a, b) => b.matchScore - a.matchScore)
 
-  // Return top 3 matches
-  const topMatches = scoredResorts.slice(0, 3)
+  // Select top 3 with diversity constraints
+  // (Prevents all 3 being from USA or all $$$$ resorts)
+  const topMatches = selectDiverseTopMatches(scoredResorts, 3)
 
   return {
     personality,

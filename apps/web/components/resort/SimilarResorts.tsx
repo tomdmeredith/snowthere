@@ -80,7 +80,7 @@ export function SimilarResorts({
                     <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-coral-500 to-coral-600 shadow-coral">
                       <Star className="w-4 h-4 text-white fill-white/50" />
                       <span className="text-sm font-bold text-white">
-                        {resort.family_overall_score}/10
+                        {resort.family_overall_score}
                       </span>
                     </div>
                   )}

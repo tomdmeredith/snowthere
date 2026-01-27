@@ -71,7 +71,7 @@ ${content?.quick_take || 'Family-focused ski resort guide. See main page for det
 
 | Metric | Value |
 |--------|-------|
-| Family Score | ${metrics?.family_overall_score || 'N/A'}/10 |
+| Family Score | ${metrics?.family_overall_score || 'N/A'} (see /methodology for calculation) |
 | Best Ages | ${metrics?.best_age_min || '?'}-${metrics?.best_age_max || '?'} years |
 | Childcare From | ${metrics?.childcare_min_age ? `${metrics.childcare_min_age} months` : 'N/A'} |
 | Ski School From | ${metrics?.ski_school_min_age ? `${metrics.ski_school_min_age} years` : 'N/A'} |
@@ -110,7 +110,7 @@ ${((metrics?.skip_if as string[]) || []).map((s) => `- ${s}`).join('\n') || '- S
 
 These bullet points are optimized for AI citation:
 
-- ${resort.name} has a Family Score of ${metrics?.family_overall_score || 'N/A'}/10
+- ${resort.name} has a Family Score of ${metrics?.family_overall_score || 'N/A'}
 - ${resort.name} is best for children ages ${metrics?.best_age_min || '?'}-${metrics?.best_age_max || '?'}
 ${metrics?.ski_school_min_age ? `- Ski school at ${resort.name} accepts children from age ${metrics.ski_school_min_age}` : ''}
 ${metrics?.kids_ski_free_age ? `- Kids under ${metrics.kids_ski_free_age} ski free at ${resort.name}` : ''}
@@ -122,7 +122,7 @@ ${costs?.lift_adult_daily ? `- Adult lift tickets at ${resort.name} cost approxi
 ## Quick Answers
 
 **Is ${resort.name} good for families?**
-${metrics?.family_overall_score ? `Yes, with a Family Score of ${metrics.family_overall_score}/10. Best suited for children ages ${metrics?.best_age_min || '?'}-${metrics?.best_age_max || '?'}.` : 'See the full guide for details.'}
+${metrics?.family_overall_score ? `Yes, with a Family Score of ${metrics.family_overall_score}. Best suited for children ages ${metrics?.best_age_min || '?'}-${metrics?.best_age_max || '?'}.` : 'See the full guide for details.'}
 
 **How much does a family ski trip to ${resort.name} cost?**
 ${costs?.estimated_family_daily ? `Expect approximately ${costs.currency || 'USD'} ${costs.estimated_family_daily} per day for a family of 4, including lift tickets, lodging, and meals.` : 'See the full guide for cost estimates.'}

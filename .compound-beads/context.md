@@ -1,9 +1,80 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26 (Round 8.2)
+> Last synced: 2026-01-27 (Round 9)
 > Agent: compound-beads v2.0
 
 ## Current Round
+
+**Round 9: Scoring Differentiation & Decimal Precision** ✅ CODE COMPLETE
+- Type: Algorithm + Database + UX
+- Status: Code changes ready, migration + backfill pending deploy
+- Goal: Improve score differentiation through deterministic formula and decimal precision
+
+### Round 9: Scoring Differentiation & Decimal Precision (Code Complete 2026-01-27)
+
+**Problem Statement:**
+- Family scores clustered at 7-9 INTEGER values (only 10 discrete values)
+- LLM-based scoring produced "safe" middle scores
+- Quiz returned similar resorts for different family profiles
+- No transparency on how scores were calculated
+
+**Solution - Expert Panel Consensus:**
+An expert panel (Data Architect, Algorithm Designer, Recommendation Systems, Information Retrieval, UX, Abstract Thinker, SEO/GEO) analyzed the problem and converged on:
+
+1. **DECIMAL(3,1) scores** - 90 discrete values instead of 10
+2. **Deterministic formula** - Replace LLM opinion with calculated scores
+3. **Diversity constraints** - Max 2 resorts from same country in quiz top 3
+4. **Transparency** - /methodology page explains the formula
+
+**Files Created:**
+- `supabase/migrations/030_decimal_scores.sql` - DECIMAL(3,1) column migration
+- `agents/shared/primitives/scoring.py` - Deterministic scoring formula:
+  - Base: 5.0 points
+  - Childcare: +0.0 to +1.5 (has_childcare, min_age thresholds)
+  - Ski school: +0.0 to +1.0 (min_age thresholds)
+  - Terrain: +0.0 to +1.2 (beginner %, magic carpet, kids park)
+  - Value: +0.0 to +0.8 (kids ski free age)
+  - Convenience: +0.0 to +0.5 (ski-in/out, English friendly)
+- `agents/scripts/recalculate_scores.py` - Backfill script for existing resorts
+- `apps/web/app/methodology/page.tsx` - Public methodology page
+
+**Files Modified:**
+- `apps/web/lib/quiz/scoring.ts` - Added `selectDiverseTopMatches()` for diversity
+- `apps/web/lib/database.types.ts` - JSDoc for FamilyScore type
+- `apps/web/lib/quiz/types.ts` - JSDoc for decimal scores
+- `agents/shared/primitives/__init__.py` - Added scoring exports, fixed linking import
+- `agents/shared/primitives/database.py` - Updated column whitelist
+- 7 UI components - Removed "/10" suffix, display decimal directly
+
+**UI Components Updated:**
+- `ResortMatch.tsx`, `HeroImage.tsx`, `TradingCard.tsx`
+- `SimilarResorts.tsx`, `FamilyMetricsTable.tsx`, `QuickTake.tsx`
+- `SkiCalendar.tsx`, `llms.txt/route.ts`
+
+**Dry Run Results:**
+- 30 resorts processed
+- Score range: 5.4 to 7.8 (previously clustered at 7-9)
+- Good variance achieved
+- Many resorts show low childcare/terrain scores (data gaps exposed)
+
+**Deploy Steps:**
+1. Run migration: `supabase/migrations/030_decimal_scores.sql`
+2. Run backfill: `cd agents && .venv/bin/python scripts/recalculate_scores.py --apply`
+
+**Key Insight:** The deterministic formula correctly exposes data quality issues - resorts showing 5.4 scores have incomplete childcare/terrain data in the database. This motivates improving data extraction in the pipeline.
+
+**Arc Narrative:**
+- We started believing: LLM-generated scores were trustworthy approximations
+- We ended believing: "Store atoms, compute molecules" - deterministic formulas from data beat LLM opinion
+- The transformation: From "AI-generated quality score" → "calculated score from verifiable data"
+
+---
+
+**Round 8.3: Quiz Comprehensive Audit + Region Backfill** ✅ DEPLOYED
+- Type: UX + Algorithm + Data Quality
+- Status: Live on production, all tests passing
+
+---
 
 **Round 8.2: Email Confirmation + Migration** ✅ DEPLOYED
 - Type: Feature + Infrastructure
@@ -703,14 +774,17 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 
 ## Active Tasks
 
+**Round 9 Deploy** (immediate)
+- Run migration 030_decimal_scores.sql in Supabase
+- Run backfill script with --apply
+
 **Round 6: Homepage Redesign** (next)
 - Finalize homepage design direction
 - Implement new homepage components
 - A/B test conversion
 
-**Future Work** (moved from Round 4):
-- Newsletter signup API integration
-- Monitor and iterate on pipeline quality
+**R7.2: Affiliate Signups** (pending)
+- Apply to Booking.com, Ski.com, Liftopia affiliate programs
 
 ## Future Work (Round 6+)
 
@@ -719,19 +793,16 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 - Add sort dropdown to `/resorts/[country]` pages
 - Consider filters (age range, budget, pass compatibility)
 
-### Improve Data Tables
-- Fix CostTable data quality (real prices from research)
-- Fix The Numbers data completeness (all metrics populated)
-- Re-enable CostTable and FamilyMetricsTable when data is reliable
+### Improve Data Quality
+- Fix childcare data completeness (has_childcare, childcare_min_age)
+- Fix terrain percentages (beginner_terrain_pct)
+- Re-enable CostTable when data is reliable
+- Pipeline should populate more fields
 
 ### Checklist Download Feature
 - Create actual PDF/printable checklist
 - Wire up "Get the Checklist" button to download or email capture
 - Consider lead magnet flow (email → checklist)
-
-### Decimal Scores
-- Migrate `family_overall_score` from INTEGER to DECIMAL(3,1)
-- Enable nuanced rankings (8.6, 8.7, etc.)
 
 ### Internal Linking Enhancements (Low Priority)
 > Build only if data shows need - Round 5.10 baseline is sufficient

@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 8.3**: Quiz Audit + Region Backfill ✅ DEPLOYED & TESTED
-**Type**: UX + Algorithm + Data Quality
-**Status**: Live on production, all tests passing
+**Round 9**: Scoring Differentiation & Decimal Precision ✅ CODE COMPLETE
+**Type**: Algorithm + Database + UX
+**Status**: Code changes ready, migration + backfill pending deploy
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -13,32 +13,31 @@
 - Autonomous operation
 
 **Recent**:
-- R8.3: **Quiz Comprehensive Audit + Region Backfill** ✅ COMPLETE
-  - Fixed algorithm: Different profiles now get different resorts (negative weights)
-  - Fixed price level bug: Uses DB price_level, not $200 default
-  - Fixed location display: Handles empty region gracefully
-  - Added Navbar to quiz results page
-  - Personalized match reasons (20+ cases covered)
-  - Shows user's age selection instead of resort's age range
-  - Fixed snow personality contrast for WCAG AA accessibility
-  - **Backfilled regions for all 32 resorts** (Colorado, Utah, Valais, etc.)
-  - Fixed Haiku model ID bug in intelligence.py
-  - Removed referral section from welcome email (no reward system built)
-- R8.2: **Email Confirmation + Migration** - Welcome emails on signup
-- R8.1: **Comprehensive Audit Fixes** - Created /about, /contact pages
+- R9: **Scoring Differentiation & Decimal Precision** ✅ CODE COMPLETE
+  - Changed scores from INTEGER to DECIMAL(3,1) for 90 discrete values
+  - Created deterministic scoring formula (no LLM opinion)
+  - Added diversity constraints to quiz (max 2 from same country)
+  - UI shows decimal scores directly (8.2 not 8/10)
+  - Created /methodology page for transparency
+  - Backfill script ready (dry run shows 5.4-7.8 range)
+- R8.3: **Quiz Comprehensive Audit + Region Backfill** ✅ DEPLOYED
+- R8.2: **Email Confirmation + Migration** ✅ DEPLOYED
+- R8.1: **Comprehensive Audit Fixes** ✅ DEPLOYED
 
-**Next**:
-- R7.2: Apply to affiliate programs (Booking.com, Ski.com, Liftopia)
-- R9: Add more resorts to improve algorithm differentiation
-- Consider: Location-based "Quick getaway" recommendations
+**Deploy Steps**:
+1. Run `supabase/migrations/030_decimal_scores.sql` in Supabase SQL editor
+2. Run `cd agents && .venv/bin/python scripts/recalculate_scores.py --apply`
 
 **Key Files**:
-- Quiz scoring: `apps/web/lib/quiz/scoring.ts`
-- Quiz results: `apps/web/app/quiz/results/page.tsx`
-- Resort cards: `apps/web/components/quiz/ResortMatch.tsx`
-- Personalities: `apps/web/lib/quiz/personalities.ts`
-- Email: `apps/web/lib/email.ts`
-- Region backfill: `agents/scripts/backfill_regions.py`
-- Intelligence fix: `agents/shared/primitives/intelligence.py`
+- Scoring formula: `agents/shared/primitives/scoring.py`
+- Migration: `supabase/migrations/030_decimal_scores.sql`
+- Backfill: `agents/scripts/recalculate_scores.py`
+- Methodology: `apps/web/app/methodology/page.tsx`
+- Quiz diversity: `apps/web/lib/quiz/scoring.ts`
+
+**Next**:
+- Deploy R9 migration + backfill
+- R7.2: Apply to affiliate programs (Booking.com, Ski.com)
+- Improve data quality for childcare/terrain fields
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

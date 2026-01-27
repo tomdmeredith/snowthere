@@ -146,7 +146,7 @@ export function TradingCard({
                     />
                   ))}
                 </div>
-                <span className="text-xs font-bold text-dark-700">{score}/10</span>
+                <span className="text-xs font-bold text-dark-700">{score}</span>
               </>
             ) : (
               <span className="text-xs text-dark-400 italic">Coming soon</span>

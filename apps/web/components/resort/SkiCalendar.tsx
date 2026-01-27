@@ -74,27 +74,27 @@ const FamilyScoreBadge = ({ score }: { score: number | null }) => {
   if (score >= 9) {
     return (
       <span className="inline-flex items-center gap-1 px-4 py-1.5 text-sm font-bold rounded-full bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-teal">
-        {score}/10
+        {score}
       </span>
     )
   }
   if (score >= 8) {
     return (
       <span className="inline-block px-4 py-1.5 text-sm font-bold rounded-full bg-gradient-to-r from-teal-50 to-mint-50 text-teal-700 border border-teal-200">
-        {score}/10
+        {score}
       </span>
     )
   }
   if (score >= 6) {
     return (
       <span className="inline-block px-4 py-1.5 text-sm font-bold rounded-full bg-gradient-to-r from-gold-50 to-gold-100/50 text-gold-700 border border-gold-200">
-        {score}/10
+        {score}
       </span>
     )
   }
   return (
     <span className="inline-block px-4 py-1.5 text-sm font-bold rounded-full bg-gradient-to-r from-coral-50 to-coral-100/50 text-coral-700 border border-coral-200">
-      {score}/10
+      {score}
     </span>
   )
 }

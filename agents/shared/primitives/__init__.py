@@ -369,6 +369,17 @@ from .quick_take import (
     FORBIDDEN_PHRASES,
 )
 
+# Scoring primitives (Deterministic family score calculation)
+from .scoring import (
+    # Data classes
+    ScoreBreakdown,
+    # Core calculation
+    calculate_family_score,
+    calculate_family_score_with_breakdown,
+    # Formatting
+    format_score_explanation,
+)
+
 # Linking primitives (Similar resorts, internal links)
 from .linking import (
     # Constants
@@ -700,4 +711,9 @@ __all__ = [
     "check_forbidden_phrases",
     "validate_quick_take",
     "FORBIDDEN_PHRASES",
+    # Scoring (Round 9 - Deterministic formula)
+    "ScoreBreakdown",
+    "calculate_family_score",
+    "calculate_family_score_with_breakdown",
+    "format_score_explanation",
 ]

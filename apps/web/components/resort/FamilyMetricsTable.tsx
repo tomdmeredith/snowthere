@@ -20,7 +20,7 @@ export function FamilyMetricsTable({ metrics }: FamilyMetricsTableProps) {
     {
       icon: Star,
       label: 'Family Score',
-      value: metrics.family_overall_score ? `${metrics.family_overall_score}/10` : '—',
+      value: metrics.family_overall_score ? `${metrics.family_overall_score}` : '—',
       highlight: true,
     },
     {

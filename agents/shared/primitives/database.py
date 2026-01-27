@@ -40,18 +40,31 @@ RESORT_COSTS_COLUMNS = frozenset({
 
 RESORT_FAMILY_METRICS_COLUMNS = frozenset({
     "resort_id",
-    "family_overall_score",
+    "family_overall_score",  # DECIMAL(3,1) after migration 030
+    "family_score",  # alias for family_overall_score
     "best_age_min",
     "best_age_max",
     "kid_friendly_terrain_pct",
     "has_childcare",
+    "childcare_available",  # alias for has_childcare
     "childcare_min_age",  # in months
+    "has_ski_school",
     "ski_school_min_age",  # in years
     "kids_ski_free_age",
     "has_magic_carpet",
     "has_terrain_park_kids",
     "perfect_if",
     "skip_if",
+    # Added in migration 009 (quiz metrics):
+    "beginner_terrain_pct",
+    "intermediate_terrain_pct",
+    "advanced_terrain_pct",
+    "has_ski_in_out",
+    "nightlife_score",  # DECIMAL(3,1) after migration 030
+    "non_ski_activities",  # DECIMAL(3,1) after migration 030
+    "english_friendly",
+    "snow_reliability",  # DECIMAL(3,1) after migration 030
+    "village_charm",  # DECIMAL(3,1) after migration 030
 })
 
 # Field name mappings (extraction layer name -> database column name)

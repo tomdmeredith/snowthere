@@ -109,11 +109,8 @@ export function HeroImage({
             <div className="absolute top-8 right-8 sm:top-10 sm:right-10">
               <div className="flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-coral-500/90 to-coral-600/90 backdrop-blur-md border border-white/20 shadow-coral">
                 <Sparkles className="w-5 h-5 text-white" />
-                <span className="font-display font-black text-xl text-white">
+                <span className="font-display font-black text-2xl text-white">
                   {familyScore}
-                </span>
-                <span className="text-sm text-white/80 font-semibold">
-                  /10
                 </span>
               </div>
             </div>

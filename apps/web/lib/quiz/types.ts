@@ -68,8 +68,10 @@ export interface ResortMatch {
   name: string
   country: string
   region: string
+  /** Match percentage 0-100 based on quiz answers */
   matchScore: number
   matchReason: string
+  /** Family Score - decimal 1.0-10.0, see /methodology */
   familyScore: number
   bestAgeMin: number
   bestAgeMax: number
