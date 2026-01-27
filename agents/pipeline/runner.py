@@ -68,6 +68,8 @@ from shared.primitives import (
     # Trail map
     get_trail_map,
     get_difficulty_breakdown,
+    # Scoring (R9 - deterministic family score calculation)
+    calculate_family_score,
     # Official images (real photos from resort websites)
     fetch_resort_images_with_fallback,
     # UGC Photos (Google Places) - kept as fallback
@@ -825,6 +827,14 @@ async def run_resort_pipeline(
 
         # Update family metrics if available - verify write succeeded
         if research_data.get("family_metrics"):
+            # R9.2 FIX: Recalculate score with deterministic formula
+            # Replaces LLM-extracted integer (8, 9) with precise decimal (6.8, 7.3)
+            old_score = research_data["family_metrics"].get("family_overall_score")
+            calculated_score = calculate_family_score(research_data["family_metrics"])
+            research_data["family_metrics"]["family_overall_score"] = calculated_score
+            if old_score != calculated_score:
+                print(f"  Score recalculated: {old_score} → {calculated_score}")
+
             metrics_result = update_resort_family_metrics(resort_id, research_data["family_metrics"])
             if not metrics_result:
                 print(f"⚠️  Warning: Failed to save family metrics for {resort_name}", file=sys.stderr)

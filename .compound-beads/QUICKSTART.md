@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 9.1**: Pipeline Crash Fix ✅ READY TO DEPLOY
-**Type**: Bug Fix (Storage + Duplicate Detection)
-**Status**: Fixed locally, pending Railway deploy
+**Round 9.2**: Scoring Integration + Google Places API Fix
+**Type**: Bug Fix (Scoring + API Integration)
+**Status**: Scoring FIXED, Google Places needs investigation
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -13,32 +13,38 @@
 - Autonomous operation
 
 **Recent**:
-- R9.1: **Pipeline Crash Fix** ✅ READY (2026-01-27)
-  - Bug 1: `perfect_if`/`skip_if` written to wrong table (PGRST204 error)
-  - Bug 2: `_slugify` didn't use unidecode (duplicate detection failed for Kitzbühel, Méribel)
-  - Fixed: Added RESORT_CONTENT_COLUMNS whitelist to filter invalid columns
-  - Fixed: `_slugify` now uses unidecode for consistent slug matching
-  - Fixed: Route `perfect_if`/`skip_if` to `family_metrics` instead of `content`
+- R9.2: **Scoring Integration + Google Places API Fix** (Active)
+  - ✅ FIXED: Pipeline now uses deterministic scoring formula
+  - ✅ FIXED: 5 resorts backfilled (9.0→5.4, 8.0→5.7-6.2)
+  - PENDING: Google Places API 400 errors (blocks UGC photos)
+- R9.1: **Pipeline Crash Fix** ✅ DEPLOYED & VERIFIED (2026-01-27)
+  - 5/5 resorts published, 0 failed
+  - PGRST204 schema mismatch resolved
+  - Duplicate detection working with unidecode
 - R9: **Scoring Differentiation & Decimal Precision** ✅ DEPLOYED (2026-01-27)
   - Changed scores from INTEGER to DECIMAL(3,1) for 90 discrete values
   - Created deterministic scoring formula (no LLM opinion)
   - Added diversity constraints to quiz (max 2 from same country)
-  - Backfill applied: 30 resorts updated, scores range 5.4-7.8
 - R8.3: **Quiz Comprehensive Audit + Region Backfill** ✅ DEPLOYED
 
-**Verified Working (R9.1)**:
-- `_slugify("Kitzbühel")` → "kitzbuhel" (correct transliteration)
-- `check_resort_exists("Kitzbühel", "Austria")` finds existing resort
-- `update_resort_content` filters out `perfect_if`/`skip_if` automatically
-- All pipeline imports successful
+**Pipeline Status (2026-01-27 10:45 PST)**:
+- Published: 5 (Selva Val Gardena, Val Thorens, Heavenly, Sun Valley, Jackson Hole)
+- Drafts: 0
+- Failed: 0
 
-**Key Files (R9.1)**:
-- Whitelist fix: `agents/shared/primitives/database.py`
-- Routing fix: `agents/pipeline/runner.py` (lines 644-656)
+**Known Issues**:
+- Google Places API returning 400 errors (blocks UGC photos)
+- Quick Take length sometimes exceeds 120 word limit (minor)
+- Published resorts queued for price verification (by design)
+
+**Key Files (R9.2)**:
+- Scoring fix: `agents/pipeline/runner.py` (line ~830, calls calculate_family_score)
+- Backfill script: `agents/scripts/recalculate_scores.py`
+- Google Places calls: `agents/shared/primitives/research.py` (needs investigation)
 
 **Next**:
-- Deploy to Railway (auto-deploys from main)
-- Monitor next cron run for success
+- Investigate Google Places API 400 errors
+- Fix API request format if needed
 - R7.2: Apply to affiliate programs (Booking.com, Ski.com)
 
 **Full context**: CLAUDE.md | .compound-beads/context.md
