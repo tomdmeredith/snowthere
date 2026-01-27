@@ -73,6 +73,22 @@ FAMILY_METRICS_FIELD_MAP = {
     "ski_school_min_age_years": "ski_school_min_age",
 }
 
+RESORT_CONTENT_COLUMNS = frozenset({
+    "resort_id",
+    "quick_take",
+    "getting_there",
+    "where_to_stay",
+    "lift_tickets",
+    "on_mountain",
+    "off_mountain",
+    "parent_reviews_summary",
+    "faqs",
+    "llms_txt",
+    "seo_meta",
+    "content_version",
+    "tagline",
+})
+
 
 def sanitize_for_schema(
     data: dict[str, Any],
@@ -383,18 +399,31 @@ def update_resort_content(resort_id: str, content: dict[str, Any]) -> dict:
     """
     Update resort content (upsert).
 
+    Automatically filters out any fields not in the database schema to prevent
+    schema mismatch errors (e.g., perfect_if/skip_if which belong in family_metrics).
+
     Args:
         resort_id: UUID of the resort
         content: Content fields to update
 
     Returns:
-        Updated content record
+        Updated content record (includes _dropped_fields for debugging)
     """
     client = get_supabase_client()
 
-    data = {"resort_id": resort_id, **content}
+    # Sanitize data to only include valid columns
+    sanitized_content, dropped = sanitize_for_schema(content, RESORT_CONTENT_COLUMNS)
+
+    if dropped:
+        print(f"[sanitize] Dropped {len(dropped)} fields from resort_content: {dropped}")
+
+    data = {"resort_id": resort_id, **sanitized_content}
     response = client.table("resort_content").upsert(data).execute()
-    return response.data[0] if response.data else data
+
+    result = response.data[0] if response.data else data
+    if dropped:
+        result["_dropped_fields"] = dropped
+    return result
 
 
 # =============================================================================
@@ -750,8 +779,17 @@ def get_resort_full(resort_id: str) -> dict | None:
 
 
 def _slugify(name: str) -> str:
-    """Convert resort name to URL-safe slug."""
-    return name.lower().replace(" ", "-").replace("'", "").replace(".", "")
+    """Convert resort name to URL-safe ASCII slug.
+
+    Uses unidecode to transliterate Unicode to ASCII (e.g., Kitzbühel → kitzbuhel).
+    This must match runner.py's slugify for consistent duplicate detection.
+    """
+    try:
+        from unidecode import unidecode
+        ascii_name = unidecode(name)
+    except ImportError:
+        ascii_name = name
+    return ascii_name.lower().replace(" ", "-").replace("'", "").replace(".", "")
 
 
 def _generate_name_variants(name: str) -> list[str]:

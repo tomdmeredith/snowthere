@@ -640,10 +640,17 @@ async def run_resort_pipeline(
         # Log cost (~$0.10 for Opus)
         log_cost("anthropic", 0.10, None, {"run_id": run_id, "stage": "quick_take_generation"})
 
-        # Store Quick Take in content
+        # Store Quick Take in content (but NOT perfect_if/skip_if - those go to family_metrics)
         content["quick_take"] = quick_take_result.quick_take_html
-        content["perfect_if"] = quick_take_result.perfect_if
-        content["skip_if"] = quick_take_result.skip_if
+
+        # Route perfect_if/skip_if to family_metrics for proper storage
+        # (resort_content table doesn't have these columns)
+        if "family_metrics" not in research_data:
+            research_data["family_metrics"] = {}
+        if quick_take_result.perfect_if:
+            research_data["family_metrics"]["perfect_if"] = quick_take_result.perfect_if
+        if quick_take_result.skip_if:
+            research_data["family_metrics"]["skip_if"] = quick_take_result.skip_if
 
         # Log quality metrics
         log_reasoning(
