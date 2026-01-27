@@ -1,9 +1,45 @@
 # Snowthere Context
 
-> Last synced: 2026-01-27 (Round 9)
+> Last synced: 2026-01-27 (Round 9.2)
 > Agent: compound-beads v2.0
 
 ## Current Round
+
+**Round 9.2: Scoring Integration + Data Quality** (Active)
+- Type: Bug Fix + Data Quality
+- Status: Phase 1 deployed, monitoring pipeline
+- Goal: Fix scoring integration + improve data extraction for better score distribution
+
+### Round 9.2 Progress (2026-01-27)
+
+**Problem 1: Scoring Integration** ✅ FIXED
+- New resorts got LLM-extracted integer scores (8, 9) instead of deterministic decimals
+- Root cause: `calculate_family_score()` was created but never integrated into pipeline
+- Fix: Added import + recalculation call in `runner.py` before storage
+- Backfilled 5 resorts: 9.0→5.4, 8.0→5.7-6.2
+
+**Problem 2: Score Distribution Too Low** ✅ ANALYZED + PHASE 1 DEPLOYED
+- No resorts reaching 8.x-9.x range (highest is Lake Louise at 7.8)
+- Expert panel analysis: Formula is sound (max 10.0 possible)
+- Root cause: DATA SPARSITY - only 11-34% of resorts have family metrics populated
+- Phase 1 Fix: Updated `intelligence.py` extraction prompts to actively search for:
+  - has_childcare, childcare_min_age
+  - ski_school_min_age, has_magic_carpet
+  - kids_ski_free_age, has_terrain_park_kids, has_ski_in_out
+- Next: Monitor pipeline for improved data population
+
+**Problem 3: Google Places API 400 Errors** (Pending)
+- All resorts getting 400 errors during external link curation
+- Blocks UGC photo collection
+- Needs investigation in `research.py`
+
+### Round 9.1: Pipeline Crash Fix ✅ DEPLOYED (2026-01-27)
+
+- PGRST204 schema mismatch (perfect_if/skip_if in wrong table)
+- Duplicate detection slug mismatch (unidecode)
+- Result: 5/5 published, 0 failed
+
+---
 
 **Round 9: Scoring Differentiation & Decimal Precision** ✅ DEPLOYED
 - Type: Algorithm + Database + UX
