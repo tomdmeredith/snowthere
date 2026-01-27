@@ -13,9 +13,11 @@
 - Autonomous operation
 
 **Recent**:
-- R9.2: **Scoring Integration + Google Places API Fix** (Active)
+- R9.2: **Scoring Integration + Data Quality** (Active)
   - ✅ FIXED: Pipeline now uses deterministic scoring formula
   - ✅ FIXED: 5 resorts backfilled (9.0→5.4, 8.0→5.7-6.2)
+  - ANALYZED: No 8.x-9.x scores due to DATA SPARSITY (not formula)
+  - PENDING: Improve data extraction prompts (Phase 1)
   - PENDING: Google Places API 400 errors (blocks UGC photos)
 - R9.1: **Pipeline Crash Fix** ✅ DEPLOYED & VERIFIED (2026-01-27)
   - 5/5 resorts published, 0 failed

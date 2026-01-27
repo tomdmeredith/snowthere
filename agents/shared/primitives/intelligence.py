@@ -785,12 +785,55 @@ RESEARCH DATA:
 TARGET SCHEMA:
 {json.dumps(target_schema, indent=2)}
 
-EXTRACTION RULES:
-- Extract exact values where available in the research
+=== CRITICAL: FAMILY METRICS DATA EXTRACTION ===
+
+You MUST actively search for and report on EACH of these family-critical fields:
+
+1. **has_childcare** (boolean): Does the resort offer childcare/daycare/nursery?
+   - Look for: "childcare", "daycare", "nursery", "kids club", "crèche", "kinderland"
+   - Many resorts have this but call it different names
+   - Answer: true/false/null (only null if truly not mentioned anywhere)
+
+2. **childcare_min_age** (number in MONTHS): What's the youngest age accepted?
+   - Look for: "from 3 months", "6 weeks", "2 years", "12 months"
+   - Convert years to months: 2 years = 24 months, 18 months = 18
+   - This is CRUCIAL for families with babies/toddlers
+
+3. **ski_school_min_age** (number in YEARS): What's the minimum age for ski lessons?
+   - Look for: "ski school from age 3", "lessons for 4+", "kids classes start at 5"
+   - Most resorts accept ages 3-4, some as young as 2.5
+   - Report in YEARS (e.g., 3, 4, 5)
+
+4. **has_magic_carpet** (boolean): Does resort have magic carpet/conveyor lifts?
+   - Look for: "magic carpet", "conveyor belt lift", "moving carpet", "beginner conveyor"
+   - Essential for toddlers and first-time skiers
+
+5. **kids_ski_free_age** (number): Up to what age do kids ski FREE?
+   - Look for: "kids under 6 ski free", "free for under 5", "children 5 and under"
+   - Report the age limit (e.g., 5 means kids 5 and under are free)
+
+6. **has_terrain_park_kids** (boolean): Is there a kids-specific terrain park?
+   - Look for: "kids park", "family park", "beginner terrain park", "mini park"
+   - Not the main terrain park - specifically for children
+
+7. **has_ski_in_out** (boolean): Are there ski-in/ski-out lodging options?
+   - Look for: "ski-in ski-out", "slopeside lodging", "ski to your door"
+   - Game-changer for families with gear and tired kids
+
+WHERE TO FIND THIS DATA:
+- Resort official website content
+- Ski school pages
+- Kids/family sections
+- Childcare/daycare information
+- Lift ticket pricing pages (for free ages)
+- Village/lodging descriptions
+
+=== EXTRACTION RULES ===
+- ACTIVELY SEARCH for each field - don't just passively extract
 - For price ranges, use the midpoint
 - For family_overall_score: Consider childcare quality, beginner terrain %, terrain park safety, crowds, ski school reputation
-- Use null for truly unavailable data - do NOT fabricate
-- Be conservative - only extract what you can verify from the source
+- Use null ONLY for truly unavailable data after searching
+- Be conservative with prices - only extract verified amounts
 - Convert all prices to the local currency of the resort
 
 Return JSON:
@@ -798,14 +841,28 @@ Return JSON:
     "costs": {{ ... }},
     "family_metrics": {{ ... }},
     "confidence": 0.0-1.0,
-    "reasoning": "Brief quality assessment of extraction",
+    "reasoning": "Brief quality assessment of extraction - note which family fields you found vs couldn't find",
     "missing_fields": ["field1", "field2"]
 }}"""
 
-    system = """You are a data extraction specialist for ski resort information.
-Extract structured data from raw research accurately and conservatively.
+    system = """You are a data extraction specialist for ski resort FAMILY information.
+
+Your PRIMARY mission is extracting family-critical metrics:
+- has_childcare, childcare_min_age (crucial for families with babies)
+- ski_school_min_age (when can kids start lessons?)
+- has_magic_carpet (essential for tiny beginners)
+- kids_ski_free_age (big cost saver!)
+- has_terrain_park_kids, has_ski_in_out
+
+ACTIVELY SEARCH the research data for these. They're often buried in:
+- "Kids Club" or "Kinderland" sections
+- Ski school pages
+- Lift ticket FAQs
+- Village amenity lists
+
 Never fabricate data - use null when information isn't available.
-Be especially careful with family metrics - these help parents make decisions."""
+But DON'T be lazy - search thoroughly before reporting null.
+These metrics directly affect family vacation decisions and our scoring algorithm."""
 
     response = _call_claude(
         prompt,
