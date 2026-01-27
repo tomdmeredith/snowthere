@@ -49,6 +49,7 @@ import sys
 from datetime import datetime
 
 from pipeline import run_daily_pipeline, run_single_resort
+from pipeline.guide_orchestrator import run_guide_generation
 
 
 async def run_email_sequences() -> dict:
@@ -79,6 +80,82 @@ async def run_email_sequences() -> dict:
             "success": False,
             "emails_sent": 0,
             "errors": [str(e)],
+        }
+
+
+async def run_weekly_newsletter() -> dict:
+    """Run weekly newsletter generation and sending if due.
+
+    Runs on Thursdays at 6am PT. Generates content from:
+    - New resort guides published this week
+    - Trending discovery candidates
+    - Parent hack of the week
+    - Community photo
+    - Referral CTA
+
+    Returns a dict with results suitable for logging.
+    """
+    from shared.primitives.newsletter import (
+        check_newsletter_due,
+        generate_newsletter,
+        send_newsletter,
+    )
+
+    print("Checking if newsletter is due...")
+
+    try:
+        if not check_newsletter_due():
+            print("  Newsletter not due today")
+            return {
+                "success": True,
+                "status": "not_due",
+                "message": "Newsletter not due today",
+            }
+
+        print("  Newsletter is due! Generating...")
+
+        # Generate newsletter content
+        gen_result = await generate_newsletter()
+
+        if not gen_result.success:
+            print(f"❌ Newsletter generation failed: {gen_result.error}")
+            return {
+                "success": False,
+                "status": "generation_failed",
+                "error": gen_result.error,
+            }
+
+        print(f"✓ Newsletter #{gen_result.issue_number} generated")
+        print(f"  Subject: {gen_result.content.subject if gen_result.content else 'N/A'}")
+
+        # Send the newsletter
+        print("  Sending to subscribers...")
+        send_result = await send_newsletter(gen_result.issue_id)
+
+        if send_result.success:
+            print(f"✓ Newsletter sent: {send_result.emails_sent}/{send_result.recipients_count} emails")
+        else:
+            print(f"⚠️  Newsletter send had issues: {send_result.message}")
+            if send_result.errors:
+                for error in send_result.errors[:5]:
+                    print(f"    - {error}")
+
+        return {
+            "success": send_result.success,
+            "status": "sent" if send_result.success else "send_failed",
+            "issue_number": gen_result.issue_number,
+            "issue_id": gen_result.issue_id,
+            "emails_sent": send_result.emails_sent,
+            "recipients_count": send_result.recipients_count,
+            "errors": send_result.errors,
+        }
+
+    except Exception as e:
+        print(f"❌ Newsletter failed: {e}")
+        return {
+            "success": False,
+            "status": "error",
+            "error": str(e),
         }
 
 
@@ -155,6 +232,14 @@ def main():
     # Run email sequences (independent of content pipeline)
     # This advances subscribers through welcome sequences, sends due emails
     email_result = asyncio.run(run_email_sequences())
+
+    # Run weekly newsletter (Thursdays at 6am PT)
+    # Generates and sends Morning Brew-style digest to all subscribers
+    newsletter_result = asyncio.run(run_weekly_newsletter())
+
+    # Run guide generation (Monday and Thursday)
+    # Produces 2 guides/week through autonomous discovery and 3-agent approval
+    guide_result = asyncio.run(run_guide_generation())
 
     parser = argparse.ArgumentParser(
         description="Snowthere autonomous content generation pipeline"
@@ -253,8 +338,10 @@ def main():
             force_discovery=args.force_discovery,
         ))
 
-    # Add email results to output
+    # Add email, newsletter, and guide results to output
     result["email_sequences"] = email_result
+    result["weekly_newsletter"] = newsletter_result
+    result["guide_generation"] = guide_result
 
     # Output results
     if args.json:
@@ -295,6 +382,41 @@ def print_human_readable(result: dict, single_resort: bool = False, email_result
             print("Email Sequences: No emails due")
         if email_result.get("errors"):
             print(f"  Errors: {len(email_result['errors'])}")
+        print()
+
+    # Weekly newsletter
+    newsletter_result = result.get("weekly_newsletter")
+    if newsletter_result:
+        status = newsletter_result.get("status", "unknown")
+        if status == "sent":
+            issue_num = newsletter_result.get("issue_number", "?")
+            emails = newsletter_result.get("emails_sent", 0)
+            print(f"Weekly Newsletter: #{issue_num} sent to {emails} subscribers")
+        elif status == "not_due":
+            print("Weekly Newsletter: Not due today")
+        else:
+            print(f"Weekly Newsletter: {status}")
+        print()
+
+    # Guide generation
+    guide_result = result.get("guide_generation")
+    if guide_result:
+        status = guide_result.get("status", "unknown")
+        if status == "completed":
+            published = guide_result.get("published", 0)
+            drafts = guide_result.get("drafts", 0)
+            failed = guide_result.get("failed", 0)
+            print(f"Guide Generation: {published} published, {drafts} drafts, {failed} failed")
+            guides = guide_result.get("guides", [])
+            for g in guides:
+                status_emoji = {"published": "✓", "draft": "○", "failed": "✗"}.get(g.get("status"), "?")
+                conf = g.get("confidence", 0)
+                conf_str = f" ({conf:.2f})" if conf else ""
+                print(f"  {status_emoji} {g.get('title', 'Unknown')}{conf_str}")
+        elif status == "not_scheduled":
+            print(f"Guide Generation: {guide_result.get('message', 'Not scheduled')}")
+        else:
+            print(f"Guide Generation: {status}")
         print()
 
     print(f"Status: {result.get('status', 'unknown').upper()}")

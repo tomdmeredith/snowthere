@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans, Fraunces, Caveat } from 'next/font/google'
 import './globals.css'
 import { CookieConsent } from '@/components/CookieConsent'
 import { WebVitalsReporter } from '@/components/WebVitalsReporter'
+import { ExitIntentPopup } from '@/components/ExitIntentPopup'
 
 // SPIELPLATZ Design System Typography
 // Plus Jakarta Sans - Swiss-inspired geometry with rounded terminals (body text, UI)
@@ -90,6 +91,7 @@ export default function RootLayout({
         </div>
         <CookieConsent />
         <WebVitalsReporter />
+        <ExitIntentPopup />
       </body>
     </html>
   )
