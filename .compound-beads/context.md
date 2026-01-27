@@ -5,12 +5,12 @@
 
 ## Current Round
 
-**Round 9: Scoring Differentiation & Decimal Precision** ✅ CODE COMPLETE
+**Round 9: Scoring Differentiation & Decimal Precision** ✅ DEPLOYED
 - Type: Algorithm + Database + UX
-- Status: Code changes ready, migration + backfill pending deploy
+- Status: Live in production, all 30 resorts updated (2026-01-27)
 - Goal: Improve score differentiation through deterministic formula and decimal precision
 
-### Round 9: Scoring Differentiation & Decimal Precision (Code Complete 2026-01-27)
+### Round 9: Scoring Differentiation & Decimal Precision (Deployed 2026-01-27)
 
 **Problem Statement:**
 - Family scores clustered at 7-9 INTEGER values (only 10 discrete values)
@@ -51,15 +51,20 @@ An expert panel (Data Architect, Algorithm Designer, Recommendation Systems, Inf
 - `SimilarResorts.tsx`, `FamilyMetricsTable.tsx`, `QuickTake.tsx`
 - `SkiCalendar.tsx`, `llms.txt/route.ts`
 
-**Dry Run Results:**
-- 30 resorts processed
+**Deployment Results (2026-01-27):**
+- 30 resorts updated with new decimal scores
+- Score distribution: 5.x (15 resorts), 6.x (13 resorts), 7.x (2 resorts)
 - Score range: 5.4 to 7.8 (previously clustered at 7-9)
-- Good variance achieved
-- Many resorts show low childcare/terrain scores (data gaps exposed)
+- Top scores: Lake Louise 7.8, Serfaus-Fiss-Ladis 7.0
+- Good variance achieved - scores now differentiate
 
-**Deploy Steps:**
-1. Run migration: `supabase/migrations/030_decimal_scores.sql`
-2. Run backfill: `cd agents && .venv/bin/python scripts/recalculate_scores.py --apply`
+**Verification Completed:**
+- ✅ Migration 030_decimal_scores.sql executed in Supabase
+- ✅ Backfill script run with --apply
+- ✅ /methodology page working
+- ✅ Quiz diversity working (max 2 from same country)
+- ✅ Decimal scores displaying on resort pages (e.g., 6.3/10)
+- ✅ ISR cache revalidated for all resorts
 
 **Key Insight:** The deterministic formula correctly exposes data quality issues - resorts showing 5.4 scores have incomplete childcare/terrain data in the database. This motivates improving data extraction in the pipeline.
 
@@ -774,9 +779,8 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 
 ## Active Tasks
 
-**Round 9 Deploy** (immediate)
-- Run migration 030_decimal_scores.sql in Supabase
-- Run backfill script with --apply
+**Round 9** ✅ DEPLOYED (2026-01-27)
+- Migration, backfill, and verification complete
 
 **Round 6: Homepage Redesign** (next)
 - Finalize homepage design direction
@@ -785,6 +789,10 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 
 **R7.2: Affiliate Signups** (pending)
 - Apply to Booking.com, Ski.com, Liftopia affiliate programs
+
+**Data Quality Improvement** (ongoing)
+- Improve childcare/terrain data to get higher scores
+- Regenerate Quick Take content to match new scores
 
 ## Future Work (Round 6+)
 
