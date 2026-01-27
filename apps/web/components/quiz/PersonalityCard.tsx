@@ -63,7 +63,7 @@ export function PersonalityCard({ personality }: PersonalityCardProps) {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
               className="font-display text-3xl md:text-4xl font-bold"
-              style={{ color: personality.color }}
+              style={{ color: personality.colorDark }}
             >
               {personality.title}
             </motion.h2>

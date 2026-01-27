@@ -86,8 +86,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<SendEmailRes
  */
 export async function sendWelcomeEmail(
   email: string,
-  name?: string | null,
-  referralCode?: string | null
+  name?: string | null
 ): Promise<SendEmailResult> {
   const displayName = name || 'there'
 
@@ -169,26 +168,6 @@ export async function sendWelcomeEmail(
 
             </td>
           </tr>
-
-          <!-- Referral Section -->
-          ${referralCode ? `
-          <tr>
-            <td style="padding-top: 25px; text-align: center;">
-              <div style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-radius: 12px; padding: 20px;">
-                <p style="margin: 0 0 10px 0; color: #92400e; font-size: 14px; font-weight: 600;">
-                  🎁 Share Snowthere with friends!
-                </p>
-                <p style="margin: 0 0 15px 0; color: #78350f; font-size: 13px;">
-                  Your referral code: <strong style="background: white; padding: 4px 8px; border-radius: 4px;">${referralCode}</strong>
-                </p>
-                <a href="https://snowthere.com/?ref=${referralCode}"
-                   style="color: #92400e; font-size: 13px; text-decoration: underline;">
-                  Share your link →
-                </a>
-              </div>
-            </td>
-          </tr>
-          ` : ''}
 
           <!-- Footer -->
           <tr>

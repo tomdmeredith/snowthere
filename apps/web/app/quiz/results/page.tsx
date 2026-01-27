@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Snowflake, ArrowRight, RefreshCw, Home } from 'lucide-react'
+import { Navbar } from '@/components/layout/Navbar'
 import { PersonalityCard } from '@/components/quiz/PersonalityCard'
 import { ResortMatchCard } from '@/components/quiz/ResortMatch'
 import { QuizAnswers, QuizResult } from '@/lib/quiz/types'
@@ -51,6 +52,7 @@ interface ResortWithMetrics {
   }> | null
   resort_costs: Array<{
     lodging_mid_nightly: number | null
+    price_level: string | null
   }> | null
 }
 
@@ -108,7 +110,8 @@ export default function QuizResultsPage() {
               kid_friendly_terrain_pct
             ),
             resort_costs (
-              lodging_mid_nightly
+              lodging_mid_nightly,
+              price_level
             )
           `)
           .eq('status', 'published')
@@ -131,13 +134,17 @@ export default function QuizResultsPage() {
           const metrics = resort.resort_family_metrics?.[0]
           const costs = resort.resort_costs?.[0]
 
-          // Calculate price level from lodging cost
-          const lodgingCost = costs?.lodging_mid_nightly ?? 200
-          let priceLevel = '$$'
-          if (lodgingCost < 150) priceLevel = '$'
-          else if (lodgingCost < 300) priceLevel = '$$'
-          else if (lodgingCost < 500) priceLevel = '$$$'
-          else priceLevel = '$$$$'
+          // Use database price_level if available, otherwise compute from lodging cost
+          let priceLevel = costs?.price_level || null
+          if (!priceLevel && costs?.lodging_mid_nightly) {
+            const lodgingCost = costs.lodging_mid_nightly
+            if (lodgingCost < 150) priceLevel = '$'
+            else if (lodgingCost < 300) priceLevel = '$$'
+            else if (lodgingCost < 500) priceLevel = '$$$'
+            else priceLevel = '$$$$'
+          }
+          // Default to mid-range only if we have no data at all
+          if (!priceLevel) priceLevel = '$$'
 
           return {
             id: resort.id,
@@ -237,17 +244,20 @@ export default function QuizResultsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">
+      {/* Navigation */}
+      <Navbar />
+
       {/* Decorative floating elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute top-10 left-[10%] text-4xl opacity-50"
+          className="absolute top-24 left-[10%] text-4xl opacity-50"
           animate={{ y: [0, -15, 0] }}
           transition={{ duration: 4, repeat: Infinity }}
         >
           🎉
         </motion.div>
         <motion.div
-          className="absolute top-20 right-[15%] text-3xl opacity-50"
+          className="absolute top-32 right-[15%] text-3xl opacity-50"
           animate={{ y: [0, 10, 0], rotate: [0, 10, 0] }}
           transition={{ duration: 3.5, repeat: Infinity, delay: 0.5 }}
         >
@@ -270,22 +280,6 @@ export default function QuizResultsPage() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-8"
-        >
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-gray-500 hover:text-gray-700 group"
-          >
-            <Snowflake className="w-5 h-5 text-coral-500" />
-            <span className="font-semibold">
-              snow<span className="text-coral-500">there</span>
-            </span>
-          </Link>
-        </motion.div>
 
         {/* Results Header */}
         <motion.div
@@ -331,6 +325,7 @@ export default function QuizResultsPage() {
                   match={match}
                   rank={index + 1}
                   delay={0.5 + index * 0.15}
+                  userAges={result.answers.ages}
                 />
               ))}
             </div>

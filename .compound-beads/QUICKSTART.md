@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 8.2**: Email Confirmation + Migration ✅ COMPLETE
-**Type**: Feature + Infrastructure
-**Status**: Immediate welcome email on signup + contact_submissions table created
+**Round 8.3**: Quiz Audit + Region Backfill ✅ COMPLETE
+**Type**: UX + Algorithm + Data Quality
+**Status**: Built, ready to deploy
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -13,27 +13,32 @@
 - Autonomous operation
 
 **Recent**:
-- R8.2: **Email Confirmation + Migration**
-  - Added Resend SDK to Next.js app
-  - Created `lib/email.ts` with `sendEmail()` and `sendWelcomeEmail()`
-  - Updated `/api/subscribe` to send welcome email immediately (not wait for cron)
-  - Ran migration `029_contact_submissions.sql` via Supabase SQL Editor
-  - Fixed quiz 9000% match percentage bug (was multiplying by 100 twice)
+- R8.3: **Quiz Comprehensive Audit + Region Backfill** ✅ COMPLETE
+  - Fixed algorithm: Different profiles now get different resorts (negative weights)
+  - Fixed price level bug: Uses DB price_level, not $200 default
+  - Fixed location display: Handles empty region gracefully
+  - Added Navbar to quiz results page
+  - Personalized match reasons (20+ cases covered)
+  - Shows user's age selection instead of resort's age range
+  - Fixed snow personality contrast for WCAG AA accessibility
+  - **Backfilled regions for all 32 resorts** (Colorado, Utah, Valais, etc.)
+  - Fixed Haiku model ID bug in intelligence.py
+  - Removed referral section from welcome email (no reward system built)
+- R8.2: **Email Confirmation + Migration** - Welcome emails on signup
 - R8.1: **Comprehensive Audit Fixes** - Created /about, /contact pages
-- R8: **Quick Take redesign** - Editorial Verdict Model replaces generic prompts
 
 **Next**:
-- Add RESEND_API_KEY to Vercel environment variables
-- Commit + push to deploy
-- R7.2: Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual signup
-- R9: ChatGPT GPT & API - Family Ski Trip Planner custom GPT
+- Deploy R8.3 changes
+- Test quiz with different profiles to verify differentiation
+- R7.2: Apply to affiliate programs (Booking.com, Ski.com, Liftopia)
 
 **Key Files**:
-- Email utility: `apps/web/lib/email.ts`
-- Subscribe API: `apps/web/app/api/subscribe/route.ts`
-- Quiz fix: `apps/web/components/quiz/ResortMatch.tsx` (line 37)
-- About page: `apps/web/app/about/page.tsx`
-- Contact page: `apps/web/app/contact/page.tsx`
-- Strategic plan: `/.claude/plans/snuggly-herding-liskov.md`
+- Quiz scoring: `apps/web/lib/quiz/scoring.ts`
+- Quiz results: `apps/web/app/quiz/results/page.tsx`
+- Resort cards: `apps/web/components/quiz/ResortMatch.tsx`
+- Personalities: `apps/web/lib/quiz/personalities.ts`
+- Email: `apps/web/lib/email.ts`
+- Region backfill: `agents/scripts/backfill_regions.py`
+- Intelligence fix: `agents/shared/primitives/intelligence.py`
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

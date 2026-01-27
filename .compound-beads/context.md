@@ -1,9 +1,55 @@
 # Snowthere Context
 
-> Last synced: 2026-01-26 (Round 8.1)
+> Last synced: 2026-01-26 (Round 8.2)
 > Agent: compound-beads v2.0
 
 ## Current Round
+
+**Round 8.2: Email Confirmation + Migration** ✅ DEPLOYED
+- Type: Feature + Infrastructure
+- Status: Live - Welcome emails send immediately on signup
+- Goal: Send welcome email on signup, not delayed via cron
+
+### Round 8.2: Email Confirmation + Migration (Completed 2026-01-26)
+
+**Problem Statement:**
+- Welcome emails were delayed until cron job ran (could be 24+ hours)
+- Quiz was showing 9000% match percentages (multiplying by 100 twice)
+- Migration 029 hadn't been run on production
+
+**Solution:**
+Immediate email confirmation on signup + bug fixes.
+
+**Files Created:**
+- `apps/web/lib/email.ts` - Resend SDK integration with `sendEmail()` and `sendWelcomeEmail()`
+
+**Files Modified:**
+- `apps/web/app/api/subscribe/route.ts` - Now calls `sendWelcomeEmail()` immediately after signup (line 169-178)
+- `apps/web/components/quiz/ResortMatch.tsx` - Fixed match percentage (line 37: removed duplicate *100)
+
+**Infrastructure:**
+- Ran migration `029_contact_submissions.sql` via Supabase SQL Editor
+- Created new Resend API key "snowthere-vercel" in Resend dashboard
+- Added RESEND_API_KEY to Vercel environment variables
+- Triggered redeploy with new env var
+
+**Welcome Email Features:**
+- Personalized greeting with subscriber name
+- 4 value propositions (resort guides, real costs, age tips, weekly deals)
+- Pro tip teaser about Austria vs Colorado pricing
+- CTA to browse resorts
+- Referral code section (if referral code exists)
+- Unsubscribe link (CAN-SPAM compliant)
+- HTML and plain text versions
+
+**Key Files:**
+- `apps/web/lib/email.ts` - Email utility
+- `apps/web/app/api/subscribe/route.ts` - Subscribe API with immediate email
+- `apps/web/components/quiz/ResortMatch.tsx` - Quiz fix
+
+**Deployment Status:** ✅ LIVE at www.snowthere.com
+
+---
 
 **Round 8.1: Comprehensive Site Audit & Fixes** ✅ COMPLETE
 - Type: Bug fixes + missing pages

@@ -3,12 +3,21 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, MapPin, Users, DollarSign } from 'lucide-react'
-import { ResortMatch as ResortMatchType } from '@/lib/quiz/types'
+import { ResortMatch as ResortMatchType, AgeRange } from '@/lib/quiz/types'
 
 interface ResortMatchProps {
   match: ResortMatchType
   rank: number
   delay?: number
+  userAges?: AgeRange | null
+}
+
+const AGE_LABELS: Record<string, string> = {
+  '0-3': 'Tots (under 4)',
+  '4-7': 'Minis (4-7)',
+  '8-12': 'Riders (8-12)',
+  '13+': 'Teens (13+)',
+  'mix': 'Mixed ages',
 }
 
 const RANK_MEDALS: Record<number, { emoji: string; color: string; label: string }> = {
@@ -30,11 +39,15 @@ const PRICE_INDICATORS: Record<string, { icons: number; label: string }> = {
   luxury: { icons: 4, label: 'Premium' },
 }
 
-export function ResortMatchCard({ match, rank, delay = 0 }: ResortMatchProps) {
+export function ResortMatchCard({ match, rank, delay = 0, userAges }: ResortMatchProps) {
   const medal = RANK_MEDALS[rank] || RANK_MEDALS[3]
   const priceInfo = PRICE_INDICATORS[match.priceLevel] || PRICE_INDICATORS['mid']
   // matchScore is already 0-100 from scoring algorithm
   const matchPercent = Math.round(match.matchScore)
+  // Display user's age selection if provided, otherwise fall back to resort's age range
+  const ageDisplay = userAges
+    ? AGE_LABELS[userAges] || `Ages ${match.bestAgeMin}-${match.bestAgeMax}`
+    : `Ages ${match.bestAgeMin}-${match.bestAgeMax}`
 
   return (
     <motion.div
@@ -105,7 +118,7 @@ export function ResortMatchCard({ match, rank, delay = 0 }: ResortMatchProps) {
         <div className="flex items-center gap-1 text-gray-500 mb-4">
           <MapPin className="w-4 h-4" />
           <span className="text-sm">
-            {match.region}, {match.country}
+            {match.region ? `${match.region}, ${match.country}` : match.country}
           </span>
         </div>
 
@@ -121,10 +134,10 @@ export function ResortMatchCard({ match, rank, delay = 0 }: ResortMatchProps) {
 
         {/* Quick Stats */}
         <div className="flex flex-wrap gap-3 mb-5">
-          {/* Age Range */}
+          {/* Age Range - shows user's selection */}
           <div className="flex items-center gap-1.5 bg-gold-50 text-gold-700 px-3 py-1.5 rounded-full text-sm">
             <Users className="w-3.5 h-3.5" />
-            <span>Ages {match.bestAgeMin}-{match.bestAgeMax}</span>
+            <span>{ageDisplay}</span>
           </div>
 
           {/* Price Level */}

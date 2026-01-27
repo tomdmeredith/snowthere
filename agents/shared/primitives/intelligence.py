@@ -878,7 +878,7 @@ If you don't know, return "Unknown"."""
         response = _call_claude(
             prompt,
             system=system,
-            model="claude-haiku-3-5-20241022",  # Fast and cheap for simple lookups
+            model="claude-3-5-haiku-20241022",  # Fast and cheap for simple lookups
             max_tokens=50,
         )
         region = response.strip().strip('"').strip("'")

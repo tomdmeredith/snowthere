@@ -60,6 +60,7 @@ export interface PersonalityProfile {
   description: string
   traits: string[]
   color: string
+  colorDark: string // WCAG AA compliant color for text on white
 }
 
 export interface ResortMatch {

@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Send welcome back email
-        await sendWelcomeEmail(email.toLowerCase().trim(), name?.trim(), undefined)
+        await sendWelcomeEmail(email.toLowerCase().trim(), name?.trim())
 
         return NextResponse.json({
           success: true,
@@ -168,8 +168,7 @@ export async function POST(request: NextRequest) {
     // Send welcome email immediately (don't wait for cron)
     const emailResult = await sendWelcomeEmail(
       email.toLowerCase().trim(),
-      name?.trim(),
-      newSubscriber.referral_code
+      name?.trim()
     )
 
     if (!emailResult.success) {

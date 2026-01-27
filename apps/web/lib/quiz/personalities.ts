@@ -15,7 +15,8 @@ export const PERSONALITY_PROFILES: Record<PersonalityType, PersonalityProfile> =
       'Confident on steep slopes',
       'Value extensive trail networks',
     ],
-    color: '#FF6B6B', // coral
+    color: '#FF6B6B', // coral (decorative)
+    colorDark: '#C92A2A', // dark coral for text (WCAG AA compliant)
   },
   'snow-bunny': {
     type: 'snow-bunny',
@@ -30,7 +31,8 @@ export const PERSONALITY_PROFILES: Record<PersonalityType, PersonalityProfile> =
       'Appreciate beginner-friendly terrain',
       'Love cozy lodge breaks',
     ],
-    color: '#FFE066', // gold
+    color: '#FFE066', // gold (decorative)
+    colorDark: '#996600', // dark gold for text (WCAG AA compliant)
   },
   'value-hunter': {
     type: 'value-hunter',
@@ -45,7 +47,8 @@ export const PERSONALITY_PROFILES: Record<PersonalityType, PersonalityProfile> =
       'Love international value',
       'Smart about pass deals',
     ],
-    color: '#4ECDC4', // teal
+    color: '#4ECDC4', // teal (decorative)
+    colorDark: '#1A7A73', // dark teal for text (WCAG AA compliant)
   },
   'village-lover': {
     type: 'village-lover',
@@ -60,7 +63,8 @@ export const PERSONALITY_PROFILES: Record<PersonalityType, PersonalityProfile> =
       'Appreciate local culture',
       'Seek authentic experiences',
     ],
-    color: '#95E1D3', // mint
+    color: '#95E1D3', // mint (decorative)
+    colorDark: '#1A7A73', // dark teal for text (WCAG AA compliant)
   },
   'family-first': {
     type: 'family-first',
@@ -75,7 +79,8 @@ export const PERSONALITY_PROFILES: Record<PersonalityType, PersonalityProfile> =
       'Need flexible options',
       'Appreciate family packages',
     ],
-    color: '#FFE066', // gold
+    color: '#FFE066', // gold (decorative)
+    colorDark: '#996600', // dark gold for text (WCAG AA compliant)
   },
   'apres-enthusiast': {
     type: 'apres-enthusiast',
@@ -90,7 +95,8 @@ export const PERSONALITY_PROFILES: Record<PersonalityType, PersonalityProfile> =
       'Enjoy nightlife options',
       'Value mountain restaurants',
     ],
-    color: '#FF6B6B', // coral
+    color: '#FF6B6B', // coral (decorative)
+    colorDark: '#C92A2A', // dark coral for text (WCAG AA compliant)
   },
 }
 

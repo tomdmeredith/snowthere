@@ -143,6 +143,7 @@ export function calculateResortMatchScore(
   answers: QuizAnswers
 ): number {
   let score = 0
+  let penalty = 0
   const weights = {
     ageMatch: 0.25,
     budgetMatch: 0.2,
@@ -165,6 +166,9 @@ export function calculateResortMatchScore(
         const overlapSize = overlapMax - overlapMin
         const rangeSize = ageBounds.max - ageBounds.min
         score += weights.ageMatch * Math.min(1, (overlapSize / rangeSize) * 1.5)
+      } else {
+        // Penalty for no age overlap
+        penalty += 0.1
       }
     }
   }
@@ -180,6 +184,11 @@ export function calculateResortMatchScore(
       (answers.budget === 'luxury' && resort.priceLevel === '$$')
     ) {
       score += weights.budgetMatch * 0.5
+    } else {
+      // Penalty for budget mismatch - especially for value seekers at luxury resorts
+      if (answers.budget === 'value' && resort.priceLevel === '$$$$') {
+        penalty += 0.2
+      }
     }
   }
 
@@ -199,6 +208,9 @@ export function calculateResortMatchScore(
     for (const mustHave of answers.mustHaves) {
       if (mustHaveChecks[mustHave]) {
         mustHaveScore += 1 / answers.mustHaves.length
+      } else {
+        // Penalty for missing must-have (these are NON-NEGOTIABLES)
+        penalty += 0.15 / answers.mustHaves.length
       }
     }
     score += weights.mustHaves * mustHaveScore
@@ -207,7 +219,7 @@ export function calculateResortMatchScore(
     score += weights.mustHaves
   }
 
-  // Vibe match (15%)
+  // Vibe match (15%) - with CONFLICT penalties
   if (answers.vibe) {
     const vibeScores: Record<VibeType, number> = {
       village: resort.villageCharm ?? (resort.familyScore > 8 ? 8 : 6),
@@ -216,9 +228,26 @@ export function calculateResortMatchScore(
       hidden: resort.familyScore > 6 && resort.familyScore < 9 ? 8 : 5,
     }
     score += weights.vibeMatch * (vibeScores[answers.vibe] / 10)
+
+    // Vibe CONFLICTS - these are fundamentally incompatible
+    const nightlifeScore = resort.nightlifeScore ?? 5
+    const familyScore = resort.familyScore
+
+    // Party seekers penalized at quiet family resorts
+    if (answers.vibe === 'party' && nightlifeScore < 6 && familyScore >= 8) {
+      penalty += 0.25
+    }
+    // Family-first penalized at party-heavy resorts
+    if (answers.vibe === 'family' && nightlifeScore >= 8) {
+      penalty += 0.15
+    }
+    // Village lovers penalized at modern/commercial resorts
+    if (answers.vibe === 'village' && (resort.villageCharm ?? 6) < 5) {
+      penalty += 0.1
+    }
   }
 
-  // Skill match (15%)
+  // Skill match (15%) - with mismatch penalties
   if (answers.skill) {
     const beginnerPct = resort.beginnerTerrain ?? 30
     const advancedPct = resort.advancedTerrain ?? 20
@@ -227,6 +256,10 @@ export function calculateResortMatchScore(
     switch (answers.skill) {
       case 'bunny':
         score += weights.skillMatch * Math.min(1, beginnerPct / 40)
+        // Beginners penalized at expert-heavy resorts
+        if (advancedPct > 40 && beginnerPct < 20) {
+          penalty += 0.15
+        }
         break
       case 'blue':
         // Intermediate wants balanced terrain
@@ -234,6 +267,10 @@ export function calculateResortMatchScore(
         break
       case 'black':
         score += weights.skillMatch * Math.min(1, advancedPct / 30)
+        // Experts penalized at beginner-heavy resorts
+        if (beginnerPct > 50 && advancedPct < 15) {
+          penalty += 0.1
+        }
         break
       case 'mix':
         // Mixed ability wants variety
@@ -244,39 +281,184 @@ export function calculateResortMatchScore(
     }
   }
 
-  // Bonus for high family score (always relevant)
-  score += (resort.familyScore / 10) * 0.1
+  // Conditional family bonus - only for users who want family-focused experience
+  const wantsFamily =
+    answers.vibe === 'family' ||
+    answers.ages === '0-3' ||
+    answers.ages === '4-7' ||
+    answers.mustHaves.includes('ski-school')
 
-  return Math.min(1, score) * 100
+  if (wantsFamily) {
+    score += (resort.familyScore / 10) * 0.1
+  }
+
+  // Apply penalties and ensure score stays in valid range
+  const finalScore = Math.max(0, Math.min(1, score - penalty)) * 100
+  return finalScore
 }
 
-// Generate match reason text
+// Age labels for display
+const AGE_LABELS: Record<string, string> = {
+  '0-3': 'toddlers',
+  '4-7': 'young kids',
+  '8-12': 'tweens',
+  '13+': 'teens',
+  'mix': 'mixed ages',
+}
+
+// Generate personalized match reason based on user's actual selections
 export function generateMatchReason(
-  resort: { name: string; familyScore: number; priceLevel: string },
+  resort: {
+    name: string
+    familyScore: number
+    priceLevel: string
+    hasSkiSchool?: boolean
+    hasSkiInOut?: boolean
+    nightlifeScore?: number
+    nonSkiActivities?: number
+    snowReliability?: number
+    englishFriendly?: boolean
+    villageCharm?: number
+    beginnerTerrain?: number
+    advancedTerrain?: number
+    bestAgeMin?: number
+    bestAgeMax?: number
+  },
   answers: QuizAnswers,
   matchScore: number
 ): string {
-  const reasons: string[] = []
+  const strongMatches: string[] = []
+  const concerns: string[] = []
 
-  if (matchScore >= 90) {
-    reasons.push(`Nearly perfect for your family!`)
-  } else if (matchScore >= 80) {
-    reasons.push(`Great match for your crew`)
-  } else {
-    reasons.push(`Solid option for families like yours`)
-  }
-
-  if (answers.ages === '0-3' || answers.ages === '4-7') {
-    if (resort.familyScore >= 8) {
-      reasons.push(`excellent for young kids`)
+  // Check age match
+  if (answers.ages && answers.ages !== 'mix') {
+    const ageBounds = AGE_BOUNDS[answers.ages]
+    if (ageBounds) {
+      const ageMatch =
+        (resort.bestAgeMin ?? 4) <= ageBounds.max &&
+        (resort.bestAgeMax ?? 12) >= ageBounds.min
+      if (ageMatch) {
+        strongMatches.push(`Great for ${AGE_LABELS[answers.ages]}`)
+      }
+    }
+  } else if (answers.ages === 'mix') {
+    // Mixed ages - check if resort has wide age range
+    const ageRange = (resort.bestAgeMax ?? 12) - (resort.bestAgeMin ?? 4)
+    if (ageRange >= 8) {
+      strongMatches.push('Works for all ages')
     }
   }
 
-  if (answers.budget === 'value' && ['$', '$$'].includes(resort.priceLevel)) {
-    reasons.push(`amazing value`)
+  // Check budget match
+  if (answers.budget === 'value') {
+    if (['$', '$$'].includes(resort.priceLevel)) {
+      strongMatches.push('Excellent value')
+    } else if (resort.priceLevel === '$$$$') {
+      concerns.push('Premium pricing')
+    }
+  } else if (answers.budget === 'mid') {
+    if (['$$', '$$$'].includes(resort.priceLevel)) {
+      strongMatches.push('Good value for quality')
+    }
+  } else if (answers.budget === 'luxury' && resort.priceLevel === '$$$$') {
+    strongMatches.push('Premium experience')
   }
 
-  return reasons.join(' - ')
+  // Check must-have matches
+  if (answers.mustHaves.includes('ski-school')) {
+    if (resort.hasSkiSchool || resort.familyScore > 7) {
+      strongMatches.push('Top-rated ski school')
+    }
+  }
+  if (answers.mustHaves.includes('ski-in-out')) {
+    if (resort.hasSkiInOut) {
+      strongMatches.push('Ski-in/ski-out convenience')
+    }
+  }
+  if (answers.mustHaves.includes('nightlife')) {
+    if ((resort.nightlifeScore ?? 0) >= 7) {
+      strongMatches.push('Vibrant après-ski')
+    }
+  }
+  if (answers.mustHaves.includes('non-ski')) {
+    if ((resort.nonSkiActivities ?? 0) >= 5) {
+      strongMatches.push('Plenty off-mountain activities')
+    }
+  }
+  if (answers.mustHaves.includes('snow-guarantee')) {
+    if ((resort.snowReliability ?? 0) >= 8) {
+      strongMatches.push('Reliable snow conditions')
+    }
+  }
+  if (answers.mustHaves.includes('english')) {
+    if (resort.englishFriendly !== false) {
+      strongMatches.push('English-friendly')
+    }
+  }
+
+  // Check vibe match
+  if (answers.vibe === 'village' && (resort.villageCharm ?? 6) >= 8) {
+    strongMatches.push('Charming village atmosphere')
+  }
+  if (answers.vibe === 'party' && (resort.nightlifeScore ?? 5) >= 8) {
+    strongMatches.push('Legendary nightlife')
+  }
+  if (answers.vibe === 'family' && resort.familyScore >= 8) {
+    strongMatches.push('Family-focused resort')
+  }
+  if (answers.vibe === 'hidden') {
+    if (resort.familyScore > 6 && resort.familyScore < 9) {
+      strongMatches.push('Hidden gem destination')
+    }
+  }
+
+  // Check skill match
+  const beginnerPct = resort.beginnerTerrain ?? 30
+  const advancedPct = resort.advancedTerrain ?? 20
+  const intermediatePct = 100 - beginnerPct - advancedPct
+
+  if (answers.skill === 'bunny' && beginnerPct >= 35) {
+    strongMatches.push('Perfect for learning')
+  }
+  if (answers.skill === 'blue' && intermediatePct >= 40) {
+    strongMatches.push('Great intermediate terrain')
+  }
+  if (answers.skill === 'black' && advancedPct >= 25) {
+    strongMatches.push('Challenging terrain')
+  }
+  if (answers.skill === 'mix') {
+    if (beginnerPct > 20 && advancedPct > 15) {
+      strongMatches.push('Terrain for every level')
+    }
+  }
+
+  // Check travel style match
+  if (answers.travelStyle === 'epic') {
+    if ((resort.villageCharm ?? 6) >= 7 || (resort.nonSkiActivities ?? 0) >= 5) {
+      strongMatches.push('Epic adventure awaits')
+    }
+  }
+
+  // Build the reason string - prioritize most relevant matches
+  if (strongMatches.length >= 2) {
+    return `${strongMatches[0]} • ${strongMatches[1]}`
+  } else if (strongMatches.length === 1) {
+    return strongMatches[0]
+  } else if (concerns.length > 0 && matchScore < 70) {
+    return `Consider: ${concerns[0]}`
+  }
+
+  // Fallback based on score and user preferences
+  if (matchScore >= 85) {
+    if (answers.ages) {
+      return `Strong match for your ${AGE_LABELS[answers.ages]}`
+    }
+    return 'Strong match for your family'
+  } else if (matchScore >= 70) {
+    return 'Solid choice for families'
+  } else {
+    return 'Worth exploring'
+  }
 }
 
 // Main function to compute quiz results
@@ -317,7 +499,15 @@ export function computeQuizResults(
         country: resort.country,
         region: resort.region,
         matchScore: Math.round(matchScore),
-        matchReason: generateMatchReason(resort, answers, matchScore),
+        matchReason: generateMatchReason(
+          {
+            ...resort,
+            bestAgeMin: resort.bestAgeMin,
+            bestAgeMax: resort.bestAgeMax,
+          },
+          answers,
+          matchScore
+        ),
         familyScore: resort.familyScore,
         bestAgeMin: resort.bestAgeMin,
         bestAgeMax: resort.bestAgeMax,
