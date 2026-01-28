@@ -66,7 +66,7 @@ export function QuickScoreSummary({
         <div className="flex items-center gap-3">
           <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-coral-500 to-coral-600 flex items-center justify-center shadow-coral">
             <span className="text-2xl font-display font-black text-white">
-              {familyScore}
+              {familyScore.toFixed(1)}
             </span>
           </div>
           <div className="min-w-0">

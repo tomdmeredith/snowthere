@@ -197,7 +197,7 @@ const ScoreBadge = forwardRef<HTMLSpanElement, ScoreBadgeProps>(
         )}
         {...props}
       >
-        <span className="tabular-nums">{score}</span>
+        <span className="tabular-nums">{score.toFixed(1)}</span>
         {showMax && (
           <span className="opacity-70 font-medium">/{maxScore}</span>
         )}

@@ -107,7 +107,7 @@ export function ResortMatchCard({ match, rank, delay = 0, userAges }: ResortMatc
           {/* Family Score Badge */}
           <div className="flex items-center gap-1.5 bg-teal-50 text-teal-700 px-3 py-1.5 rounded-full">
             <span className="text-sm">👨‍👩‍👧</span>
-            <span className="text-sm font-semibold">{match.familyScore}</span>
+            <span className="text-sm font-semibold">{match.familyScore.toFixed(1)}</span>
           </div>
         </div>
 
