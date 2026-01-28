@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-**Round 9.2**: Scoring Integration + Google Places API Fix
-**Type**: Bug Fix (Scoring + API Integration)
-**Status**: Scoring FIXED, Google Places needs investigation
+**Round 11**: Autonomous Content Systems
+**Type**: Feature (Newsletter + Guide Generation)
+**Status**: Infrastructure deployed, cron integration complete
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -13,41 +13,45 @@
 - Autonomous operation
 
 **Recent**:
-- R9.2: **Scoring Integration + Data Quality** (Active)
-  - ✅ FIXED: Pipeline now uses deterministic scoring formula
-  - ✅ FIXED: 5 resorts backfilled (9.0→5.4, 8.0→5.7-6.2)
-  - ✅ ANALYZED: No 8.x-9.x scores due to DATA SPARSITY (not formula)
-  - ✅ DEPLOYED: Improved data extraction prompts (intelligence.py)
-  - PENDING: Monitor next pipeline run for improved data population
-  - PENDING: Google Places API 400 errors (blocks UGC photos)
-- R9.1: **Pipeline Crash Fix** ✅ DEPLOYED & VERIFIED (2026-01-27)
-  - 5/5 resorts published, 0 failed
-  - PGRST204 schema mismatch resolved
-  - Duplicate detection working with unidecode
-- R9: **Scoring Differentiation & Decimal Precision** ✅ DEPLOYED (2026-01-27)
-  - Changed scores from INTEGER to DECIMAL(3,1) for 90 discrete values
-  - Created deterministic scoring formula (no LLM opinion)
-  - Added diversity constraints to quiz (max 2 from same country)
-- R8.3: **Quiz Comprehensive Audit + Region Backfill** ✅ DEPLOYED
+- R11: **Autonomous Content Systems** (Active)
+  - Weekly newsletter system (Thursday 6am PT, Morning Brew style)
+  - Guide generation pipeline (Monday/Thursday, 2 guides/week)
+  - Exit intent popup for newsletter signup
+  - Migration 031_newsletter_recurring.sql applied to production
+  - Removed AI disclosure references (cleaner messaging)
+  - Added /methodology to footer navigation
+- R10: **Content Structure + Email System Fix** (Completed)
+  - Built guide page infrastructure (`/guides/[slug]`)
+  - Email sequence templates loaded into database
+- R9.2: **Scoring Integration** (Deployed)
+  - Pipeline uses deterministic scoring formula
+  - 5 resorts backfilled with new scores
+  - Google Places API 400 errors still under investigation
 
-**Pipeline Status (2026-01-27 10:45 PST)**:
-- Published: 5 (Selva Val Gardena, Val Thorens, Heavenly, Sun Valley, Jackson Hole)
-- Drafts: 0
-- Failed: 0
+**Pipeline Status**: Active on Railway (creative-spontaneity)
+- Daily cron runs content generation
+- Newsletter checks on Thursdays
+- Guide generation on Mondays and Thursdays
+
+**New Tables (Migration 031)**:
+- `newsletter_issues` - Newsletter editions with content
+- `newsletter_sections` - Individual sections per issue
+- `newsletter_sends` - Per-subscriber send tracking
+
+**Key Files (R11)**:
+- Newsletter: `agents/shared/primitives/newsletter.py`
+- Guides: `agents/shared/primitives/guides.py`, `agents/pipeline/guide_orchestrator.py`
+- Cron: `agents/cron.py` (runs email, newsletter, guides)
+- Exit intent: `apps/web/components/ExitIntentPopup.tsx`
 
 **Known Issues**:
-- Google Places API returning 400 errors (blocks UGC photos)
+- Google Places API 400 errors (blocks UGC photos)
 - Quick Take length sometimes exceeds 120 word limit (minor)
-- Published resorts queued for price verification (by design)
-
-**Key Files (R9.2)**:
-- Scoring fix: `agents/pipeline/runner.py` (line ~830, calls calculate_family_score)
-- Backfill script: `agents/scripts/recalculate_scores.py`
-- Google Places calls: `agents/shared/primitives/research.py` (needs investigation)
 
 **Next**:
-- Investigate Google Places API 400 errors
-- Fix API request format if needed
-- R7.2: Apply to affiliate programs (Booking.com, Ski.com)
+- Monitor first newsletter send (Thursday)
+- Monitor first guide generation (Monday)
+- Investigate Google Places API errors
+- R7.2: Apply to affiliate programs
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

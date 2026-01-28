@@ -6,7 +6,7 @@ import { Mountain, ImageOff, Sparkles, MapPin } from 'lucide-react'
 
 interface HeroImageProps {
   /**
-   * Primary hero image URL (AI-generated or official)
+   * Primary hero image URL
    */
   imageUrl?: string | null
   /**
@@ -116,14 +116,6 @@ export function HeroImage({
             </div>
           )}
 
-          {/* Image source attribution (subtle) */}
-          {source && hasValidImage && (
-            <div className="absolute bottom-4 right-4 sm:bottom-5 sm:right-5">
-              <span className="text-[10px] text-white/50 font-medium px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-sm">
-                {source === 'official' ? 'Resort photo' : 'AI-generated'}
-              </span>
-            </div>
-          )}
         </div>
       </div>
 

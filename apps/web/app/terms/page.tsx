@@ -2,11 +2,11 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
-import { ChevronRight, FileText, AlertTriangle, Scale, Bot } from 'lucide-react'
+import { ChevronRight, FileText, AlertTriangle, Scale } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Terms of Service',
-  description: 'Terms and conditions for using Snowthere. Read about our disclaimers, AI-generated content disclosure, and user responsibilities.',
+  description: 'Terms and conditions for using Snowthere. Read about our disclaimers and user responsibilities.',
 }
 
 export default function TermsPage() {
@@ -59,37 +59,6 @@ export default function TermsPage() {
               bound by these Terms of Service. If you do not agree with any part of these terms,
               please do not use our website.
             </p>
-          </section>
-
-          {/* AI Content Disclosure - CRITICAL */}
-          <section className="mb-12">
-            <div className="flex items-center gap-3 mb-6">
-              <Bot className="w-5 h-5 text-coral-600" />
-              <h2 className="font-display text-2xl font-bold text-dark-800 m-0">AI-Generated Content Disclosure</h2>
-            </div>
-
-            <div className="bg-gradient-to-br from-coral-50 to-gold-50 rounded-2xl p-6 border-2 border-coral-200 mb-6">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-6 h-6 text-coral-600 flex-shrink-0 mt-1" />
-                <div>
-                  <p className="text-dark-800 font-semibold mb-2">Important Notice</p>
-                  <p className="text-dark-600">
-                    The resort guides, descriptions, pricing estimates, and recommendations on Snowthere
-                    are generated using artificial intelligence (AI) technology. While we strive for
-                    accuracy and have quality review processes in place, AI-generated content may
-                    contain errors, outdated information, or inaccuracies.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <h3 className="font-display text-xl font-semibold text-dark-700 mt-6 mb-3">What This Means for You</h3>
-            <ul className="space-y-2 text-dark-600">
-              <li><strong>Pricing:</strong> All prices are estimates and may not reflect current rates. Always verify directly with resorts, hotels, and lift ticket providers before booking.</li>
-              <li><strong>Facilities:</strong> Information about ski schools, childcare, restaurants, and other amenities may have changed. Verify availability before traveling.</li>
-              <li><strong>Recommendations:</strong> Our &quot;Perfect if&quot; and &quot;Skip if&quot; suggestions are based on AI analysis and may not apply to your specific situation.</li>
-              <li><strong>Safety:</strong> Never rely solely on our guides for safety-critical information. Check official resort websites and local authorities.</li>
-            </ul>
           </section>
 
           {/* Disclaimer of Warranties */}

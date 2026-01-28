@@ -1,14 +1,68 @@
 # Snowthere Context
 
-> Last synced: 2026-01-27 (Round 9.2)
+> Last synced: 2026-01-27 (Round 11)
 > Agent: compound-beads v2.0
 
 ## Current Round
 
-**Round 9.2: Scoring Integration + Data Quality** (Active)
+**Round 11: Autonomous Content Systems** (Active)
+- Type: Feature (Newsletter + Guide Generation)
+- Status: Infrastructure deployed, awaiting first scheduled runs
+- Goal: Weekly newsletter + autonomous guide generation
+
+### Round 11 Progress (2026-01-27)
+
+**Newsletter System** - Deployed
+- Migration 031_newsletter_recurring.sql applied to Supabase
+- Created `newsletter_issues`, `newsletter_sections`, `newsletter_sends` tables
+- Extended `email_sequences` with recurrence fields
+- Weekly newsletter sequence seeded (Thursdays 6am PT)
+- `agents/shared/primitives/newsletter.py` - Generation and sending
+- `agents/cron.py` - Integrated `run_weekly_newsletter()`
+
+**Guide Generation Pipeline** - Deployed
+- `agents/shared/primitives/guides.py` - Guide CRUD and generation
+- `agents/pipeline/guide_orchestrator.py` - Full pipeline with 3-agent approval
+- Runs Monday and Thursday, produces 2 guides/week
+- TrustGuard, FamilyValue, VoiceCoach approval panel (2/3 majority)
+
+**Exit Intent Popup** - Deployed
+- `apps/web/components/ExitIntentPopup.tsx` - Newsletter capture on exit
+- 7-day cooldown after dismissal, never shows again after signup
+- Integrated into layout.tsx
+
+**Site Cleanup** - Deployed
+- Removed AIDisclosure.tsx (was unused)
+- Removed AI disclosure section from Terms page
+- Added /methodology link to Footer navigation
+- Scores verified correct on /resorts page (decimal 5.4-7.8)
+- Quiz and homepage use correct database scores
+
+---
+
+**Round 10: Content Structure + Email System Fix** (Completed)
+- Type: Feature + Bug Fix
+- Status: Complete
+- Goal: Fix email system + build guide page infrastructure
+
+### Round 10 Summary
+
+**Guides Infrastructure**
+- Created `/guides/[slug]` page template
+- Guide content components (GuideHero, GuideContent, GuideFeaturedResorts)
+- `apps/web/lib/guides.ts` - Guide fetching utilities
+
+**Email System Fix**
+- Ran seed_email_sequences.sql to populate templates
+- Created load_email_templates.py script
+- Welcome sequence now sends properly
+
+---
+
+**Round 9.2: Scoring Integration + Data Quality** (Completed)
 - Type: Bug Fix + Data Quality
-- Status: Phase 1 deployed, monitoring pipeline
-- Goal: Fix scoring integration + improve data extraction for better score distribution
+- Status: Deployed
+- Goal: Fix scoring integration + improve data extraction
 
 ### Round 9.2 Progress (2026-01-27)
 
