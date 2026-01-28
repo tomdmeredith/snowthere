@@ -4,6 +4,16 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { BookOpen, Map, CheckSquare, CreditCard, Snowflake, Calendar } from 'lucide-react'
 
+// Guide type emojis for placeholder cards
+const GUIDE_TYPE_EMOJI: Record<string, string> = {
+  comparison: '⛷️',
+  'how-to': '✅',
+  regional: '🗺️',
+  pass: '🎟️',
+  seasonal: '📅',
+  gear: '🎿',
+}
+
 // Guide type configuration
 const GUIDE_TYPE_CONFIG: Record<
   string,
@@ -70,6 +80,8 @@ export function GuideCard({ guide, delay = 0 }: GuideCardProps) {
   const config = GUIDE_TYPE_CONFIG[guide.guide_type] || GUIDE_TYPE_CONFIG.comparison
   const Icon = config.icon
 
+  const emoji = GUIDE_TYPE_EMOJI[guide.guide_type] || '📖'
+
   return (
     <Link href={`/guides/${guide.slug}`}>
       <motion.article
@@ -77,7 +89,7 @@ export function GuideCard({ guide, delay = 0 }: GuideCardProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay, duration: 0.3 }}
         whileHover={{ y: -4 }}
-        className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col"
+        className="group bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col"
       >
         {/* Image or placeholder */}
         <div className={`h-40 ${config.bgColor} flex items-center justify-center relative overflow-hidden`}>
@@ -90,10 +102,12 @@ export function GuideCard({ guide, delay = 0 }: GuideCardProps) {
           ) : (
             <motion.div
               initial={{ scale: 1 }}
-              whileHover={{ scale: 1.1, rotate: 5 }}
-              transition={{ duration: 0.3 }}
+              whileHover={{ scale: 1.2, rotate: 5 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+              className="text-5xl"
+              aria-hidden="true"
             >
-              <Icon className={`w-16 h-16 ${config.textColor} opacity-50`} />
+              {emoji}
             </motion.div>
           )}
 

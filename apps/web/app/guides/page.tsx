@@ -11,6 +11,16 @@ export const metadata: Metadata = {
     'Comprehensive guides for family ski trips - from packing lists to resort comparisons. Everything you need to plan the perfect family ski vacation.',
 }
 
+// Guide type emojis for placeholder cards
+const GUIDE_TYPE_EMOJI: Record<string, string> = {
+  comparison: '⛷️',
+  'how-to': '✅',
+  regional: '🗺️',
+  pass: '🎟️',
+  seasonal: '📅',
+  gear: '🎿',
+}
+
 // Guide type icons and colors
 const GUIDE_TYPE_CONFIG: Record<
   string,
@@ -53,21 +63,26 @@ async function getPublishedGuides(): Promise<Guide[]> {
 function GuideCard({ guide }: { guide: Guide }) {
   const config = GUIDE_TYPE_CONFIG[guide.guide_type] || GUIDE_TYPE_CONFIG.comparison
   const Icon = config.icon
+  const emoji = GUIDE_TYPE_EMOJI[guide.guide_type] || '📖'
 
   return (
     <Link href={`/guides/${guide.slug}`}>
-      <article className="group bg-white rounded-2xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
+      <article className="group bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
         {/* Image or placeholder */}
-        <div className={`h-40 bg-gradient-to-br from-${config.color}-100 to-${config.color}-200 flex items-center justify-center`}>
+        <div className={`h-40 bg-gradient-to-br from-${config.color}-100 to-${config.color}-200 flex items-center justify-center relative overflow-hidden`}>
           {guide.featured_image_url ? (
             <img
               src={guide.featured_image_url}
               alt={guide.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
-            <Icon className={`w-16 h-16 text-${config.color}-400 group-hover:scale-110 transition-transform duration-300`} />
+            <span className="text-5xl group-hover:scale-110 transition-transform duration-300" aria-hidden="true">
+              {emoji}
+            </span>
           )}
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>
 
         {/* Content */}

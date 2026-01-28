@@ -36,6 +36,16 @@ const GUIDE_TYPE_ICONS: Record<string, React.ElementType> = {
   gear: Snowflake,
 }
 
+// Guide type emojis for hero section
+const GUIDE_TYPE_EMOJI: Record<string, string> = {
+  comparison: '⛷️',
+  'how-to': '✅',
+  regional: '🗺️',
+  pass: '🎟️',
+  seasonal: '📅',
+  gear: '🎿',
+}
+
 // A7: Static generation for all published guides
 export async function generateStaticParams() {
   const slugs = await getAllGuideSlugs()
@@ -209,6 +219,7 @@ export default async function GuidePage({
 
   const typeConfig = GUIDE_TYPE_CONFIG[guide.guide_type as GuideType]
   const Icon = GUIDE_TYPE_ICONS[guide.guide_type] || BookOpen
+  const heroEmoji = GUIDE_TYPE_EMOJI[guide.guide_type] || '📖'
 
   const publishedDate = guide.published_at
     ? new Date(guide.published_at).toLocaleDateString('en-US', {
@@ -269,6 +280,8 @@ export default async function GuidePage({
                 {typeConfig?.label || 'Guide'}
               </span>
 
+              <div className="text-4xl mb-4" aria-hidden="true">{heroEmoji}</div>
+
               <h1 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
                 {guide.title}
               </h1>
@@ -305,7 +318,7 @@ export default async function GuidePage({
                 <img
                   src={guide.featured_image_url}
                   alt={guide.title}
-                  className="w-full rounded-2xl shadow-xl"
+                  className="w-full rounded-3xl shadow-xl"
                 />
               </div>
             </div>
@@ -315,7 +328,7 @@ export default async function GuidePage({
         {/* Content Sections */}
         <section className="pb-20">
           <div className="container mx-auto px-4">
-            <div className="max-w-3xl mx-auto">
+            <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-lg p-8 md:p-12">
               <GuideContent
                 sections={guide.content?.sections || []}
                 resortCountryMap={resortCountryMap}

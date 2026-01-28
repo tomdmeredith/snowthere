@@ -8,13 +8,19 @@ import { supabase } from '@/lib/supabase'
 export type GuideType = 'comparison' | 'how-to' | 'regional' | 'pass' | 'seasonal' | 'gear'
 
 export interface GuideSection {
-  type: 'intro' | 'list' | 'checklist' | 'comparison_table' | 'faq' | 'cta' | 'text'
+  type: 'intro' | 'list' | 'checklist' | 'comparison_table' | 'faq' | 'cta' | 'text' | 'image' | 'callout'
   title?: string
-  content?: string // For intro/text sections
+  content?: string // For intro/text/callout sections
   items?: GuideListItem[] | GuideChecklistItem[] | GuideFAQItem[]
   columns?: string[] // For comparison tables
   rows?: string[][] // For comparison tables
   cta?: GuideCTA // For CTA sections
+  // Image section fields
+  image_url?: string
+  alt_text?: string
+  caption?: string
+  // Callout section fields
+  variant?: 'tip' | 'warning' | 'celebration'
 }
 
 export interface GuideListItem {

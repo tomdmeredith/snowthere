@@ -37,6 +37,7 @@ from shared.primitives.guides import (
     check_guide_exists,
 )
 from shared.primitives.expert_panel import expert_approval_loop, ExpertApprovalLoopResult
+from shared.primitives.images import generate_image_with_fallback, AspectRatio
 from shared.primitives.publishing import revalidate_page
 from shared.supabase_client import get_supabase_client
 
@@ -173,6 +174,30 @@ async def generate_single_guide(
                 guide_id,
                 [{"resort_id": rid} for rid in outline.featured_resort_ids],
             )
+
+        # Stage 6.5: Generate featured image
+        logger.info(f"  Generating featured image...")
+        try:
+            image_prompt = (
+                f"Editorial travel photography for a family ski guide about: {outline.title}. "
+                f"Warm golden hour lighting, professional magazine quality, "
+                f"mountain landscape or ski atmosphere, no close-up faces, "
+                f"distant silhouettes only, 16:9 landscape format"
+            )
+            image_result = await generate_image_with_fallback(
+                prompt=image_prompt,
+                aspect_ratio=AspectRatio.LANDSCAPE,
+            )
+            if image_result.success and image_result.url:
+                client = get_supabase_client()
+                client.table("guides").update(
+                    {"featured_image_url": image_result.url}
+                ).eq("id", guide_id).execute()
+                logger.info(f"  Featured image set: {image_result.url[:60]}...")
+            else:
+                logger.warning(f"  Image generation failed: {image_result.error}")
+        except Exception as e:
+            logger.warning(f"  Image generation error (non-fatal): {e}")
 
         # Stage 7: Publish or draft based on approval
         final_status = "draft"
