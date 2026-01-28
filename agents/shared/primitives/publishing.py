@@ -24,6 +24,7 @@ def publish_resort(
     resort_id: str,
     task_id: str | None = None,
     trigger_revalidation: bool = True,
+    trigger_indexnow: bool = True,
 ) -> dict:
     """
     Publish a resort (set status to 'published').
@@ -32,6 +33,7 @@ def publish_resort(
         resort_id: UUID of the resort
         task_id: Optional task ID for audit logging
         trigger_revalidation: Whether to trigger Vercel ISR revalidation
+        trigger_indexnow: Whether to ping IndexNow for instant Bing/Yandex indexing
 
     Returns:
         Updated resort record
@@ -64,6 +66,16 @@ def publish_resort(
     # Trigger revalidation
     if trigger_revalidation and resort:
         revalidate_resort_page(resort["slug"], resort["country"])
+
+    # Ping IndexNow for instant Bing/Yandex indexing
+    if trigger_indexnow and resort:
+        vercel_url = getattr(settings, "vercel_url", None)
+        if vercel_url:
+            country_slug = resort["country"].lower().replace(" ", "-")
+            page_url = f"{vercel_url.rstrip('/')}/resorts/{country_slug}/{resort['slug']}"
+            indexnow_result = ping_indexnow(page_url)
+            if indexnow_result.get("success"):
+                print(f"  IndexNow: Pinged {page_url}")
 
     return resort
 
@@ -316,6 +328,136 @@ def revalidate_multiple_pages(paths: list[str]) -> list[dict[str, Any]]:
         result = revalidate_page(path)
         results.append(result)
     return results
+
+
+# =============================================================================
+# INDEXNOW (BING/YANDEX INSTANT INDEXING)
+# =============================================================================
+
+
+def ping_indexnow(url: str) -> dict[str, Any]:
+    """
+    Notify Bing/Yandex of new or updated page via IndexNow protocol.
+
+    IndexNow allows instant notification of search engines about new content,
+    enabling faster indexing than waiting for crawlers.
+
+    Args:
+        url: Full URL of the page (e.g., "https://www.snowthere.com/resorts/austria/kitzbuhel")
+
+    Returns:
+        Result dict with success status
+    """
+    indexnow_key = getattr(settings, "indexnow_key", None)
+
+    if not indexnow_key:
+        return {
+            "success": False,
+            "error": "INDEXNOW_KEY not configured - skipping IndexNow ping",
+            "url": url,
+        }
+
+    try:
+        with httpx.Client(timeout=10.0) as client:
+            # IndexNow API endpoint
+            response = client.get(
+                "https://api.indexnow.org/IndexNow",
+                params={
+                    "url": url,
+                    "key": indexnow_key,
+                },
+            )
+
+            # 200 = submitted, 202 = accepted for later processing
+            if response.status_code in (200, 202):
+                return {
+                    "success": True,
+                    "url": url,
+                    "status_code": response.status_code,
+                }
+            else:
+                return {
+                    "success": False,
+                    "url": url,
+                    "error": f"IndexNow returned {response.status_code}",
+                    "response": response.text[:200],
+                }
+
+    except Exception as e:
+        # Don't alert on IndexNow failures - it's not critical
+        return {
+            "success": False,
+            "url": url,
+            "error": str(e),
+        }
+
+
+def ping_indexnow_batch(urls: list[str]) -> dict[str, Any]:
+    """
+    Notify Bing/Yandex of multiple pages at once.
+
+    More efficient than individual pings for bulk updates.
+
+    Args:
+        urls: List of full URLs to submit
+
+    Returns:
+        Result dict with success status and counts
+    """
+    indexnow_key = getattr(settings, "indexnow_key", None)
+
+    if not indexnow_key:
+        return {
+            "success": False,
+            "error": "INDEXNOW_KEY not configured",
+            "urls_submitted": 0,
+        }
+
+    if not urls:
+        return {
+            "success": True,
+            "urls_submitted": 0,
+            "message": "No URLs to submit",
+        }
+
+    # Get host from first URL
+    from urllib.parse import urlparse
+
+    parsed = urlparse(urls[0])
+    host = parsed.netloc
+
+    try:
+        with httpx.Client(timeout=30.0) as client:
+            response = client.post(
+                "https://api.indexnow.org/IndexNow",
+                json={
+                    "host": host,
+                    "key": indexnow_key,
+                    "urlList": urls,
+                },
+                headers={"Content-Type": "application/json"},
+            )
+
+            if response.status_code in (200, 202):
+                return {
+                    "success": True,
+                    "urls_submitted": len(urls),
+                    "status_code": response.status_code,
+                }
+            else:
+                return {
+                    "success": False,
+                    "urls_submitted": 0,
+                    "error": f"IndexNow returned {response.status_code}",
+                    "response": response.text[:200],
+                }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "urls_submitted": 0,
+            "error": str(e),
+        }
 
 
 # =============================================================================

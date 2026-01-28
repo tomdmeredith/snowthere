@@ -38,6 +38,10 @@ class Settings(BaseSettings):
     # Google Places API (UGC photos)
     google_places_api_key: str | None = None
 
+    # Google Search Console API
+    gsc_credentials_json: str | None = None  # JSON string of service account credentials
+    gsc_property_url: str | None = None  # Site URL (e.g., "sc-domain:snowthere.com")
+
     # Budget Controls
     # NOTE: Actual cost per resort is ~$10 (Opus content + research APIs)
     # Growth mode targets 8 resorts/day = ~$80/day
@@ -60,6 +64,9 @@ class Settings(BaseSettings):
     # Vercel (for ISR revalidation)
     vercel_url: str | None = None
     vercel_revalidate_token: str | None = None
+
+    # IndexNow (Bing/Yandex instant indexing)
+    indexnow_key: str | None = None  # API key for IndexNow protocol
 
 
 @lru_cache

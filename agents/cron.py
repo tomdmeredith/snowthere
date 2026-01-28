@@ -52,6 +52,101 @@ from pipeline import run_daily_pipeline, run_single_resort
 from pipeline.guide_orchestrator import run_guide_generation
 
 
+async def run_external_link_validation() -> dict:
+    """Validate external links weekly (runs on Sundays only).
+
+    Checks if external links in entity_link_cache are still valid.
+    Broken links hurt SEO trust signals.
+
+    Returns a dict with results suitable for logging.
+    """
+    from datetime import datetime
+
+    # Only run on Sundays (weekday 6)
+    if datetime.now().weekday() != 6:
+        return {
+            "success": True,
+            "status": "not_scheduled",
+            "message": "Link validation only runs on Sundays",
+        }
+
+    from shared.primitives.external_links import validate_external_links
+
+    print("Validating external links (weekly check)...")
+    try:
+        result = await validate_external_links(max_links=100)
+
+        if result.success:
+            print(f"✓ Link validation: {result.valid_count} valid, {result.invalid_count} broken")
+            if result.broken_links:
+                print(f"  Broken links found:")
+                for broken in result.broken_links[:5]:  # Show first 5
+                    print(f"    - {broken.get('name')}: {broken.get('error')}")
+                if len(result.broken_links) > 5:
+                    print(f"    ... and {len(result.broken_links) - 5} more")
+        else:
+            print(f"⚠️  Link validation failed: {result.error}")
+
+        return {
+            "success": result.success,
+            "total_checked": result.total_checked,
+            "valid_count": result.valid_count,
+            "invalid_count": result.invalid_count,
+            "broken_links": result.broken_links,
+            "error": result.error,
+        }
+    except Exception as e:
+        print(f"❌ Link validation failed: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+        }
+
+
+async def run_gsc_fetch() -> dict:
+    """Fetch Google Search Console performance data.
+
+    Fetches 7 days of GSC data and stores in gsc_performance table.
+    This enables data-driven SEO decisions.
+
+    Returns a dict with results suitable for logging.
+    """
+    from shared.primitives.analytics import fetch_gsc_performance, get_gsc_summary
+
+    print("Fetching GSC performance data...")
+    try:
+        result = await fetch_gsc_performance(days=7)
+        if result.success:
+            print(f"✓ GSC: {result.rows_fetched} rows fetched, {result.rows_stored} stored")
+            print(f"  Date range: {result.date_range[0]} to {result.date_range[1]}")
+
+            # Get quick summary
+            summary = get_gsc_summary(days=7)
+            if summary.get("total_impressions", 0) > 0:
+                print(f"  Last 7 days: {summary['total_impressions']} impressions, {summary['total_clicks']} clicks")
+                print(f"  Avg CTR: {summary['avg_ctr']*100:.2f}%, Avg Position: {summary['avg_position']:.1f}")
+        else:
+            if "not configured" in (result.error or ""):
+                print(f"  GSC not configured (skipping)")
+            else:
+                print(f"⚠️  GSC fetch: {result.error}")
+
+        return {
+            "success": result.success,
+            "rows_fetched": result.rows_fetched,
+            "rows_stored": result.rows_stored,
+            "error": result.error,
+        }
+    except Exception as e:
+        print(f"❌ GSC fetch failed: {e}")
+        return {
+            "success": False,
+            "rows_fetched": 0,
+            "rows_stored": 0,
+            "error": str(e),
+        }
+
+
 async def run_email_sequences() -> dict:
     """Run email sequence advancement for all due subscribers.
 
@@ -229,6 +324,14 @@ def main():
     # Validate environment FIRST - fail fast before incurring API costs
     validate_environment()
 
+    # Fetch GSC data (independent of content pipeline)
+    # This enables data-driven SEO decisions by tracking impressions, clicks, CTR
+    gsc_result = asyncio.run(run_gsc_fetch())
+
+    # Validate external links (weekly, Sundays only)
+    # Broken links hurt SEO trust signals
+    link_validation_result = asyncio.run(run_external_link_validation())
+
     # Run email sequences (independent of content pipeline)
     # This advances subscribers through welcome sequences, sends due emails
     email_result = asyncio.run(run_email_sequences())
@@ -338,7 +441,9 @@ def main():
             force_discovery=args.force_discovery,
         ))
 
-    # Add email, newsletter, and guide results to output
+    # Add GSC, link validation, email, newsletter, and guide results to output
+    result["gsc_fetch"] = gsc_result
+    result["link_validation"] = link_validation_result
     result["email_sequences"] = email_result
     result["weekly_newsletter"] = newsletter_result
     result["guide_generation"] = guide_result
@@ -372,6 +477,39 @@ def print_human_readable(result: dict, single_resort: bool = False, email_result
     print(f"\n{'='*60}")
     print("RESULTS")
     print(f"{'='*60}\n")
+
+    # GSC fetch
+    gsc_result = result.get("gsc_fetch")
+    if gsc_result:
+        if gsc_result.get("success"):
+            rows = gsc_result.get("rows_stored", 0)
+            if rows > 0:
+                print(f"GSC Performance: {rows} rows stored")
+            else:
+                print("GSC Performance: No data (may be normal for new sites)")
+        elif "not configured" in (gsc_result.get("error") or ""):
+            print("GSC Performance: Not configured")
+        else:
+            print(f"GSC Performance: Error - {gsc_result.get('error', 'Unknown')}")
+        print()
+
+    # Link validation (weekly)
+    link_result = result.get("link_validation")
+    if link_result:
+        status = link_result.get("status")
+        if status == "not_scheduled":
+            pass  # Don't print anything on non-Sunday days
+        elif link_result.get("success"):
+            valid = link_result.get("valid_count", 0)
+            invalid = link_result.get("invalid_count", 0)
+            if invalid > 0:
+                print(f"Link Validation: {valid} valid, {invalid} broken")
+            else:
+                print(f"Link Validation: {valid} links OK")
+            print()
+        else:
+            print(f"Link Validation: Error - {link_result.get('error', 'Unknown')}")
+            print()
 
     # Email sequences
     if email_result:
