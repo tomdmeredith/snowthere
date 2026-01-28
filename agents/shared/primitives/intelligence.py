@@ -80,6 +80,7 @@ def _call_claude(
     system: str | None = None,
     model: str = "claude-sonnet-4-20250514",
     max_tokens: int = 1000,
+    temperature: float | None = None,
 ) -> str:
     """Make a Claude API call and return the text response."""
     client = _get_client()
@@ -93,6 +94,8 @@ def _call_claude(
     }
     if system:
         kwargs["system"] = system
+    if temperature is not None:
+        kwargs["temperature"] = temperature
 
     response = client.messages.create(**kwargs)
     return response.content[0].text
@@ -1392,4 +1395,497 @@ Generic output is a failure. Specific, memorable output is success."""
         return QuickTakeContextResult(
             extraction_confidence=0.0,
             extraction_reasoning=f"Extraction failed: {e}",
+        )
+
+
+# =============================================================================
+# TAGLINE GENERATION - AGENT NATIVE APPROACH
+# =============================================================================
+# Uses "store atoms, compute molecules" principle:
+# 1. Extract atomic facts (numbers, landmarks, unique features)
+# 2. Provide structural diversity through examples, not rules
+# 3. Use LLM-based quality evaluation (rubric scoring, not regex)
+# 4. Portfolio awareness via database query for diversity
+# =============================================================================
+
+import random
+
+
+@dataclass
+class TaglineAtoms:
+    """Atomic facts for tagline synthesis - specific, not generic.
+
+    These atoms are the building blocks from which taglines are synthesized.
+    Each atom should be concrete and unique to this specific resort.
+    """
+
+    # Numbers that differentiate (not "great terrain" - "93% beginner terrain")
+    numbers: list[str] = field(default_factory=list)
+
+    # Unique identifiers (not "beautiful views" - "Matterhorn views")
+    landmark_or_icon: str | None = None
+
+    # Sensory/emotional hooks
+    signature_feeling: str | None = None
+
+    # Comparative positioning
+    value_angle: str | None = None
+    unexpected_fact: str | None = None
+
+    # From existing extraction (reuse QuickTakeContextResult)
+    unique_angle: str | None = None
+    signature_experience: str | None = None
+    memorable_detail: str | None = None
+
+    # What makes this resort NOT like others (differentiation)
+    anti_pattern: str | None = None
+
+    extraction_confidence: float = 0.0
+
+
+@dataclass
+class TaglineQualityScore:
+    """Probabilistic quality assessment for taglines.
+
+    Uses LLM-based rubric scoring rather than deterministic regex matching.
+    """
+
+    overall_score: float  # 0.0-1.0
+
+    # Dimensional scores (each 0.0-1.0)
+    specificity: float  # Does it include concrete facts? (numbers, names, places)
+    differentiation: float  # Could this ONLY apply to this resort?
+    structure_novelty: float  # Is the structure different from common patterns?
+    emotional_resonance: float  # Does it make families feel something?
+    voice_alignment: float  # Does it match snowthere_guide voice?
+
+    # Qualitative feedback
+    strongest_element: str = ""
+    weakest_element: str = ""
+    improvement_suggestion: str | None = None
+
+    # Portfolio context
+    similar_to: str | None = None  # If resembles another tagline, which one?
+
+    passes_threshold: bool = False  # overall_score >= 0.7
+
+
+# Structural examples for diverse tagline generation
+# These are rotated (3 shown per call) to guide variety, not rules
+TAGLINE_STRUCTURAL_EXAMPLES: dict[str, list[str]] = {
+    "number_lead": [
+        "93% beginner terrain, 100% family focus",
+        "Three mountains, one car-free village, zero stress",
+        "3 magic carpets, 2 terrain parks, 1 very tired kid",
+    ],
+    "contrast": [
+        "Big mountain thrills with a soft landing",
+        "Premium terrain, mid-range prices",
+        "Small village, huge confidence-builder",
+    ],
+    "question": [
+        "What if powder days came with babysitters?",
+        "Remember when ski trips were actually relaxing?",
+        "What if the bunny slope had Matterhorn views?",
+    ],
+    "sensory": [
+        "Fondue at 10,000 feet, hot chocolate by 3",
+        "Cobblestone streets, powder mornings, content kids",
+        "Ski through the village, stop for strudel, ski home",
+    ],
+    "comparative": [
+        "Austria's answer to Colorado, at half the price",
+        "Like Verbier, if Verbier remembered families exist",
+        "Half the cost of Vail, none of the altitude headaches",
+    ],
+    "identity": [
+        "Europe's best-kept family secret",
+        "The gentle giant that makes skiing feel easy",
+        "Japan's most toddler-friendly powder paradise",
+    ],
+    "action": [
+        "Ski the Dolomites, lunch in Italy",
+        "Learn by morning, explore by afternoon",
+        "First tracks by 8am, cocoa by 10",
+    ],
+    "parent_benefit": [
+        "Kids exhausted by 3pm. You're welcome.",
+        "Ski school pickup on the slopes, not in a parking lot",
+        "The ski school your 3-year-old actually wants to return to",
+    ],
+}
+
+
+async def extract_tagline_atoms(
+    resort_name: str,
+    country: str,
+    research_data: dict[str, Any],
+    quick_take_context: dict[str, Any] | None = None,
+) -> TaglineAtoms:
+    """
+    Extract specific, concrete facts that make taglines memorable.
+
+    This primitive extracts the "atoms" from research data - specific facts,
+    numbers, landmarks, and unique features that can be synthesized into
+    a memorable tagline.
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        research_data: Raw research data about the resort
+        quick_take_context: Optional existing QuickTakeContextResult data
+
+    Returns:
+        TaglineAtoms with extracted facts
+
+    Cost: ~$0.003 with Haiku
+    """
+    # Prepare context from research
+    context_parts = []
+
+    # Add family metrics if available
+    if "family_metrics" in research_data:
+        fm = research_data["family_metrics"]
+        context_parts.append(f"Family metrics: {json.dumps(fm, default=str)}")
+
+    # Add costs if available
+    if "costs" in research_data:
+        context_parts.append(f"Costs: {json.dumps(research_data['costs'], default=str)}")
+
+    # Add raw research summaries
+    if "exa_results" in research_data:
+        context_parts.append(f"Research: {str(research_data['exa_results'])[:2000]}")
+
+    # Add quick take context if available
+    if quick_take_context:
+        context_parts.append(f"Quick take context: {json.dumps(quick_take_context, default=str)}")
+
+    context = "\n\n".join(context_parts)[:4000]
+
+    prompt = f"""Extract TAGLINE ATOMS for {resort_name}, {country}.
+
+Tagline atoms are the SPECIFIC, CONCRETE facts that make memorable taglines.
+NOT generic adjectives - actual facts, numbers, names, unique features.
+
+RESEARCH DATA:
+{context}
+
+Extract these atoms (use null if not available):
+
+{{
+    "numbers": ["list of specific numbers that differentiate this resort",
+                "e.g., '93% beginner terrain', 'ski school from age 2.5', 'under-6s ski free'"],
+    "landmark_or_icon": "unique visual/geographic identifier (Matterhorn, car-free village, etc.) or null",
+    "signature_feeling": "the emotional experience unique to this resort or null",
+    "value_angle": "how this compares on price/value to alternatives or null",
+    "unexpected_fact": "something surprising about this resort or null",
+    "unique_angle": "what makes this resort different from all others or null",
+    "signature_experience": "the one thing families will remember or null",
+    "memorable_detail": "a sensory detail that sticks or null",
+    "anti_pattern": "what this resort is NOT (for differentiation) or null",
+    "confidence": 0.0-1.0
+}}
+
+Rules:
+- SPECIFIC over generic. "Beautiful views" = useless. "Matterhorn from the bunny slope" = gold.
+- NUMBERS are powerful. Find them.
+- COMPARISONS help. "Half the price of..." "Unlike Vail..."
+- If something isn't clearly in the data, use null.
+
+Return only valid JSON."""
+
+    system = """You extract concrete, specific facts from research data.
+Your output becomes the building blocks of memorable taglines.
+Generic output is failure. Specific output is success."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-3-5-haiku-20241022",
+            max_tokens=500,
+        )
+
+        parsed = _parse_json_response(response)
+
+        return TaglineAtoms(
+            numbers=parsed.get("numbers", []) or [],
+            landmark_or_icon=parsed.get("landmark_or_icon"),
+            signature_feeling=parsed.get("signature_feeling"),
+            value_angle=parsed.get("value_angle"),
+            unexpected_fact=parsed.get("unexpected_fact"),
+            unique_angle=parsed.get("unique_angle"),
+            signature_experience=parsed.get("signature_experience"),
+            memorable_detail=parsed.get("memorable_detail"),
+            anti_pattern=parsed.get("anti_pattern"),
+            extraction_confidence=float(parsed.get("confidence", 0.5)),
+        )
+
+    except Exception as e:
+        print(f"Tagline atom extraction failed: {e}")
+        return TaglineAtoms(extraction_confidence=0.0)
+
+
+def _format_atoms_for_prompt(atoms: TaglineAtoms) -> str:
+    """Format tagline atoms into a prompt-friendly string."""
+    parts = []
+
+    if atoms.numbers:
+        parts.append(f"NUMBERS: {', '.join(atoms.numbers)}")
+    if atoms.landmark_or_icon:
+        parts.append(f"LANDMARK: {atoms.landmark_or_icon}")
+    if atoms.signature_feeling:
+        parts.append(f"FEELING: {atoms.signature_feeling}")
+    if atoms.value_angle:
+        parts.append(f"VALUE: {atoms.value_angle}")
+    if atoms.unexpected_fact:
+        parts.append(f"SURPRISE: {atoms.unexpected_fact}")
+    if atoms.unique_angle:
+        parts.append(f"UNIQUE: {atoms.unique_angle}")
+    if atoms.signature_experience:
+        parts.append(f"EXPERIENCE: {atoms.signature_experience}")
+    if atoms.memorable_detail:
+        parts.append(f"DETAIL: {atoms.memorable_detail}")
+    if atoms.anti_pattern:
+        parts.append(f"NOT: {atoms.anti_pattern}")
+
+    return "\n".join(parts) if parts else "No specific atoms extracted"
+
+
+def _sample_structural_examples(n: int = 3) -> str:
+    """Sample n diverse structural examples for the tagline prompt."""
+    categories = list(TAGLINE_STRUCTURAL_EXAMPLES.keys())
+    sampled_categories = random.sample(categories, min(n, len(categories)))
+
+    examples = []
+    for cat in sampled_categories:
+        example = random.choice(TAGLINE_STRUCTURAL_EXAMPLES[cat])
+        examples.append(f"- {example} ({cat} structure)")
+
+    return "\n".join(examples)
+
+
+async def generate_diverse_tagline(
+    resort_name: str,
+    country: str,
+    atoms: TaglineAtoms,
+    recent_taglines: list[dict[str, str]] | None = None,
+    temperature: float = 0.8,
+) -> str:
+    """
+    Generate a tagline with structural diversity through examples, not rules.
+
+    This uses the extracted atoms and rotated structural examples to produce
+    unique, specific taglines. Temperature controls variety.
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        atoms: Extracted TaglineAtoms for this resort
+        recent_taglines: Recent portfolio taglines (for diversity awareness)
+        temperature: Claude temperature (0.7-1.0 recommended for variety)
+
+    Returns:
+        Generated tagline string
+
+    Cost: ~$0.008 with Sonnet
+    """
+    # Format atoms for prompt
+    atoms_text = _format_atoms_for_prompt(atoms)
+
+    # Sample structural examples (3 different structures each call)
+    structural_examples = _sample_structural_examples(3)
+
+    # Format recent taglines for context
+    recent_text = ""
+    if recent_taglines:
+        recent_list = [f"- {t['tagline']} ({t.get('resort', 'unknown')})" for t in recent_taglines[:7]]
+        recent_text = f"""
+RECENT PORTFOLIO TAGLINES (for awareness - do NOT repeat these structures):
+{chr(10).join(recent_list)}
+"""
+
+    prompt = f"""Generate a unique tagline for {resort_name}, {country}.
+
+TAGLINE ATOMS (use at least ONE of these specifics):
+{atoms_text}
+
+STRUCTURAL VARIETY (use ONE of these patterns, or invent a fresh one):
+{structural_examples}
+{recent_text}
+REQUIREMENTS:
+- 8-12 words maximum
+- Must include at least ONE specific from the atoms above
+- Must NOT use the same structure as recent taglines
+- Punchy, memorable, makes families want to visit
+
+Return ONLY the tagline, nothing else."""
+
+    system = """You are a travel copywriter who writes memorable taglines.
+Each tagline must be SPECIFIC to this resort - not generic.
+Use the atoms provided - don't make up facts.
+Vary your structure - don't repeat patterns."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-sonnet-4-20250514",
+            max_tokens=100,
+            temperature=temperature,
+        )
+
+        # Clean up the response
+        tagline = response.strip().strip('"').strip("'")
+
+        # Ensure it's not too long
+        words = tagline.split()
+        if len(words) > 15:
+            tagline = " ".join(words[:12])
+
+        return tagline
+
+    except Exception as e:
+        print(f"Diverse tagline generation failed: {e}")
+        return f"Your family adventure starts in {resort_name}"
+
+
+async def evaluate_tagline_quality(
+    tagline: str,
+    atoms: TaglineAtoms,
+    resort_name: str,
+    recent_taglines: list[dict[str, str]] | None = None,
+) -> TaglineQualityScore:
+    """
+    LLM-based quality assessment using rubric scoring.
+
+    Evaluates tagline on multiple dimensions using a calibrated rubric.
+    No regex patterns - pure model judgment.
+
+    Args:
+        tagline: The tagline to evaluate
+        atoms: The TaglineAtoms that were available for this resort
+        resort_name: Name of the resort
+        recent_taglines: Recent portfolio taglines for similarity check
+
+    Returns:
+        TaglineQualityScore with dimensional scores and feedback
+
+    Cost: ~$0.003 with Haiku
+    """
+    atoms_text = _format_atoms_for_prompt(atoms)
+
+    recent_text = ""
+    if recent_taglines:
+        recent_list = [t["tagline"] for t in recent_taglines[:10]]
+        recent_text = f"EXISTING PORTFOLIO: {recent_list}"
+
+    prompt = f"""Evaluate this tagline for {resort_name}:
+
+TAGLINE: "{tagline}"
+
+AVAILABLE ATOMS FOR THIS RESORT:
+{atoms_text}
+
+{recent_text}
+
+Score each dimension 0.0-1.0:
+
+SPECIFICITY (does it include concrete facts?):
+- 0.2: Generic ("great for families", "perfect destination")
+- 0.5: Some specificity ("beginner-friendly", "Austrian charm")
+- 0.8: Concrete facts ("93% beginner terrain", "Matterhorn views")
+- 1.0: Multiple specifics unique to this resort
+
+DIFFERENTIATION (could this ONLY apply to this resort?):
+- 0.2: Could apply to 50+ resorts
+- 0.5: Could apply to 5-10 similar resorts
+- 0.8: Could only apply to 2-3 resorts
+- 1.0: Unmistakably THIS resort
+
+STRUCTURE_NOVELTY (is the structure fresh?):
+- 0.2: "X meets Y" or other overused patterns
+- 0.5: Common but not cliche structure
+- 0.8: Fresh structure rarely seen
+- 1.0: Inventive structure that surprises
+
+EMOTIONAL_RESONANCE (does it make families feel something?):
+- 0.2: Informational only, no feeling
+- 0.5: Mild interest
+- 0.8: "That sounds nice" reaction
+- 1.0: "I need to go there" reaction
+
+VOICE_ALIGNMENT (does it match smart, witty travel friend tone?):
+- 0.2: Corporate/brochure feel
+- 0.5: Generic travel writing
+- 0.8: Matches casual expert tone
+- 1.0: Perfectly captures "smart friend" voice
+
+Return JSON:
+{{
+    "specificity": 0.0-1.0,
+    "differentiation": 0.0-1.0,
+    "structure_novelty": 0.0-1.0,
+    "emotional_resonance": 0.0-1.0,
+    "voice_alignment": 0.0-1.0,
+    "strongest_element": "brief description",
+    "weakest_element": "brief description",
+    "improvement_suggestion": "how to improve or null if good",
+    "similar_to": "if similar to existing tagline, which one, else null"
+}}"""
+
+    system = """You evaluate tagline quality using a calibrated rubric.
+Be honest and specific in your assessment.
+Overused patterns like "X meets Y" score LOW on structure_novelty."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-3-5-haiku-20241022",
+            max_tokens=400,
+        )
+
+        parsed = _parse_json_response(response)
+
+        # Extract scores
+        specificity = float(parsed.get("specificity", 0.5))
+        differentiation = float(parsed.get("differentiation", 0.5))
+        structure_novelty = float(parsed.get("structure_novelty", 0.5))
+        emotional_resonance = float(parsed.get("emotional_resonance", 0.5))
+        voice_alignment = float(parsed.get("voice_alignment", 0.5))
+
+        # Calculate overall score (weighted average)
+        overall = (
+            specificity * 0.25
+            + differentiation * 0.25
+            + structure_novelty * 0.20
+            + emotional_resonance * 0.15
+            + voice_alignment * 0.15
+        )
+
+        return TaglineQualityScore(
+            overall_score=round(overall, 2),
+            specificity=specificity,
+            differentiation=differentiation,
+            structure_novelty=structure_novelty,
+            emotional_resonance=emotional_resonance,
+            voice_alignment=voice_alignment,
+            strongest_element=parsed.get("strongest_element", ""),
+            weakest_element=parsed.get("weakest_element", ""),
+            improvement_suggestion=parsed.get("improvement_suggestion"),
+            similar_to=parsed.get("similar_to"),
+            passes_threshold=overall >= 0.7,
+        )
+
+    except Exception as e:
+        print(f"Tagline quality evaluation failed: {e}")
+        return TaglineQualityScore(
+            overall_score=0.5,
+            specificity=0.5,
+            differentiation=0.5,
+            structure_novelty=0.5,
+            emotional_resonance=0.5,
+            voice_alignment=0.5,
+            passes_threshold=False,
         )

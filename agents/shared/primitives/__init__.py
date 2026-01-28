@@ -75,6 +75,8 @@ from .database import (
     find_similar_resorts,
     count_resorts,
     get_country_coverage_summary,
+    # Portfolio diversity (Agent-Native tagline - Round 12)
+    get_recent_portfolio_taglines,
 )
 
 # Discovery primitives
@@ -149,8 +151,14 @@ from .intelligence import (
     # Resort validation (agent-native duplicate detection)
     validate_resort_selection,
     ResortValidationResult,
-    # Content generation
+    # Content generation (legacy)
     generate_tagline,
+    # Tagline generation (Agent-Native - Round 12)
+    extract_tagline_atoms,
+    generate_diverse_tagline,
+    evaluate_tagline_quality,
+    TaglineAtoms,
+    TaglineQualityScore,
     # Resort data extraction
     extract_resort_data,
     ExtractedResortData,

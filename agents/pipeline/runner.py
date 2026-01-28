@@ -42,6 +42,13 @@ from shared.primitives import (
     generate_faq,
     generate_seo_meta,
     generate_tagline,
+    # Tagline (Agent-Native approach - Round 12)
+    extract_tagline_atoms,
+    generate_diverse_tagline,
+    evaluate_tagline_quality,
+    TaglineAtoms,
+    TaglineQualityScore,
+    get_recent_portfolio_taglines,
     # Quick Take (Round 8 - Editorial Verdict Model)
     generate_quick_take,
     QuickTakeContext,
@@ -733,13 +740,77 @@ async def run_resort_pipeline(
             quick_take=content["quick_take"],
         )
 
-        # Generate unique tagline (8-12 words capturing resort personality)
-        content["tagline"] = await generate_tagline(
+        # Generate unique tagline using Agent-Native approach (Round 12)
+        # 1. Extract tagline atoms (specific facts, numbers, landmarks)
+        # 2. Generate with structural diversity
+        # 3. Evaluate quality with LLM-based rubric
+        # 4. Retry with higher temperature if quality < threshold
+        tagline_atoms = await extract_tagline_atoms(
             resort_name=resort_name,
             country=country,
-            context=content_context,
-            voice_profile="snowthere_guide",
+            research_data=research_data,
+            quick_take_context={
+                "unique_angle": quick_take_context.unique_angle,
+                "signature_experience": quick_take_context.signature_experience,
+                "memorable_detail": quick_take_context.memorable_detail,
+            } if quick_take_context else None,
         )
+
+        # Get recent portfolio taglines for diversity awareness
+        recent_taglines = get_recent_portfolio_taglines(limit=10, exclude_country=country)
+
+        # Quality loop: generate, evaluate, retry if needed (max 3 attempts)
+        best_tagline = None
+        best_quality = None
+
+        for attempt in range(3):
+            temperature = 0.7 + (attempt * 0.15)  # 0.7, 0.85, 1.0
+
+            candidate = await generate_diverse_tagline(
+                resort_name=resort_name,
+                country=country,
+                atoms=tagline_atoms,
+                recent_taglines=recent_taglines,
+                temperature=temperature,
+            )
+
+            quality = await evaluate_tagline_quality(
+                tagline=candidate,
+                atoms=tagline_atoms,
+                resort_name=resort_name,
+                recent_taglines=recent_taglines,
+            )
+
+            # Track best attempt
+            if best_quality is None or quality.overall_score > best_quality.overall_score:
+                best_tagline = candidate
+                best_quality = quality
+
+            # Accept if passes threshold and has good structure novelty
+            if quality.passes_threshold and quality.structure_novelty >= 0.6:
+                log_reasoning(
+                    task_id=None,
+                    agent_name="pipeline_runner",
+                    action="tagline_accepted",
+                    reasoning=f"Tagline accepted on attempt {attempt + 1}: '{candidate}' "
+                              f"(score={quality.overall_score:.2f}, novelty={quality.structure_novelty:.2f})",
+                )
+                break
+
+            # Log rejection for next attempt
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="tagline_retry",
+                reasoning=f"Attempt {attempt + 1} rejected: '{candidate}' - "
+                          f"score={quality.overall_score:.2f}, weakness={quality.weakest_element}",
+            )
+
+        # Use best tagline found (or fallback from last attempt)
+        content["tagline"] = best_tagline or f"Your family adventure starts in {resort_name}"
+
+        # Log tagline generation cost (~$0.035 for 3 attempts)
+        log_cost("anthropic", 0.035, None, {"run_id": run_id, "stage": "tagline_generation"})
 
         # Log content generation cost (~$0.70 for Claude API, Quick Take logged separately)
         log_cost("anthropic", 0.70, None, {"run_id": run_id, "stage": "content_generation"})

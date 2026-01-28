@@ -993,3 +993,77 @@ def get_country_coverage_summary() -> dict[str, int]:
         counts[country] = counts.get(country, 0) + 1
 
     return counts
+
+
+def get_recent_portfolio_taglines(
+    limit: int = 10,
+    exclude_country: str | None = None,
+) -> list[dict[str, str]]:
+    """
+    Get recent taglines from portfolio for diversity checking.
+
+    Returns a diverse sample of taglines (different countries, different creation
+    dates) to enable portfolio-level diversity awareness during tagline generation.
+
+    This is the agent-native way to check for structural diversity without
+    hardcoded pattern lists.
+
+    Args:
+        limit: Maximum number of taglines to return
+        exclude_country: Optionally exclude a specific country (for variety)
+
+    Returns:
+        List of dicts with tagline, resort name, and country
+    """
+    client = get_supabase_client()
+
+    # Join resort_content with resorts to get country info
+    # Fetch more than needed for diversity filtering
+    query = (
+        client.table("resort_content")
+        .select("tagline, resort_id, resorts(name, country)")
+        .not_.is_("tagline", "null")
+        .order("content_version", desc=True)
+        .limit(limit * 3)
+    )
+
+    response = query.execute()
+
+    if not response.data:
+        return []
+
+    # Deduplicate by country to ensure geographic diversity
+    seen_countries: set[str] = set()
+    diverse_taglines: list[dict[str, str]] = []
+
+    for row in response.data:
+        tagline = row.get("tagline")
+        resorts_data = row.get("resorts")
+
+        if not tagline or not resorts_data:
+            continue
+
+        resort_name = resorts_data.get("name", "Unknown")
+        country = resorts_data.get("country", "Unknown")
+
+        # Skip excluded country
+        if exclude_country and country == exclude_country:
+            continue
+
+        # Ensure geographic diversity - max 2 per country
+        country_count = sum(1 for t in diverse_taglines if t.get("country") == country)
+        if country_count >= 2:
+            continue
+
+        diverse_taglines.append({
+            "tagline": tagline,
+            "resort": resort_name,
+            "country": country,
+        })
+
+        seen_countries.add(country)
+
+        if len(diverse_taglines) >= limit:
+            break
+
+    return diverse_taglines
