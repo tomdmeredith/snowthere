@@ -1,7 +1,7 @@
 # Family Ski Directory - Agent Handoff Document
 
-> Last Updated: 2026-01-25
-> Current Round: 6 (Homepage Redesign) - pending
+> Last Updated: 2026-01-28
+> Current Round: 14 (Homepage Redesign) - pending
 
 ## Quick Context
 
@@ -178,7 +178,24 @@ family-ski-directory/
 - Google Places: Place IDs can be cached indefinitely, photos cannot
 - Transliteration graceful fallback ensures production stability
 
-### Round 6: Homepage Redesign (Next)
+### Round 13: Delightful, On-Brand, Image-Rich Guide Pages ✅ (Completed 2026-01-28)
+> Guide page design overhaul, Nano Banana Pro image generation, exit intent popup redesign
+
+- [x] HTML rendering bug fixes (list descriptions + FAQ answers with `sanitizeHtml()`)
+- [x] Guide page Spielplatz design overhaul (white cards, section emojis, styled tables/lists)
+- [x] Exit intent popup redesigned with Spielplatz personality
+- [x] Nano Banana Pro on Replicate as primary image model (4-tier fallback)
+- [x] All 11 guide images generated, stored in Supabase Storage
+- [x] Frontend design skill installed (`.claude/skills/frontend-design/`)
+- [x] TypeScript types for new section types (image, callout)
+
+**Key Learnings:**
+- Nano Banana Pro (`google/nano-banana-pro` on Replicate): $0.15/image, best quality
+- 4-tier fallback: Nano Banana Pro (Replicate) → Glif → Gemini → Flux Schnell
+- Replicate URLs are temporary — always re-upload to Supabase Storage
+- Browser audit before design work reveals UX issues invisible in code review
+
+### Round 14: Homepage Redesign (Next)
 > Implement chosen design from concepts
 
 - [ ] Finalize homepage design direction
@@ -188,7 +205,8 @@ family-ski-directory/
 ### Future Work
 > Moved from earlier rounds
 
-- [ ] Newsletter signup API integration
+- [ ] Sign up for affiliate networks + run migration 032
+- [ ] Investigate Google Places API errors
 - [ ] Monitor and iterate on pipeline quality
 
 ---
@@ -599,8 +617,10 @@ cd agents && python cron.py --dry-run --max-resorts 2
 ```
 
 **Immediate Next Steps:**
-- Round 5 complete (cron alerts, accessibility, CWV, trademark)
-- Round 6: Homepage redesign
+- Round 13 complete (guide design overhaul, Nano Banana Pro images, exit intent popup)
+- Round 14: Homepage redesign
+- Sign up for affiliate networks + run migration 032
+- Investigate Google Places API errors
 
 ---
 
@@ -628,5 +648,6 @@ This project is part of the SuperTrained workspace:
 | **Pipeline vs MCP** | **Direct code for autonomy** | MCP is for interactive sessions; direct Python is simpler for cron |
 | **Confidence scoring** | Formula-based with Claude borderline | Auto-publish >0.8, auto-reject <0.6, ask Claude 0.6-0.8 |
 | **Decision making** | Claude API calls | Flexible, captures reasoning, handles nuance |
+| **Image generation** | Nano Banana Pro on Replicate (primary) | Best quality ($0.15), 4-tier fallback ensures reliability |
 
 See `agents/ARCHITECTURE.md` for detailed rationale on each decision.

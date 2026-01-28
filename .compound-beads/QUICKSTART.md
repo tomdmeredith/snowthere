@@ -1,58 +1,61 @@
 # Snowthere Quick Start
 
-**Round 11**: Autonomous Content Systems
-**Type**: Feature (Newsletter + Guide Generation)
-**Status**: Infrastructure deployed, cron integration complete
+**All 13 rounds complete.** No active round. Site is live, pipeline is autonomous, all guides have Nano Banana Pro images.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
 **Guiding Principles**:
 - Agent-native (atomic primitives, composable, full parity)
-- Probabilistic for nuance, deterministic for correctness
-- SEO/GEO optimized
-- Autonomous operation
+- Store atoms, compute molecules (deterministic formulas from data)
+- SEO/GEO optimized (Schema.org, llms.txt, AI crawler whitelist)
+- Autonomous operation (daily cron: resorts + guides + newsletter)
 
 **Recent**:
-- R11: **Autonomous Content Systems** (Active)
-  - Weekly newsletter system (Thursday 6am PT, Morning Brew style)
-  - Guide generation pipeline (Monday/Thursday, 2 guides/week)
-  - Exit intent popup for newsletter signup
-  - Migration 031_newsletter_recurring.sql applied to production
-  - Removed AI disclosure references (cleaner messaging)
-  - Added /methodology to footer navigation
-  - Fixed decimal score display (6.0 not 6)
-- R10: **Content Structure + Email System Fix** (Completed)
-  - Built guide page infrastructure (`/guides/[slug]`)
-  - Email sequence templates loaded into database
-- R9.2: **Scoring Integration** (Deployed)
-  - Pipeline uses deterministic scoring formula
-  - 5 resorts backfilled with new scores
-  - Google Places API 400 errors still under investigation
+- R13: **Delightful, On-Brand, Image-Rich Guide Pages** (Completed 2026-01-28)
+  - Nano Banana Pro on Replicate as primary image model (4-tier fallback)
+  - All 11 guide images generated, stored in Supabase Storage
+  - Guide page Spielplatz design overhaul (white cards, emojis, styled tables/lists)
+  - HTML rendering bug fixes (list descriptions + FAQ answers)
+  - Exit intent popup redesigned with Spielplatz personality
+  - Frontend design skill installed (`.claude/skills/frontend-design/`)
+- R12: **Content Expansion & SEO Critical Fixes** (Completed 2026-01-28)
+  - Centralized `SITE_URL` with `.trim()` safety net (`lib/constants.ts`)
+  - Fixed canonical URLs, www domain, homepage ISR caching
+  - 6 Olympics guides published (Milan-Cortina 2026)
+  - Guides workflow overhaul: Schema.org JSON-LD, full metadata, ISR, sitemap
+  - Generalized `expert_panel.py` review primitive
+- R11: **Autonomous Content Systems** (Completed 2026-01-27)
+  - Weekly newsletter (Thursday 6am PT, Morning Brew style)
+  - Guide generation pipeline (Monday/Thursday)
+  - Exit intent popup, site cleanup
 
-**Pipeline Status**: Active on Railway (creative-spontaneity)
-- Daily cron runs content generation
-- Newsletter checks on Thursdays
-- Guide generation on Mondays and Thursdays
+**Stats**: 35+ resorts published, 10 guides published (all with Nano Banana Pro images), scores 5.4-7.8
 
-**New Tables (Migration 031)**:
-- `newsletter_issues` - Newsletter editions with content
-- `newsletter_sections` - Individual sections per issue
-- `newsletter_sends` - Per-subscriber send tracking
+**Pipeline**: Active on Railway (creative-spontaneity)
+- Resorts: ~6/day, 70% discovery, deterministic scoring
+- Guides: Mon/Thu, 3-agent expert panel, auto-publish, Nano Banana Pro images
+- Images: Nano Banana Pro on Replicate (primary), 4-tier fallback, Supabase Storage
+- Newsletter: Thursday 6am PT
+- Email sequences: 5-email welcome series
 
-**Key Files (R11)**:
-- Newsletter: `agents/shared/primitives/newsletter.py`
-- Guides: `agents/shared/primitives/guides.py`, `agents/pipeline/guide_orchestrator.py`
-- Cron: `agents/cron.py` (runs email, newsletter, guides)
-- Exit intent: `apps/web/components/ExitIntentPopup.tsx`
+**Infrastructure**:
+- Vercel: www.snowthere.com (ISR)
+- Railway: creative-spontaneity (daily cron)
+- Supabase: Snowthere, AWS us-east-2, 30+ tables
+- GSC: 54 pages discovered, sitemap resubmitted
+- Bing: sitemap resubmitted (processing)
 
 **Known Issues**:
 - Google Places API 400 errors (blocks UGC photos)
-- Quick Take length sometimes exceeds 120 word limit (minor)
+- Quick Take length occasionally exceeds 120 word limit
+- Affiliate programs: migration 032 created, manual signups pending
 
 **Next**:
-- Monitor first newsletter send (Thursday)
-- Monitor first guide generation (Monday)
+- Monitor autonomous guide + image generation (Mon/Thu pipeline)
+- Monitor newsletter send (Thursday)
+- Sign up for affiliate networks
+- Run migration 032 on production
 - Investigate Google Places API errors
-- R7.2: Apply to affiliate programs
+- Homepage redesign (Round 6 in CLAUDE.md, not yet started)
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

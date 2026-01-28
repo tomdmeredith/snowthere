@@ -1,989 +1,233 @@
 # Snowthere Context
 
-> Last synced: 2026-01-27 (Round 11)
+> Last synced: 2026-01-28 (Round 13)
 > Agent: compound-beads v2.0
 
-## Current Round
+## Current State
 
-**Round 11: Autonomous Content Systems** (Active)
-- Type: Feature (Newsletter + Guide Generation)
-- Status: Infrastructure deployed, awaiting first scheduled runs
-- Goal: Weekly newsletter + autonomous guide generation
+**All 13 rounds complete.** No active round. Site is live, pipeline is autonomous, all guides have Nano Banana Pro images.
 
-### Round 11 Progress (2026-01-27)
-
-**Newsletter System** - Deployed
-- Migration 031_newsletter_recurring.sql applied to Supabase
-- Created `newsletter_issues`, `newsletter_sections`, `newsletter_sends` tables
-- Extended `email_sequences` with recurrence fields
-- Weekly newsletter sequence seeded (Thursdays 6am PT)
-- `agents/shared/primitives/newsletter.py` - Generation and sending
-- `agents/cron.py` - Integrated `run_weekly_newsletter()`
-
-**Guide Generation Pipeline** - Deployed
-- `agents/shared/primitives/guides.py` - Guide CRUD and generation
-- `agents/pipeline/guide_orchestrator.py` - Full pipeline with 3-agent approval
-- Runs Monday and Thursday, produces 2 guides/week
-- TrustGuard, FamilyValue, VoiceCoach approval panel (2/3 majority)
-
-**Exit Intent Popup** - Deployed
-- `apps/web/components/ExitIntentPopup.tsx` - Newsletter capture on exit
-- 7-day cooldown after dismissal, never shows again after signup
-- Integrated into layout.tsx
-
-**Site Cleanup** - Deployed
-- Removed AIDisclosure.tsx (was unused)
-- Removed AI disclosure section from Terms page
-- Added /methodology link to Footer navigation
-- Scores verified correct on /resorts page (decimal 5.4-7.8)
-- Quiz and homepage use correct database scores
-- Fixed decimal score display: all scores now show .toFixed(1) (e.g., 6.0 not 6)
+- **Resorts:** 35+ published, pipeline adds ~6/day
+- **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
+- **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback)
+- **Newsletter:** Weekly system deployed (Thursdays 6am PT)
+- **SEO:** Canonical URLs fixed, www domain, ISR caching, sitemaps resubmitted
+- **Scores:** Deterministic decimal (5.4-7.8 range)
 
 ---
 
-**Round 10: Content Structure + Email System Fix** (Completed)
-- Type: Feature + Bug Fix
-- Status: Complete
-- Goal: Fix email system + build guide page infrastructure
+## Round 13: Delightful, On-Brand, Image-Rich Guide Pages (2026-01-28) ✅
 
-### Round 10 Summary
+**Goal:** Guide page design overhaul, Nano Banana Pro image generation, exit intent popup redesign
 
-**Guides Infrastructure**
-- Created `/guides/[slug]` page template
-- Guide content components (GuideHero, GuideContent, GuideFeaturedResorts)
-- `apps/web/lib/guides.ts` - Guide fetching utilities
+### Design Overhaul — DEPLOYED
+- **HTML bug fixes:** `dangerouslySetInnerHTML` + `sanitizeHtml()` for list descriptions and FAQ answers
+- **White card containers:** Content wrapped in `bg-white rounded-3xl shadow-lg` on gradient background
+- **Section emojis:** Contextual emoji mapping by section type and title keywords
+- **List item styling:** Color-coded number badges (coral odd, teal even), hover effects
+- **Comparison tables:** Coral/teal gradient headers, alternating row tints
+- **Callout section type:** Tip/warning/celebration variants with Spielplatz colors
+- **Exit intent popup:** Full Spielplatz redesign — Fraunces headline, Caveat accent, floating snowflakes, playful CTA
 
-**Email System Fix**
-- Ran seed_email_sequences.sql to populate templates
-- Created load_email_templates.py script
+### Nano Banana Pro Image Integration — DEPLOYED
+- **Primary model:** `google/nano-banana-pro` on Replicate ($0.15/image, 2K resolution)
+- **4-tier fallback chain:** Nano Banana Pro (Replicate) → Nano Banana Pro (Glif) → Gemini → Flux Schnell
+- **All 11 guide images generated:** 11/11 success via Nano Banana Pro, stored in Supabase Storage
+- **Permanent hosting:** Images downloaded from Replicate and re-uploaded to Supabase Storage (Replicate URLs are temporary)
+- **Pipeline integrated:** `guide_orchestrator.py` uses `generate_image_with_fallback()` which now defaults to Nano Banana Pro
+
+### Frontend Design Skill — INSTALLED
+- `.claude/skills/frontend-design/SKILL.md` — combines Spielplatz design system with Anthropic frontend-design skill
+- Ensures all future page work follows brand palette, typography, emoji conventions, and component patterns
+
+**Key commits:** `b34fc48`, `900f0f4`
+
+**Arc:**
+- Started believing: Guide pages just needed images and a few bug fixes
+- Ended believing: Brand personality requires systematic design overhaul AND reliable image infrastructure
+- Transformation: From patching individual issues to establishing Spielplatz as a living design standard with autonomous image generation
+
+---
+
+## Round 12: Content Expansion & SEO Critical Fixes (2026-01-28) ✅
+
+**Goal:** Olympics guides, guides workflow overhaul, canonical URL fixes, indexing
+
+### SEO Critical Fixes — DEPLOYED
+**Root cause:** `NEXT_PUBLIC_SITE_URL` on Vercel had a trailing newline, breaking every canonical URL, og:url, and sitemap entry. Combined with www vs non-www mismatch and homepage `force-dynamic`.
+
+**Fixes applied:**
+1. Created `apps/web/lib/constants.ts` — centralized `SITE_URL` with `.trim()` safety net
+2. Updated 7 files to import from `lib/constants.ts` (replaced scattered `BASE_URL` definitions)
+3. Added `metadataBase` to `layout.tsx` using centralized `SITE_URL`
+4. Deleted duplicate `app/robots.txt/route.ts` (comprehensive `robots.ts` now serves)
+5. Changed homepage from `force-dynamic` to `revalidate = 3600` (ISR)
+6. Added homepage revalidation to publishing pipeline (`revalidate_page("/")`)
+7. Updated Vercel env var: `https://snowthere.com` → `https://www.snowthere.com`
+
+**Post-deploy verification (all passed):**
+- Canonical URLs: `https://www.snowthere.com/...` — no newline, correct www
+- Sitemap: All URLs use www domain, no `%0A` encoding
+- Homepage: `x-vercel-cache: HIT` (was `private, no-cache, no-store`)
+- robots.txt: Comprehensive version with AI crawler rules
+
+**Manual actions completed:**
+- Google Search Console: Sitemap resubmitted (54 pages discovered, up from 43)
+- Google Search Console: Homepage indexing requested (priority crawl queue)
+- Bing Webmaster Tools: Sitemap resubmitted (processing)
+
+### Olympics Guides — 6 PUBLISHED
+- `cortina-skiing-2026-olympics` — Can You Ski in Cortina During the 2026 Olympics?
+- `milan-cortina-2026-family-guide` — Complete Family Guide
+- `dolomites-family-resorts-olympics` — Best Dolomites Family Resorts
+- `milan-to-cortina-with-kids` — Transportation Guide
+- `olympics-italy-family-itinerary` — 5-Day Itinerary
+- `cortina-family-budget-guide` — Budget-Friendly Guide
+
+### Guides Workflow Overhaul — 3 TRACKS
+- **Track A (SEO/GEO):** Schema.org JSON-LD (Article + FAQPage + BreadcrumbList), full metadata with OpenGraph/Twitter/canonical, `generateStaticParams()` + ISR, guide llms.txt endpoints, guides in sitemap
+- **Track B (Quality):** Generalized `expert_panel.py` review primitive, expert approval loop with iteration
+- **Track C (UX):** Fixed resort links in guide content, related guides section, breadcrumb navigation
+
+### Railway Crash Fixes
+- Fix #1: Exa API `type: 'neural'` → `type: 'auto'` (breaking API change) + GSC dependencies
+- Fix #2: NameError in runner.py (`quick_take_context` → `qt_context_result`)
+
+**Key commits:** `a1ac49b`, `e51bcf0`, `9b001fb`, `21198f6`, `fec6c6b`, `2255a5b`
+
+**Arc:**
+- Started believing: SEO is about content and Schema.org markup
+- Ended believing: A single trailing newline in an env var can block all indexing
+- Transformation: Infrastructure correctness is the foundation of discoverability
+
+---
+
+## Round 11: Autonomous Content Systems (2026-01-27) ✅
+
+**Goal:** Weekly newsletter + autonomous guide generation
+
+- Newsletter system: Migration 031, `newsletter.py`, cron integration (Thursdays 6am PT)
+- Guide generation pipeline: `guide_orchestrator.py`, 3-agent approval, Mon/Thu schedule
+- Exit intent popup: `ExitIntentPopup.tsx`, 7-day cooldown
+- Site cleanup: Removed AI disclosure, added /methodology to footer, fixed decimal display
+
+**Arc:** Autonomous content is just primitives composed differently on a cron schedule
+
+---
+
+## Round 10: Content Structure & Email Fix (2026-01-27) ✅
+
+**Goal:** Guide pages + fix email system
+
+- Built `/guides/[slug]` page template with GuideContent, GuideHero components
+- Created `lib/guides.ts` with fetching utilities
+- Loaded HTML templates into `email_templates` table
 - Welcome sequence now sends properly
 
----
-
-**Round 9.2: Scoring Integration + Data Quality** (Completed)
-- Type: Bug Fix + Data Quality
-- Status: Deployed
-- Goal: Fix scoring integration + improve data extraction
-
-### Round 9.2 Progress (2026-01-27)
-
-**Problem 1: Scoring Integration** ✅ FIXED
-- New resorts got LLM-extracted integer scores (8, 9) instead of deterministic decimals
-- Root cause: `calculate_family_score()` was created but never integrated into pipeline
-- Fix: Added import + recalculation call in `runner.py` before storage
-- Backfilled 5 resorts: 9.0→5.4, 8.0→5.7-6.2
-
-**Problem 2: Score Distribution Too Low** ✅ ANALYZED + PHASE 1 DEPLOYED
-- No resorts reaching 8.x-9.x range (highest is Lake Louise at 7.8)
-- Expert panel analysis: Formula is sound (max 10.0 possible)
-- Root cause: DATA SPARSITY - only 11-34% of resorts have family metrics populated
-- Phase 1 Fix: Updated `intelligence.py` extraction prompts to actively search for:
-  - has_childcare, childcare_min_age
-  - ski_school_min_age, has_magic_carpet
-  - kids_ski_free_age, has_terrain_park_kids, has_ski_in_out
-- Next: Monitor pipeline for improved data population
-
-**Problem 3: Google Places API 400 Errors** (Pending)
-- All resorts getting 400 errors during external link curation
-- Blocks UGC photo collection
-- Needs investigation in `research.py`
-
-### Round 9.1: Pipeline Crash Fix ✅ DEPLOYED (2026-01-27)
-
-- PGRST204 schema mismatch (perfect_if/skip_if in wrong table)
-- Duplicate detection slug mismatch (unidecode)
-- Result: 5/5 published, 0 failed
+**Arc:** The JSONB content schema was already designed — just needed frontend rendering
 
 ---
 
-**Round 9: Scoring Differentiation & Decimal Precision** ✅ DEPLOYED
-- Type: Algorithm + Database + UX
-- Status: Live in production, all 30 resorts updated (2026-01-27)
-- Goal: Improve score differentiation through deterministic formula and decimal precision
+## Round 9: Scoring & Pipeline Stability (2026-01-27) ✅
 
-### Round 9: Scoring Differentiation & Decimal Precision (Deployed 2026-01-27)
+**Goal:** Deterministic decimal scores + pipeline crash fixes
 
-**Problem Statement:**
-- Family scores clustered at 7-9 INTEGER values (only 10 discrete values)
-- LLM-based scoring produced "safe" middle scores
-- Quiz returned similar resorts for different family profiles
-- No transparency on how scores were calculated
+- **R9:** DECIMAL(3,1) scores, deterministic formula in `scoring.py`, /methodology page, quiz diversity
+- **R9.1:** Pipeline crash fix (perfect_if/skip_if schema mismatch + unidecode slugify)
+- **R9.2:** Integrated scoring into pipeline, backfilled 5 resorts, improved data extraction prompts
 
-**Solution - Expert Panel Consensus:**
-An expert panel (Data Architect, Algorithm Designer, Recommendation Systems, Information Retrieval, UX, Abstract Thinker, SEO/GEO) analyzed the problem and converged on:
+**Score distribution:** 5.4-7.8 (was clustered at 7-9 integers). Lake Louise highest at 7.8.
 
-1. **DECIMAL(3,1) scores** - 90 discrete values instead of 10
-2. **Deterministic formula** - Replace LLM opinion with calculated scores
-3. **Diversity constraints** - Max 2 resorts from same country in quiz top 3
-4. **Transparency** - /methodology page explains the formula
-
-**Files Created:**
-- `supabase/migrations/030_decimal_scores.sql` - DECIMAL(3,1) column migration
-- `agents/shared/primitives/scoring.py` - Deterministic scoring formula:
-  - Base: 5.0 points
-  - Childcare: +0.0 to +1.5 (has_childcare, min_age thresholds)
-  - Ski school: +0.0 to +1.0 (min_age thresholds)
-  - Terrain: +0.0 to +1.2 (beginner %, magic carpet, kids park)
-  - Value: +0.0 to +0.8 (kids ski free age)
-  - Convenience: +0.0 to +0.5 (ski-in/out, English friendly)
-- `agents/scripts/recalculate_scores.py` - Backfill script for existing resorts
-- `apps/web/app/methodology/page.tsx` - Public methodology page
-
-**Files Modified:**
-- `apps/web/lib/quiz/scoring.ts` - Added `selectDiverseTopMatches()` for diversity
-- `apps/web/lib/database.types.ts` - JSDoc for FamilyScore type
-- `apps/web/lib/quiz/types.ts` - JSDoc for decimal scores
-- `agents/shared/primitives/__init__.py` - Added scoring exports, fixed linking import
-- `agents/shared/primitives/database.py` - Updated column whitelist
-- 7 UI components - Removed "/10" suffix, display decimal directly
-
-**UI Components Updated:**
-- `ResortMatch.tsx`, `HeroImage.tsx`, `TradingCard.tsx`
-- `SimilarResorts.tsx`, `FamilyMetricsTable.tsx`, `QuickTake.tsx`
-- `SkiCalendar.tsx`, `llms.txt/route.ts`
-
-**Deployment Results (2026-01-27):**
-- 30 resorts updated with new decimal scores
-- Score distribution: 5.x (15 resorts), 6.x (13 resorts), 7.x (2 resorts)
-- Score range: 5.4 to 7.8 (previously clustered at 7-9)
-- Top scores: Lake Louise 7.8, Serfaus-Fiss-Ladis 7.0
-- Good variance achieved - scores now differentiate
-
-**Verification Completed:**
-- ✅ Migration 030_decimal_scores.sql executed in Supabase
-- ✅ Backfill script run with --apply
-- ✅ /methodology page working
-- ✅ Quiz diversity working (max 2 from same country)
-- ✅ Decimal scores displaying on resort pages (e.g., 6.3/10)
-- ✅ ISR cache revalidated for all resorts
-
-**Key Insight:** The deterministic formula correctly exposes data quality issues - resorts showing 5.4 scores have incomplete childcare/terrain data in the database. This motivates improving data extraction in the pipeline.
-
-**Arc Narrative:**
-- We started believing: LLM-generated scores were trustworthy approximations
-- We ended believing: "Store atoms, compute molecules" - deterministic formulas from data beat LLM opinion
-- The transformation: From "AI-generated quality score" → "calculated score from verifiable data"
+**Arc:** Store atoms, compute molecules — deterministic formulas from data beat LLM opinion
 
 ---
 
-**Round 8.3: Quiz Comprehensive Audit + Region Backfill** ✅ DEPLOYED
-- Type: UX + Algorithm + Data Quality
-- Status: Live on production, all tests passing
+## Rounds 6-8: Summary
+
+**Round 8 — Quick Takes & Site Audit** (2026-01-26)
+- Editorial Verdict Model: hook/context/tension/verdict structure
+- 31 forbidden phrases, specificity scoring, quality gates
+- Created About/Contact pages, fixed quiz match percentages
+- Email confirmation on signup via Resend
+
+**Round 7 — External Linking & Affiliate** (2026-01-26-27)
+- Entity link cache (Google Places), affiliate config, pipeline link injection (Stage 4.9)
+- GA4 outbound click tracking, 30+ affiliate programs researched
+- Migration 032 created (pending manual network signups)
+
+**Round 6 — AI Discoverability & Email** (2026-01-26)
+- AI crawler whitelist in robots.ts (GPTBot, Claude-Web, PerplexityBot, etc.)
+- Full email system: 7 tables, Resend integration, 5-email welcome sequence
+- CAN-SPAM compliance: unsubscribe endpoint, physical address, template variables
+- Region extraction for location display
 
 ---
 
-**Round 8.2: Email Confirmation + Migration** ✅ DEPLOYED
-- Type: Feature + Infrastructure
-- Status: Live - Welcome emails send immediately on signup
-- Goal: Send welcome email on signup, not delayed via cron
+## Rounds 1-5: Foundation (Summary)
 
-### Round 8.2: Email Confirmation + Migration (Completed 2026-01-26)
-
-**Problem Statement:**
-- Welcome emails were delayed until cron job ran (could be 24+ hours)
-- Quiz was showing 9000% match percentages (multiplying by 100 twice)
-- Migration 029 hadn't been run on production
-
-**Solution:**
-Immediate email confirmation on signup + bug fixes.
-
-**Files Created:**
-- `apps/web/lib/email.ts` - Resend SDK integration with `sendEmail()` and `sendWelcomeEmail()`
-
-**Files Modified:**
-- `apps/web/app/api/subscribe/route.ts` - Now calls `sendWelcomeEmail()` immediately after signup (line 169-178)
-- `apps/web/components/quiz/ResortMatch.tsx` - Fixed match percentage (line 37: removed duplicate *100)
-
-**Infrastructure:**
-- Ran migration `029_contact_submissions.sql` via Supabase SQL Editor
-- Created new Resend API key "snowthere-vercel" in Resend dashboard
-- Added RESEND_API_KEY to Vercel environment variables
-- Triggered redeploy with new env var
-
-**Welcome Email Features:**
-- Personalized greeting with subscriber name
-- 4 value propositions (resort guides, real costs, age tips, weekly deals)
-- Pro tip teaser about Austria vs Colorado pricing
-- CTA to browse resorts
-- Referral code section (if referral code exists)
-- Unsubscribe link (CAN-SPAM compliant)
-- HTML and plain text versions
-
-**Key Files:**
-- `apps/web/lib/email.ts` - Email utility
-- `apps/web/app/api/subscribe/route.ts` - Subscribe API with immediate email
-- `apps/web/components/quiz/ResortMatch.tsx` - Quiz fix
-
-**Deployment Status:** ✅ LIVE at www.snowthere.com
+| Round | Name | Key Outcome |
+|-------|------|-------------|
+| 1 | Foundation | Next.js 14, Supabase, 23 tables, design system |
+| 2 | Core Agents | 63 primitives, autonomous pipeline, MCP server |
+| 3 | Security Audit | XSS, GDPR, legal pages, security headers |
+| 4 | Production Launch | Vercel + Railway + Supabase in production |
+| 5 | Compliance & Polish | Alerts, WCAG 2.1 AA, CWV, internal linking, site stabilization |
+| 5.1 | Agent-Native Scalability | Two-phase validation, 99% token reduction |
+| 5.2 | Schema Contract Audit | sanitize_for_schema(), expanded cost columns |
 
 ---
 
-**Round 8.1: Comprehensive Site Audit & Fixes** ✅ COMPLETE
-- Type: Bug fixes + missing pages
-- Status: Complete - /about, /contact, /api/contact created
-- Goal: Fix critical 404s on footer links discovered during comprehensive audit
-
-### Round 8.1: Site Audit & Fixes (Completed 2026-01-26)
-
-**Problem Statement:**
-Comprehensive site audit revealed critical issues:
-- `/about` returned 404 (linked in footer)
-- `/contact` returned 404 (linked in footer)
-- No mechanism for visitors to contact the team
-
-**Audit Coverage:**
-| Area | Status | Notes |
-|------|--------|-------|
-| Homepage | ✅ Pass | All sections load correctly, age selector works |
-| /resorts | ✅ Pass | 29 resorts across 8 countries displayed |
-| /guides | ✅ Pass | "Coming Soon" state (expected) |
-| /quiz | ✅ Pass | 7-question flow works with progress tracking |
-| Resort pages | ✅ Pass | All content sections render, internal links work |
-| Newsletter signup | ✅ Pass | /api/subscribe returns 200, GA4 event fires |
-| GA4 tracking | ✅ Pass | page_view, scroll, form_start, newsletter_signup, click events |
-| Outbound click tracking | ✅ Pass | External links fire click event with outbound=true |
-| /privacy | ✅ Pass | Page loads correctly |
-| /terms | ✅ Pass | Page loads with trademark notice anchor |
-| /about | ❌→✅ | Was 404, now created |
-| /contact | ❌→✅ | Was 404, now created |
-
-**Files Created:**
-- `apps/web/app/about/page.tsx` - About page with mission, research process, trust signals
-- `apps/web/app/contact/page.tsx` - Contact page with form
-- `apps/web/components/ContactForm.tsx` - Client component for contact form
-- `apps/web/app/api/contact/route.ts` - Contact form API endpoint
-- `supabase/migrations/029_contact_submissions.sql` - Database table for submissions
-
-**About Page Sections:**
-1. Our Mission - Help families plan ski trips
-2. What We Do - Complete trip guides with costs, ages, tips
-3. How We Research - AI-assisted with human review
-4. Why Trust Snowthere - Honest, real numbers, global, parent-focused
-
-**Contact Form Features:**
-- Fields: name, email, subject (dropdown), message
-- Subject options: resort question, suggestion, feedback, correction, general, other
-- Rate limiting: 3 requests/minute per IP
-- Input sanitization: HTML stripping, max length 5000 chars
-- Stored in `contact_submissions` table with IP, user agent, referrer
-
-**Deployment Required:**
-- [ ] Commit and push to main (Vercel auto-deploy)
-- [ ] Run migration 029_contact_submissions.sql via Supabase Dashboard
-
----
-
-**Round 8: Quick Takes Redesign** ✅ COMPLETE
-- Type: Content quality improvement
-- Status: Complete - Editorial Verdict Model implemented
-- Goal: Replace generic Quick Takes with specific, memorable, honest content
-
-### Round 8: Quick Takes Redesign (Completed 2026-01-26)
-
-**Problem Statement:**
-Quick Takes were generic and formulaic. Many started with "Here's the thing about..." - violating our voice principles. Lacked specificity, honesty about downsides, and memorable details.
-
-**Solution - Editorial Verdict Model:**
-New 4-part structure replacing generic prompts:
-1. **THE HOOK** (1 sentence) - Specific, memorable insight
-2. **THE CONTEXT** (1-2 sentences) - Why this matters for YOUR family
-3. **THE TENSION** (1-2 sentences) - What's the catch? Be honest.
-4. **THE VERDICT** (1 sentence) - Clear recommendation
-
-**Files Created:**
-- `agents/shared/primitives/quick_take.py` (NEW):
-  - `QuickTakeContext` dataclass - Input context with editorial fields
-  - `QuickTakeResult` dataclass - Generated content with quality metrics
-  - `generate_quick_take()` - Main generation function using Opus
-  - `calculate_specificity_score()` - Measures how specific vs generic content is
-  - `check_forbidden_phrases()` - Detects 31 banned phrases
-  - `validate_quick_take()` - Quality gate enforcement
-  - `FORBIDDEN_PHRASES` - List of 31 banned phrases
-
-**Files Modified:**
-- `agents/shared/primitives/intelligence.py`:
-  - `extract_quick_take_context()` - Extract editorial inputs from research
-  - `QuickTakeContextResult` dataclass - Editorial extraction results
-
-- `agents/pipeline/runner.py`:
-  - Added Stage 3.1: Quick Take Context Extraction
-  - Added Stage 3.2: Quick Take Generation (Editorial Verdict Model)
-  - Stage 3.3: Other Content Sections (unchanged)
-  - Removed "quick_take" from generic sections loop
-
-- `agents/shared/primitives/__init__.py`:
-  - Added all Quick Take exports
-
-**Quality Gates:**
-| Gate | Threshold | Purpose |
-|------|-----------|---------|
-| Word count | 80-120 words | Concise but complete |
-| Specificity score | > 0.6 | Specific beats generic |
-| Forbidden phrases | 0 | No lazy writing |
-| Perfect if conditions | >= 2 | Clear recommendations |
-| Skip if conditions | >= 1 | Honest about downsides |
-
-**Forbidden Phrases (31 total):**
-- Generic openers: "here's the thing", "let's be real", "the truth is"
-- Empty superlatives: "world-class", "stunning", "amazing", "incredible"
-- Marketing speak: "hidden gem", "must-visit", "bucket list"
-- Generic qualifiers: "perfect for families", "great for families"
-
-**Specificity Scoring:**
-Positive signals (increase score):
-- Numbers (ages, percentages, costs, distances)
-- Age references ("ages 5-10", "under 6")
-- Comparisons ("half the cost of Aspen")
-- Proper nouns (specific hotels, lifts, restaurants)
-
-Negative signals (decrease score):
-- Generic adjectives (great, nice, beautiful)
-- Vague quantifiers (many, various, several)
-- Hedge words (might, could, perhaps)
-
-**Pipeline Cost:**
-- Quick Take context extraction: ~$0.01 (Sonnet)
-- Quick Take generation: ~$0.10 (Opus)
-- Total additional cost per resort: ~$0.11
-
-**Key Files:**
-- `agents/shared/primitives/quick_take.py` - Core primitive
-- `agents/shared/primitives/intelligence.py` - Context extraction
-- `agents/pipeline/runner.py` - Pipeline integration
-
----
-
-**Round 7: External Linking & Affiliate System** ✅ COMPLETE (except manual R7.2)
-- Type: Strategic implementation
-- Status: R7.1 + R7.3 + R7.4 complete, pending manual affiliate signup
-- Goal: External linking via Google Places, affiliate URL integration, link click tracking
-
-### Round 7.1: External Linking Infrastructure (Completed 2026-01-26)
-
-**Problem Statement:**
-Content mentions hotels, restaurants, ski schools - but no clickable links. Missing:
-- User value (quick access to booking, maps)
-- SEO signals (outbound links show authority)
-- Revenue opportunity (affiliate links)
-
-**Migrations Created:**
-- `027_entity_link_cache.sql` - Cache for Google Places API lookups
-  - Stores place_id (indefinite TTL), resolved names, direct URLs, maps URLs
-  - Entity types: hotel, restaurant, ski_school, rental, activity, grocery
-  - Unique constraint on (name_normalized, entity_type, location_context)
-- `028_affiliate_config.sql` - Affiliate program configuration
-  - Stores program settings: url_template, affiliate_id, tracking_param, domains
-  - Seeded with Booking.com, Ski.com, Liftopia placeholders
-  - `link_click_log` table for analytics
-
-**Primitives Created:**
-- `agents/shared/primitives/external_links.py` (NEW):
-  - `resolve_google_place()` - Resolve entity to Google Places data
-  - `lookup_affiliate_url()` - Transform direct URL to affiliate URL
-  - `resolve_entity_link()` - Main entry point combining Places + affiliate
-  - `log_link_click()` - Track outbound clicks
-  - `get_click_stats()` - Analytics queries
-  - `get_rel_attribute()` - SEO-correct rel values (sponsored, nofollow)
-  - `clear_expired_cache()` - Maintenance
-
-- `agents/shared/primitives/intelligence.py` (MODIFIED):
-  - `extract_linkable_entities()` - Find hotels, restaurants, etc. in content
-  - `ExtractedEntity` dataclass with name, type, context_snippet, confidence
-  - `EntityExtractionResult` dataclass
-
-**Exports Added:**
-- `agents/shared/primitives/__init__.py` updated with all new exports
-
-**Next Steps (R7.2-R7.4):**
-- Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual process
-- Add GOOGLE_PLACES_API_KEY to Railway environment
-- Integrate entity link injection into pipeline Stage 4.9
-- Add outbound link click tracking via GA4 events
-
-**Key Files:**
-- `supabase/migrations/027_entity_link_cache.sql`
-- `supabase/migrations/028_affiliate_config.sql`
-- `agents/shared/primitives/external_links.py`
-- `agents/shared/primitives/intelligence.py` (extract_linkable_entities)
-- `agents/shared/primitives/__init__.py`
-
-### Round 7.3: Pipeline Link Injection (Completed 2026-01-26)
-
-**Problem Statement:**
-R7.1 created the primitives for external link resolution, but they weren't integrated into the autonomous pipeline. Hotel/restaurant mentions in content remained unlinked.
-
-**Solution:**
-Integrated external link injection as Stage 4.9 in the pipeline runner, processing content sections to automatically inject Google Places / affiliate links.
-
-**Primitives Created:**
-- `agents/shared/primitives/external_links.py` (MODIFIED):
-  - `InjectedLink` dataclass - Record of link injection
-  - `LinkInjectionResult` dataclass - Result with modified content
-  - `inject_external_links()` - Inject links into single section
-  - `inject_links_in_content_sections()` - Process all sections
-
-**Pipeline Integration:**
-- `agents/pipeline/runner.py` - Added Stage 4.9: External Link Injection
-  - Processes sections in priority order: where_to_stay, on_mountain, off_mountain, etc.
-  - Max 3 links per section to avoid over-linking
-  - First mention only (SEO best practice)
-  - Proper rel attributes: sponsored (affiliate), nofollow (maps)
-  - Logs injection stats to audit log
-
-**SEO Rules Enforced:**
-- First mention only - no redundant links
-- Affiliate links: `rel="sponsored noopener"`
-- Google Maps links: `rel="nofollow noopener"`
-- Other external: `rel="nofollow noopener noreferrer"`
-- Content re-saved to database after injection
-
-**Key Files:**
-- `agents/shared/primitives/external_links.py` - inject_external_links(), inject_links_in_content_sections()
-- `agents/pipeline/runner.py` - Stage 4.9 integration
-- `agents/shared/primitives/__init__.py` - New exports
-
-**Infrastructure Verified (2026-01-26):**
-- GOOGLE_PLACES_API_KEY already configured in Railway
-- Migrations 027/028 applied successfully
-- affiliate_config seeded with Booking.com, Ski.com, Liftopia placeholders
-
-**Next Steps (R7.2):**
-- Apply to affiliate programs (Booking.com, Ski.com, Liftopia) - manual signup
-
-### Round 7.4: GA4 Outbound Click Tracking (Completed 2026-01-26)
-
-**Problem Statement:**
-External links were being rendered and clicked, but no visibility into which links users actually engage with. Need analytics to understand link performance and affiliate revenue potential.
-
-**Solution:**
-Created analytics utility with GA4 event tracking, integrated into UsefulLinks component.
-
-**Files Created:**
-- `apps/web/lib/analytics.ts` (NEW):
-  - `trackOutboundClick()` - Track external link clicks with category, affiliate status, resort context
-  - `trackNewsletterSignup()` - Newsletter signup events
-  - `trackQuizComplete()` - Quiz completion events
-  - `trackResortView()` - Enhanced resort page views
-  - Respects cookie consent (checks if gtag exists)
-  - Uses `transport_type: 'beacon'` for reliable tracking on navigation
-
-**Files Modified:**
-- `apps/web/components/resort/UsefulLinks.tsx`:
-  - Added onClick handler calling `trackOutboundClick()`
-  - Tracks: url, linkText, category, isAffiliate, affiliateProgram, resortSlug
-
-**GA4 Event Parameters:**
-```javascript
-{
-  event_category: 'outbound',
-  event_label: linkText,
-  link_url: url,
-  link_domain: 'extracted-from-url',
-  link_category: 'lodging|dining|activity|etc',
-  is_affiliate: true|false,
-  affiliate_program: 'booking.com|ski.com|etc',
-  resort_slug: 'zermatt|park-city|etc',
-  transport_type: 'beacon'
-}
-```
-
-**Key Files:**
-- `apps/web/lib/analytics.ts` - Analytics utility
-- `apps/web/components/resort/UsefulLinks.tsx` - Click tracking integration
-
-**Round 7 Complete Tasks:**
-- R7.1: External links infrastructure (migrations, primitives)
-- R7.3: Pipeline link injection (Stage 4.9)
-- R7.4: GA4 outbound click tracking
-
-### Round 7.2: Comprehensive Affiliate Program Research (Completed 2026-01-27)
-
-**Problem Statement:**
-Only 3 placeholder affiliate programs existed (Booking.com, Ski.com, Liftopia). Needed comprehensive research into ALL relevant affiliate programs for a family ski directory.
-
-**Research Completed:**
-Extensive analysis of 30+ affiliate programs across 13 categories:
-1. **Accommodation** - Booking.com, VRBO, Expedia, TripAdvisor, Interhome, Alps Resorts, Europe-Mountains
-2. **Tour Operators** - Sunweb (9x World Best winner), Skiweekends, Crystal Ski, Skiworld, Esprit Ski, Ski Famille
-3. **Lift Tickets** - Liftopia, GetSkiTickets, Epic Pass
-4. **Equipment Rentals** - Skiset, Snow Rental
-5. **Flights** - Skyscanner
-6. **Airport Transfers** - Alps2Alps (€24 flat per booking!)
-7. **Car Rental** - Discover Cars (23-54% commission!), Auto Europe
-8. **Gear/Apparel** - REI, Backcountry, evo, Burton, GoPro, The North Face, Columbia, Patagonia, Helly Hansen, Peter Glenn (150-day cookie!)
-9. **Travel Insurance** - World Nomads, Allianz Travel
-10. **Activities** - Viator, GetYourGuide
-11. **Baby Gear** - BabyQuip (10% commission)
-
-**Priority Tiers:**
-- **Tier 1 (Must Have)**: Discover Cars, Booking.com, Alps2Alps, Sunweb, Skiweekends, World Nomads, Viator
-- **Tier 2 (High Value)**: Skiset, Snow Rental, Crystal Ski, Backcountry, REI, BabyQuip, GetSkiTickets, Interhome, VRBO, Expedia, TripAdvisor, Skyscanner, evo, Auto Europe
-- **Tier 3 (Supplementary)**: Burton, GoPro, Epic Pass, Esprit Ski, Ski Famille, Skiworld, Allianz Travel, and more
-
-**Migration Created:**
-- `supabase/migrations/032_comprehensive_affiliate_programs.sql`
-  - Added new columns: category, network, cookie_duration, priority_tier, signup_url
-  - Inserted 30+ affiliate programs with placeholder affiliate_ids
-  - Created `affiliate_programs_summary` view for category breakdown
-  - All programs have signup_url for manual registration
-
-**Affiliate Networks to Join:**
-- Travelpayouts (Booking.com, Discover Cars, Viator, flights)
-- Awin (Burton, Snow Rental, Crystal Ski)
-- Impact Radius (Backcountry, outdoor brands)
-- AvantLink (REI, evo, Patagonia, Helly Hansen)
-- CJ Affiliate (Skyscanner, VRBO, Expedia, GoPro, Columbia)
-- FlexOffers (Sunweb, The North Face, Alps Resorts)
-- Admitad (Alps2Alps)
-
-**Next Steps (Manual):**
-1. Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
-2. Apply to individual programs through each network
-3. Update `affiliate_config.affiliate_id` with real IDs as approved
-4. Run migration 032 via Supabase Dashboard
-
-**Key Files:**
-- `supabase/migrations/032_comprehensive_affiliate_programs.sql`
-
-**Remaining:**
-- Manual affiliate network signups and program applications
-
----
-
-**Round 6: AI Discoverability & Infrastructure** ✅ COMPLETE
-- Type: Strategic implementation
-- Status: All tasks complete - email system fully operational
-- Goal: AI discoverability, email system, location display fixes
-
-**North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
-
-**Guiding Principles**:
-- Agent-native (atomic primitives, composable, full parity)
-- Probabilistic for nuance, deterministic for correctness
-- SEO/GEO optimized
-- Autonomous operation
-
-**Strategic Plan**: `/.claude/plans/snuggly-herding-liskov.md`
-
-### Round 6.1: AI Crawler Access (Completed 2026-01-26)
-- Added AI crawler user agents to robots.ts: OAI-SearchBot, Perplexity-User, Google-Extended, Meta-ExternalAgent, cohere-ai
-- Enhanced per-resort llms.txt with "Citable Facts" and "Quick Answers" sections for GEO optimization
-- Commit: `eb6d205`
-
-### Round 6.4: Location Display Fix (Completed 2026-01-26)
-- Issue: Resorts displayed "Country" only, should show "Region, Country"
-- Root cause: Region not extracted during pipeline research phase
-- Fix: Added `extract_region()` primitive to intelligence.py (uses Claude Haiku)
-- Integrated region extraction into runner.py after coordinates extraction
-- TradingCard and resort page hero already had correct display logic
-- New resorts will now have region data populated automatically
-
-**Key Files Changed**:
-- `apps/web/app/robots.ts` - AI crawler user agents
-- `apps/web/app/resorts/[country]/[slug]/llms.txt/route.ts` - Citable Facts, Quick Answers
-- `agents/shared/primitives/intelligence.py` - `extract_region()` primitive
-- `agents/pipeline/runner.py` - Region extraction integration
-
-### Round 6.2: Email System Foundation (Completed 2026-01-26)
-- Created migration 026_email_system.sql with 7 tables:
-  - subscribers: Core email list with referral tracking
-  - email_templates: Reusable email templates
-  - email_sequences: Automated email flows
-  - email_sequence_steps: Individual steps within sequences
-  - email_sends: Audit log of all emails sent
-  - subscriber_sequence_progress: Track subscriber progress
-  - referral_rewards: Morning Brew style referral tracking
-- Created /api/subscribe endpoint with:
-  - Rate limiting (5 requests/minute per IP)
-  - Email validation
-  - Reactivation for unsubscribed users
-  - Referral code lookup
-  - Auto-generated referral codes via DB trigger
-- Wired Newsletter.tsx to call /api/subscribe
-
-**Migration Pending**: Run `026_email_system.sql` via Supabase Dashboard
-
-### Round 6.3: Lead Magnet & Welcome Sequence (Completed 2026-01-26)
-- Created `agents/shared/primitives/email.py` with Resend API integration:
-  - `send_email()` - Send via Resend API with tracking
-  - `add_subscriber()` - Add to list with referral handling
-  - `remove_subscriber()` - Soft delete/unsubscribe
-  - `trigger_sequence()` - Start subscriber on sequence
-  - `advance_sequences()` - Cron job to send due emails
-  - `get_sequence_stats()` - Analytics for sequences
-- Added `resend_api_key` to config.py settings
-- Created 5 welcome email templates (HTML):
-  - Day 0: Family Ski Trip Checklist
-  - Day 2: Alps vs Colorado cost comparison
-  - Day 4: Kids ages guide
-  - Day 7: Epic vs Ikon simplified
-  - Day 14: Ready to pick your resort
-- Created `supabase/seed_email_sequences.sql` to seed templates and sequence
-- Integrated `advance_sequences()` into daily cron.py
-
-**Key Files Created**:
-- `agents/shared/primitives/email.py` - Resend email primitives
-- `agents/templates/welcome_checklist.html` - Day 0 checklist email
-- `agents/templates/welcome_day2.html` - Alps vs Colorado
-- `agents/templates/welcome_day4.html` - Kids ages
-- `agents/templates/welcome_day7.html` - Epic vs Ikon
-- `agents/templates/welcome_day14.html` - Ready to pick
-- `supabase/seed_email_sequences.sql` - Welcome sequence seed data
-
-### Round 6.5: Email System Deployment (Completed 2026-01-26)
-- Ran migration 026_email_system.sql via Supabase Dashboard
-- Ran seed_email_sequences.sql to create 5 templates + welcome sequence
-- Added RESEND_API_KEY to Railway and Vercel environments
-- Configured domain verification in Resend:
-  - DKIM: TXT record `resend._domainkey` → verified
-  - SPF: TXT record `send` → verified
-  - MX: `send` → `feedback-smtp.us-east-1.amazonses.com` → verified
-- snowthere.com is now fully verified in Resend for email sending
-- Email system ready for production use (subscribers → welcome sequence → Resend delivery)
-
-### Round 6.6: Email Compliance Fixes (Completed 2026-01-26)
-
-**Critical Issues Found:**
-1. Unsubscribe endpoint didn't exist (CAN-SPAM violation)
-2. Template variables ({{name}}, {{email}}) weren't being substituted
-3. Welcome sequence wasn't triggered on signup (delayed 24+ hours)
-4. Email footers missing physical address (CAN-SPAM requirement)
-
-**Fixes Implemented:**
-- Created `/api/unsubscribe` endpoint (POST for unsubscribe, GET redirects to page)
-- Created `/unsubscribe` page with confirmation UI
-- Added `substitute_template_variables()` function to email.py
-- Updated `advance_sequences()` to substitute variables before sending
-- Updated `/api/subscribe` to trigger welcome sequence immediately
-- Added physical address (2261 Market Street #5072, San Francisco, CA 94114) to all 5 email templates
-
-**Key Files Created/Modified:**
-- `apps/web/app/api/unsubscribe/route.ts` (NEW) - Unsubscribe API
-- `apps/web/app/unsubscribe/page.tsx` (NEW) - Unsubscribe confirmation page
-- `agents/shared/primitives/email.py` - Template variable substitution
-- `apps/web/app/api/subscribe/route.ts` - Trigger welcome sequence
-- `agents/templates/welcome_*.html` (5 files) - Physical address in footers
-
-**Compliance Status:**
-- ✅ Unsubscribe link works
-- ✅ Physical address in every email
-- ✅ Clear sender identity
-- ✅ Template variables substituted
-- ✅ Welcome sequence triggers immediately
-
-**Future Work (Not Critical):**
-- Resend webhooks for bounce/complaint tracking (when 1000+ subscribers)
-- Batch sending optimization (when 500+ subscribers)
-
----
-
-**Round 5.11-5.14: Compliance & Polish** (completed 2026-01-25)
-- Type: infrastructure + accessibility
-- Status: Complete, deployed to production
-- Goal: Cron alerts, accessibility (WCAG 2.1 AA), Core Web Vitals, trademark notices
-
-**Accomplishments**:
-- **5.11 Cron Alerts**: `alert_budget_warning()`, `alert_startup_failure()`, per-resort error alerts, revalidation failure alerts
-- **5.12 Accessibility**: Skip link targets on all pages, lightbox focus trap + ARIA, FAQ accordion headings, newsletter live region, mobile menu ARIA
-- **5.13 Trademark**: Footer notice linking to /terms#trademark-notice
-- **5.14 Core Web Vitals**: web-vitals package, WebVitalsReporter component (consent-aware), preconnect hints, hero image optimized with next/image
-
-**Key Files Changed**:
-- `agents/shared/primitives/alerts.py` - New alert primitives
-- `agents/cron.py`, `agents/pipeline/orchestrator.py` - Alert integration
-- `apps/web/components/WebVitalsReporter.tsx` (NEW)
-- `apps/web/lib/web-vitals.ts` (NEW)
-- Multiple accessibility fixes across components
-
-**Arc Narrative**:
-- We started believing: These 4 items are separate compliance checkboxes
-- We ended believing: They form an integrated observability and quality layer
-- The transformation: From "compliance tasks" → "quality infrastructure"
-
----
-
-**Round 5.10: Internal Linking** (completed 2026-01-25)
-- Type: feature
-- Status: Complete, deployed to production
-- Goal: Auto-link resort names in content to improve SEO, GEO, and user navigation
-
-**Accomplishments**:
-- Created `apps/web/lib/resort-linker.ts` - auto-links resort names mentioned in content
-- Module-level caching for resort lookup (shared across renders)
-- Name variant matching (St./Sankt/Saint, Mont/Mount, hyphenated names)
-- Hyphenated resort support: "Lech-Zürs" matches "Lech" or "Zürs" separately
-- Word-boundary regex matching (avoids partial matches)
-- Excludes self-linking (current resort name not linked on its own page)
-- Safety check for existing links (doesn't double-link)
-- **SEO deduplication**: Each resort linked only once per page (first mention wins)
-- Shared `linkedSlugs` tracking across all content sections
-- Pre-processes content server-side in page.tsx
-- Added `.resort-link` styling with coral underline
-- Changed ISR revalidation from 1 hour to 12 hours
-- Fixed Next.js 14.1.0 sitemap bug (converted to route handler pattern)
-
-**Key Files Changed**:
-- `apps/web/lib/resort-linker.ts` (NEW)
-- `apps/web/app/resorts/[country]/[slug]/page.tsx` (MODIFIED)
-- `apps/web/app/sitemap.xml/route.ts` (NEW - replaced sitemap.ts)
-- `apps/web/app/globals.css` (MODIFIED)
-
-**Arc Narrative**:
-- We started believing: Internal linking needs a complex agent system with databases, APIs, Claude-generated anchor text
-- We ended believing: The user's actual need is simple: when content mentions a resort, make it clickable
-- The transformation: From "build a system" → "add a utility function"
-
-## Round 5.9.8: Site Stabilization (completed 2026-01-25)
-- Type: bug fixes
-- Status: Completed
-- Goal: Fix critical UX issues found in site audit
-
-**Accomplishments**:
-- Fixed homepage ranking: 9/10 resorts now appear before 8/10
-  - Root cause: Supabase returns `family_metrics` as object (1:1), not array
-  - Fix: Added `getScore()` helper to handle both object and array formats
-- Fixed sidebar layout on resort pages:
-  - Jump to Section now appears above Useful Links
-  - Left/right columns now top-aligned (`items-start` on grid)
-- Hidden social link placeholders in Footer (no accounts yet)
-- Changed "See All 3,000+ Resorts" to "Browse All Resorts"
-- Set homepage to `force-dynamic` for fresh data on each request
-
-**Key Files Changed**:
-- `apps/web/app/page.tsx` - Homepage ranking fix, dynamic rendering
-- `apps/web/components/home/TradingCardGrid.tsx` - Interface fix
-- `apps/web/components/home/Footer.tsx` - Social links hidden
-- `apps/web/app/resorts/[country]/[slug]/page.tsx` - Sidebar order/alignment
-
-**Arc Narrative**:
-- We started believing: The homepage sorting code was correct
-- We ended believing: Supabase's foreign table data structure differs from TypeScript expectations
-- The transformation: From "sorting bug" → "data shape mismatch between DB and code"
-
-## Round 5.9.7: Site Polish (Completed 2026-01-24)
-
-**Goal**: Visual polish, taglines, voice improvements
-
-**Accomplishments**:
-- Added taglines to resort cards and hero sections
-- Fixed voice pattern post-processing
-- Location display improvements (region, country)
-- Courchevel and Niseko images added
-- Archived Kitzbühel duplicate
-
-## Round 5.9.6: Growth Mode (Completed 2026-01-24)
-
-- Type: config change
-- Goal: Increase pipeline throughput to grow the site faster
-
-**Changes**:
-- `max_resorts`: 4 → 8 (process more per run)
-- `discovery_pct`: 30% → 70% (prioritize new resorts)
-- `quality_pct`: 50% → 10% (quality queue empty due to cooling off)
-- `stale_pct`: 20% → 20% (maintain some refresh)
-
-**Expected Output**: ~6 resorts per run (5 discovery + 1 stale)
-- ~250 discovery candidates seeded from migration 017
-
-## Round 5.9.5: Pipeline Bug Fixes (Completed)
-
-**Bug 1: Stale Confidence Score**
-- Fix: Recalculate confidence after cost acquisition
-
-**Bug 2: Duplicate Resorts from Unicode Slugs**
-- Fix: Added `unidecode` to slugify function
-
-## Round 5.9.4: Sidebar Polish (Completed)
-
-**Goal**: Hide incomplete data tables, fix sidebar UX
-
-**Accomplishments**:
-- Hidden FamilyMetricsTable ("The Numbers") - incomplete data showing dashes
-- Fixed JumpToSection sticky offset (top-8 → top-24) - was hiding behind navbar
-- Added scroll-padding-top to globals.css - anchor links now scroll correctly
-- Documented future work items in Active Tasks section
-
-## Round 6: Homepage Redesign (pending)
-- Type: feature
-- Status: Not started
-- Goal: Implement chosen homepage design from concepts
-
-## Round 5.9: Resort Data Gaps + Country Pages (Completed)
-
-**Goal**: Fix issues identified in Round 5.8 audit, create country landing pages
-
-**Accomplishments**:
-- Created `apps/web/app/resorts/[country]/page.tsx` - country landing pages
-- Fixed St. Anton family metrics (Score 7, Ages 8-16, ski_school_min_age 3)
-- Added cost data for all 3 resorts (Park City USD, St. Anton EUR, Zermatt CHF)
-- Fixed St. Anton trail map data (300 runs, 88 lifts - was incorrectly showing 13 runs)
-- Fetched hero images for Park City and St. Anton via Google Places API
-- Created `agents/scripts/fix_resort_data_gaps.py` for database fixes
-- Created `agents/scripts/fetch_hero_images.py` for hero image pipeline
-- Created migration `020_fix_resort_data_gaps.sql` (backup SQL)
-
-**Issues Fixed**:
-- C1: Missing hero images (Park City, St. Anton) → NOW HAVE REAL PHOTOS
-- C2: Country pages 404 → NOW WORK (`/resorts/united-states`, `/resorts/austria`, etc.)
-- C3: Missing family metrics (St. Anton) → NOW HAS SCORE 7, AGES 8-16
-- M1: Cost data all empty → ALL 3 RESORTS NOW HAVE PRICING
-- M2: Trail map wrong data (St. Anton) → FIXED TO 300 RUNS, 88 LIFTS
-
-**Arc Narrative**:
-- We started believing: Data gaps were systemic pipeline failures needing code fixes
-- We ended believing: Data gaps were one-time extraction failures; simple SQL + scripts fix them
-- The transformation: From "fix the pipeline" → "run targeted data patches then improve gates"
-
-## Round 5.8: Resort Page Audit (Completed)
-
-**Goal**: Comprehensive audit of 3 resort pages (Park City, St. Anton, Zermatt)
-
-**Key Findings**:
-- Zermatt = "Gold standard" with real hero photo, complete data
-- Park City and St. Anton had placeholder images, missing data
-- All pages had empty cost data
-- St. Anton missing family metrics entirely
-- Country pages returned 404 (breadcrumb links broken)
-
-**Deliverable**: `.compound-beads/resort-page-audit-round-5.8.md`
-
-## Round 5.7: Search API Quality + Tracking (Completed)
-
-**Goal**: Empirically compare Exa/Brave/Tavily, implement research caching
-
-**Accomplishments**:
-- Full API comparison: 70 queries × 3 APIs × 5 results = 1050 evaluations
-- **Tavily wins ALL 7 query types** (composite score 3.85 vs Exa 3.55, Brave 3.53)
-- Tavily has 2x better price discovery (25.7% vs ~13%)
-- URL overlap only 25.9% - each API provides unique sources (keep all 3)
-- Created `agents/scripts/api_comparison/` test suite
-- Created migration 019_research_cache.sql (research_cache + resort_research_sources tables)
-- Added per-API cost logging to research.py
-- Integrated caching into production pipeline
-
-**Key Insight**: Data beats assumptions. We thought Exa would win for family reviews (semantic search),
-but Tavily's AI synthesis outperforms on ALL categories. Keep all APIs for URL diversity.
-
-**Arc Narrative**:
-- We started believing: Three APIs must be better than one, each with different strengths
-- We ended believing: Tavily dominates all categories; diversity value is in unique URLs, not specialization
-- The transformation: From API routing by query type → Tavily-first with diversity fallbacks
-
-**Migration Required**: Run `supabase/migrations/019_research_cache.sql` via Supabase Dashboard
-
-## Round 5.2: Schema Contract Audit (Completed)
-
-**Goal**: Fix schema mismatch causing 100% pipeline failure
-
-**Accomplishments**:
-- Identified root cause: extraction layer produced fields DB didn't have
-- Added `sanitize_for_schema()` safety layer to database.py
-- Created migration 016: adds lesson costs, rental costs, lift_under6
-- Aligned extraction schema with database columns exactly
-- Expert panel audit (Architecture, Data Integrity, FamilyValue, Philosopher)
-
-**Key Insight**: The extraction layer was RIGHT - families need ski school and rental costs.
-The DB schema was incomplete. Expand schema to match user needs, don't shrink capabilities.
-
-## Round 5.1: Agent-Native Scalability (Completed)
-
-**Goal**: Scale duplicate detection to 3000+ resorts
-
-**Accomplishments**:
-- New primitives: `check_resort_exists()`, `find_similar_resorts()`, `count_resorts()`
-- Two-phase validation: Claude suggests → DB validates
-- 99% token reduction (22,500 → 310 tokens)
-- Transliteration via unidecode for international names
-
-**Key Insight**: Primitives should be atomic; agents query, not receive massive lists.
-
-## Round 5: Compliance & Polish (Completed 2026-01-25)
-
-**Goal**: Monitoring, accessibility, final polish
-
-**Completed tasks**:
-- [x] Cron failure alerts (5.11)
-- [x] Accessibility audit - WCAG 2.1 AA (5.12)
-- [x] Trademark notices (5.13)
-- [x] Core Web Vitals reporting (5.14)
-
-## Round 4: Production Launch (Completed)
-
-**Goal**: Deploy to production, configure monitoring
-
-**Key outcomes**:
-- www.snowthere.com live on Vercel
-- Railway cron (creative-spontaneity) running daily
-- Google Search Console + Analytics configured
-- Supabase production with 23 tables
-
-## Active Tasks
-
-**Round 9** ✅ DEPLOYED (2026-01-27)
-- Migration, backfill, and verification complete
-
-**Round 6: Homepage Redesign** (next)
-- Finalize homepage design direction
-- Implement new homepage components
-- A/B test conversion
-
-**R7.2: Affiliate Program Database** ✅ RESEARCH COMPLETE (2026-01-27)
-- Created migration 032_comprehensive_affiliate_programs.sql with 30+ programs
-- Organized into Tier 1 (Must Have), Tier 2 (High Value), Tier 3 (Supplementary)
-- Categories: accommodation, tour_operator, lift_tickets, rentals, flights, car_rental, gear, insurance, activities, baby_gear, camera
-- **PENDING MANUAL ACTION**: Sign up for affiliate networks and update affiliate_id values
-
-**Data Quality Improvement** (ongoing)
-- Improve childcare/terrain data to get higher scores
-- Regenerate Quick Take content to match new scores
-
-## Future Work (Round 6+)
-
-### Sorting UI for Listings
-- Add sort dropdown to `/resorts` page (by score, by name, by country)
-- Add sort dropdown to `/resorts/[country]` pages
-- Consider filters (age range, budget, pass compatibility)
-
-### Improve Data Quality
-- Fix childcare data completeness (has_childcare, childcare_min_age)
-- Fix terrain percentages (beginner_terrain_pct)
-- Re-enable CostTable when data is reliable
-- Pipeline should populate more fields
-
-### Checklist Download Feature
-- Create actual PDF/printable checklist
-- Wire up "Get the Checklist" button to download or email capture
-- Consider lead magnet flow (email → checklist)
-
-### Internal Linking Enhancements (Low Priority)
-> Build only if data shows need - Round 5.10 baseline is sufficient
-
-- Click tracking for internal links (if we need to measure link CTR)
-- JSON-LD `relatedLink` schema (if AI citation testing shows schema helps)
-- "Also mentioned" sidebar section (if users request more discovery)
-- Link hover preview showing destination (if users want to see where links go)
+## Infrastructure
+
+| Service | Details |
+|---------|---------|
+| **Vercel** | www.snowthere.com, ISR, SPIELPLATZ design system |
+| **Railway** | creative-spontaneity, daily cron (resorts + guides + newsletter) |
+| **Supabase** | Snowthere, AWS us-east-2, 30+ tables |
+| **Google Search Console** | sc-domain:snowthere.com, sitemap: 54 pages |
+| **Bing Webmaster Tools** | snowthere.com verified, sitemap submitted |
+| **Google Analytics** | GA4, linked to GSC |
+| **Resend** | Email delivery, domain verified (DKIM + SPF + MX) |
+
+## Pipeline Status
+
+- **Resorts:** 8/day max, 70% discovery, deterministic scoring
+- **Guides:** Mon/Thu, 3-agent approval panel, auto-publish, Nano Banana Pro featured images
+- **Images:** Nano Banana Pro on Replicate (primary), 4-tier fallback, permanent Supabase Storage
+- **Newsletter:** Thursday 6am PT, Morning Brew style
+- **Email sequences:** 5-email welcome series (Day 0/2/4/7/14)
+
+## Known Issues
+
+- Google Places API 400 errors (blocks UGC photos) — needs investigation
+- Quick Take length occasionally exceeds 120 word limit (minor)
+- Affiliate programs: migration 032 created but manual network signups pending
+
+## Pending Manual Work
+
+- Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
+- Run migration 032_comprehensive_affiliate_programs.sql on production
+- Monitor first autonomous guide generation (Monday)
+- Monitor first newsletter send (Thursday)
 
 ## Key Files
 
 | Category | Files |
 |----------|-------|
-| **Pipeline** | `agents/pipeline/runner.py`, `orchestrator.py`, `decision_maker.py` |
-| **Primitives** | `agents/shared/primitives/` (63 atomic operations) |
-| **Frontend** | `apps/web/app/resorts/[country]/[slug]/page.tsx` |
+| **Pipeline** | `agents/pipeline/runner.py`, `orchestrator.py`, `guide_orchestrator.py` |
+| **Primitives** | `agents/shared/primitives/` (63+ atomic operations) |
+| **Frontend** | `apps/web/app/resorts/[country]/[slug]/page.tsx`, `guides/[slug]/page.tsx` |
+| **SEO** | `apps/web/lib/constants.ts`, `app/robots.ts`, `app/sitemap.xml/route.ts` |
 | **Config** | `agents/shared/config.py`, `CLAUDE.md` |
-
-## Infrastructure
-
-| Service | Status |
-|---------|--------|
-| Vercel | www.snowthere.com (live) |
-| Railway | creative-spontaneity (daily cron) |
-| Supabase | Snowthere (23 tables, AWS us-east-2) |
+| **Plan** | `.claude/plans/snuggly-herding-liskov.md` |
 
 ## Recent Commits
 
-- `f7390ed` Round 5.11-5.14: Cron alerts, accessibility, CWV, trademark
-- `e764dac` SEO fix: Link each resort only once per page (first mention wins)
-- `483a43c` Round 5.10: Auto-link resort names in content
-- `9f3736c` fix: Sort resorts by family score (handle object/array family_metrics)
-- `4b405a1` fix: Sidebar layout - Jump to Section above Useful Links, align top
+```
+900f0f4 feat: Nano Banana Pro as primary image model (4-tier fallback)
+b34fc48 feat: Guides & non-resort content workflow overhaul (3 tracks)
+a1ac49b fix: Centralize SITE_URL, fix canonical URLs, www domain, homepage caching
+e51bcf0 feat: Guides & non-resort content workflow overhaul (3 tracks)
+9b001fb feat: Expert panel review fixes + generalized review primitive
+21198f6 feat: Add 6 Olympics guides for 2026 Milan-Cortina Winter Olympics
+```
