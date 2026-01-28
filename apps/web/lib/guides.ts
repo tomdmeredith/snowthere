@@ -140,7 +140,7 @@ export async function getAllGuideSlugs(): Promise<string[]> {
     return []
   }
 
-  return data.map(g => g.slug)
+  return (data as { slug: string }[]).map(g => g.slug)
 }
 
 /**
