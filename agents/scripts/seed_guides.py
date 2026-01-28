@@ -378,7 +378,7 @@ GUIDES = [
             "sections": [
                 {
                     "type": "intro",
-                    "content": "<p><strong>Short answer: Yes, but it's complicated.</strong></p><p>The 2026 Milan-Cortina Winter Olympics run February 6-22, and families wondering if they can still ski Cortina are asking the right question. Here's the real situation: some terrain will be closed for events, accommodation prices are sky-high, and crowds will be significant—but skiing will still be possible on non-competition slopes.</p><p>If you're flexible on <em>where</em> you ski, you can have an incredible family trip. If you specifically need Cortina's famous runs, February 2026 isn't your month.</p>"
+                    "content": "<p><strong>Short answer: Yes, but it's complicated.</strong></p><p>The 2026 Milan-Cortina Winter Olympics run February 6-22, and families wondering if they can still ski Cortina are asking the right question. Here's the real situation: some terrain will be closed for events, accommodation prices are sky-high, and crowds will be significant. But skiing will still be possible on non-competition slopes.</p><p>If you're flexible on <em>where</em> you ski, you can have an incredible family trip. If you specifically need Cortina's famous runs, February 2026 is not your month.</p>"
                 },
                 {
                     "type": "comparison_table",
@@ -396,12 +396,12 @@ GUIDES = [
                 {
                     "type": "text",
                     "title": "The Real Talk on Accommodation",
-                    "content": "<p>Here's the thing: hotels in Cortina during the Olympics are either <strong>sold out or 3-4x normal prices</strong>. A room that normally costs €200/night might be €800+ if you can find one at all.</p><p><strong>Family-smart alternatives:</strong></p><ul><li><strong>Stay in Alta Badia</strong> (30 min away) - Still connected via Dolomiti Superski, way cheaper</li><li><strong>Stay in San Cassiano</strong> - Charming village, excellent ski school, half the price</li><li><strong>Book an apartment in Cortina's outskirts</strong> - Locals rent out homes; search Airbnb now</li><li><strong>Day-trip from Arabba</strong> - Excellent skiing, shuttle access to Olympic events</li></ul>"
+                    "content": "<p>Hotels in Cortina during the Olympics are either <strong>sold out or 3-4x normal prices</strong>. A room that normally costs €200/night might be €800+ if you can find one at all.</p><p><strong>Family-smart alternatives:</strong></p><ul><li><strong>Stay in Alta Badia</strong> (30 min away) - Still connected via Dolomiti Superski, way cheaper</li><li><strong>Stay in San Cassiano</strong> - Charming village, excellent ski school, half the price</li><li><strong>Book an apartment in Cortina's outskirts</strong> - Locals rent out homes; search Airbnb now</li><li><strong>Day-trip from Arabba</strong> - Excellent skiing, shuttle access to Olympic events</li></ul>"
                 },
                 {
                     "type": "text",
                     "title": "Our Recommendation for Families",
-                    "content": "<p>Unless watching Olympic events live is your primary goal, <strong>skip Cortina proper in February 2026</strong>. Instead:</p><ul><li>Base in Alta Badia or Val Gardena (same Dolomiti Superski pass)</li><li>Day-trip to Cortina for events if you want</li><li>Enjoy uncrowded slopes while everyone else is watching downhill</li></ul><p>Or consider coming <strong>March 2026</strong>—post-Olympics Cortina will have that \"just hosted the world\" energy with normal prices and better snow conditions.</p>"
+                    "content": "<p>Unless watching Olympic events live is your primary goal, <strong>skip Cortina proper in February 2026</strong>. Instead:</p><ul><li>Base in Alta Badia or Val Gardena (same Dolomiti Superski pass)</li><li>Day-trip to Cortina for events if you want</li><li>Enjoy uncrowded slopes while everyone else is watching downhill</li></ul><p>Or consider coming <strong>March 2026</strong>. Post-Olympics Cortina will have that \"just hosted the world\" energy with normal prices and better snow conditions.</p>"
                 },
                 {
                     "type": "faq",
@@ -417,7 +417,7 @@ GUIDES = [
                         },
                         {
                             "question": "Is it worth it to go during the Olympics?",
-                            "answer": "For families who want the Olympics experience—yes, if you book NOW and accept higher costs. For families who just want great skiing—no, visit Alta Badia or Val Gardena instead."
+                            "answer": "For families who want the Olympics experience, yes, if you book NOW and accept higher costs. For families who just want great skiing, no. Visit Alta Badia or Val Gardena instead."
                         },
                         {
                             "question": "When do hotels release rooms for February 2026?",
@@ -437,7 +437,7 @@ GUIDES = [
         },
         "seo_meta": {
             "title": "Can You Ski Cortina During 2026 Olympics? | Family Guide",
-            "description": "Honest guide to skiing Cortina during the 2026 Milan-Cortina Winter Olympics. What's open, what's closed, accommodation reality, and better alternatives for families.",
+            "description": "Can you ski Cortina during the 2026 Winter Olympics? What's open, what's closed, pricing reality, and better alternatives for families.",
             "keywords": ["Cortina 2026 Olympics", "ski during Olympics", "Milan-Cortina Winter Olympics", "Cortina family skiing"]
         }
     },
@@ -446,7 +446,7 @@ GUIDES = [
         "title": "2026 Milan-Cortina Olympics: The Complete Family Guide",
         "guide_type": "regional",
         "category": "olympics",
-        "excerpt": "Everything families need to know about the 2026 Winter Olympics—what to see, where to stay, and how to make it work with kids.",
+        "excerpt": "Everything families need to know about the 2026 Winter Olympics. What to see, where to stay, and how to make it work with kids.",
         "author": "Snowthere Team",
         "content": {
             "sections": [
@@ -459,7 +459,7 @@ GUIDES = [
                     "title": "2026 Olympics: What's Where",
                     "columns": ["Location", "Events", "Distance from Milan", "Best For"],
                     "rows": [
-                        ["Milan", "Opening/Closing Ceremonies, Ice Hockey, Speed Skating", "—", "City lovers, non-skiers"],
+                        ["Milan", "Opening/Closing Ceremonies, Ice Hockey, Speed Skating", "0 (base city)", "City lovers, non-skiers"],
                         ["Cortina d'Ampezzo", "Downhill, Super-G, Combined, Curling", "160 km / 2h", "Alpine skiing fans"],
                         ["Bormio", "Men's Downhill & Super-G", "200 km / 2.5h", "Expert skiing families"],
                         ["Livigno", "Freestyle, Snowboarding", "230 km / 3h", "Teen-friendly, duty-free"],
@@ -470,12 +470,12 @@ GUIDES = [
                 {
                     "type": "text",
                     "title": "Where Should Your Family Stay?",
-                    "content": "<p>The biggest decision: <strong>City or Mountains?</strong></p><p><strong>Stay in Milan if:</strong></p><ul><li>You want to see Opening/Closing Ceremonies</li><li>Kids are more interested in atmosphere than skiing</li><li>You prefer train travel to driving</li><li>This is primarily a cultural trip with some snow days</li></ul><p><strong>Stay in the Dolomites if:</strong></p><ul><li>Skiing is the priority</li><li>You want to attend alpine events</li><li>Kids need daily ski time to stay happy</li><li>You're combining Olympics + family ski vacation</li></ul><p><strong>Our recommendation for most families:</strong> Base in Alta Badia or San Cassiano—close enough to Cortina for events, excellent family skiing, and saner prices.</p>"
+                    "content": "<p>The biggest decision: <strong>City or Mountains?</strong></p><p><strong>Stay in Milan if:</strong></p><ul><li>You want to see Opening/Closing Ceremonies</li><li>Kids are more interested in atmosphere than skiing</li><li>You prefer train travel to driving</li><li>This is primarily a cultural trip with some snow days</li></ul><p><strong>Stay in the Dolomites if:</strong></p><ul><li>Skiing is the priority</li><li>You want to attend alpine events</li><li>Kids need daily ski time to stay happy</li><li>You're combining Olympics + family ski vacation</li></ul><p><strong>Our recommendation for most families:</strong> Base in Alta Badia or San Cassiano. Close enough to Cortina for events, excellent family skiing, and saner prices.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Family-Friendly Events to Prioritize",
-                    "content": "<p>Not all Olympic events are equal for kids. Here's what works best with shorter attention spans:</p><ul><li><strong>Best for kids:</strong> Freestyle skiing/snowboard (exciting, quick runs), curling (warm, indoor, relaxed pace)</li><li><strong>Good for kids:</strong> Downhill (dramatic, fast, loud cheering), ski jump (spectacular visuals)</li><li><strong>Harder with kids:</strong> Cross-country (long, slow), speed skating (indoor, hard to see), hockey (expensive, late nights)</li></ul><p><strong>Pro tip:</strong> Watch one event live, then follow others on the big screens in Olympic fan zones. Kids get the atmosphere without the logistics.</p>"
+                    "content": "<p>Not all Olympic events are equal for kids. Here's what works best with shorter attention spans:</p><ul><li><strong>Best for kids:</strong> Freestyle skiing/snowboard (exciting, quick runs), curling (warm, indoor, relaxed pace)</li><li><strong>Good for kids:</strong> Downhill (dramatic, fast, loud cheering), ski jump (spectacular visuals)</li><li><strong>Harder with kids:</strong> Cross-country (long, slow), speed skating (indoor, hard to see), hockey (expensive, late nights)</li></ul><p>Best approach: Watch one event live, then follow others on the big screens in Olympic fan zones. Kids get the atmosphere without the logistics.</p>"
                 },
                 {
                     "type": "checklist",
@@ -517,6 +517,10 @@ GUIDES = [
                         {
                             "question": "Is the Olympics worth it with young kids?",
                             "answer": "Ages 7+ will remember it forever. Under 5, they won't remember and may find it overwhelming. Consider if the cost difference is worth it for your family stage."
+                        },
+                        {
+                            "question": "Do we need travel insurance for Olympics skiing in Italy?",
+                            "answer": "Yes, strongly recommended. European ski resorts often require proof of insurance for mountain rescue. Get a policy that covers ski-specific injuries, trip cancellation (Olympics logistics can be unpredictable), and medical evacuation. World Nomads and Allianz both offer ski-specific coverage."
                         }
                     ]
                 },
@@ -532,7 +536,7 @@ GUIDES = [
         },
         "seo_meta": {
             "title": "2026 Milan-Cortina Olympics Family Guide | Complete Planning",
-            "description": "Complete family guide to the 2026 Winter Olympics in Italy. Where to stay, which events to see, budget breakdown, and how to combine skiing with Olympics for families.",
+            "description": "Complete family guide to the 2026 Winter Olympics in Italy. Where to stay, which events to see, budget breakdown, and skiing with kids.",
             "keywords": ["2026 Winter Olympics family", "Milan-Cortina Olympics guide", "Olympics with kids", "Italy Winter Olympics planning"]
         }
     },
@@ -541,13 +545,13 @@ GUIDES = [
         "title": "Best Dolomites Family Ski Resorts Near the 2026 Olympics",
         "guide_type": "comparison",
         "category": "olympics",
-        "excerpt": "The top family-friendly Dolomites resorts for combining skiing with the 2026 Olympics—ranked by distance, value, and kid-friendliness.",
+        "excerpt": "The top family-friendly Dolomites resorts for combining skiing with the 2026 Olympics, ranked by distance, value, and kid-friendliness.",
         "author": "Snowthere Team",
         "content": {
             "sections": [
                 {
                     "type": "intro",
-                    "content": "<p>If you're planning a family ski trip around the 2026 Winter Olympics, the Dolomites offer world-class skiing within easy reach of the Cortina events. But which resort should you choose?</p><p>We've ranked the top family options by <strong>distance to Olympic venues, value for money, kid-friendliness, and skiing quality</strong>. All are connected via the Dolomiti Superski pass—1,200 km of terrain on one ticket.</p>"
+                    "content": "<p>If you're planning a family ski trip around the 2026 Winter Olympics, the Dolomites offer world-class skiing within easy reach of the Cortina events. But which resort should you choose?</p><p>We've ranked the top family options by <strong>distance to Olympic venues, value for money, kid-friendliness, and skiing quality</strong>. All are connected via the Dolomiti Superski pass: 1,200 km of terrain on one ticket.</p>"
                 },
                 {
                     "type": "list",
@@ -555,13 +559,13 @@ GUIDES = [
                     "items": [
                         {
                             "name": "Alta Badia",
-                            "description": "Our #1 pick for families during Olympics. Just 30 minutes to Cortina, excellent ski schools, gentle terrain for beginners, and authentic Italian mountain culture. The villages (La Villa, San Cassiano, Corvara) are charming without being overcrowded. Exceptional food scene—this is where chefs come to ski.",
+                            "description": "Our #1 pick for families during Olympics. Just 30 minutes to Cortina, excellent ski schools, gentle terrain for beginners, and authentic Italian mountain culture. The villages (La Villa, San Cassiano, Corvara) are charming without being overcrowded. Exceptional food scene. This is where chefs come to ski.",
                             "resort_slug": "italy/alta-badia"
                         },
                         {
                             "name": "Val Gardena",
-                            "description": "Larger ski area with more terrain variety. Ortisei has great ski school and family infrastructure. About 45 minutes to Cortina. Better for families with confident skiers—some terrain is more challenging. Beautiful Sella Ronda circuit accessible.",
-                            "resort_slug": "italy/val-gardena"
+                            "description": "Larger ski area with more terrain variety. Ortisei has great ski school and family infrastructure. About 45 minutes to Cortina. Better for families with confident skiers since some terrain is more challenging. Beautiful Sella Ronda circuit accessible.",
+                            "resort_slug": "italy/selva-val-gardena"
                         },
                         {
                             "name": "Kronplatz (Plan de Corones)",
@@ -595,7 +599,7 @@ GUIDES = [
                 {
                     "type": "text",
                     "title": "The Dolomiti Superski Advantage",
-                    "content": "<p>Every resort on this list is covered by the <strong>Dolomiti Superski pass</strong>—one of the world's best ski pass deals.</p><ul><li>1,200 km of slopes (12 valleys, 450 lifts)</li><li>Kids under 8 ski free with paying adult</li><li>€324 for 6-day adult pass (2024/25 prices)</li><li>Ski a different valley every day without paying extra</li></ul><p>This means you can base in Alta Badia, ski Cortina one day, and never buy a separate ticket. Huge advantage over fragmented US ski areas.</p>"
+                    "content": "<p>Every resort on this list is covered by the <strong>Dolomiti Superski pass</strong>, one of the world's best ski pass deals.</p><ul><li>1,200 km of slopes across 12 valleys and 450 lifts</li><li>Kids under 8 ski free with paying adult</li><li>€324 for 6-day adult pass (2024/25 prices)</li><li>Ski a different valley every day without paying extra</li></ul><p>This means you can base in Alta Badia, ski Cortina one day, and never buy a separate ticket. Huge advantage over fragmented US ski areas.</p>"
                 },
                 {
                     "type": "text",
@@ -616,7 +620,7 @@ GUIDES = [
                         },
                         {
                             "question": "Should we rent a car?",
-                            "answer": "Strongly recommended. Public transport exists but is infrequent. A car gives you flexibility for Olympic events and resort-hopping. Book early—rentals will be limited during Olympics."
+                            "answer": "Strongly recommended. Public transport exists but is infrequent. A car gives you flexibility for Olympic events and resort-hopping. Book early because rentals will be limited during Olympics."
                         },
                         {
                             "question": "What's the snow like in February?",
@@ -628,7 +632,7 @@ GUIDES = [
         },
         "seo_meta": {
             "title": "Best Dolomites Family Ski Resorts for 2026 Olympics | Comparison",
-            "description": "Compare the best family ski resorts in the Dolomites near the 2026 Milan-Cortina Olympics. Alta Badia, Val Gardena, Kronplatz ranked by family-friendliness and value.",
+            "description": "Best Dolomites family resorts near the 2026 Olympics. Alta Badia, Val Gardena, Kronplatz ranked by family-friendliness, value, and distance.",
             "keywords": ["Dolomites family ski resorts", "Olympics ski resorts", "Alta Badia Olympics", "Val Gardena family", "best ski resort near Cortina"]
         }
     },
@@ -637,7 +641,7 @@ GUIDES = [
         "title": "Milan to Cortina With Kids: Complete Transportation Guide",
         "guide_type": "how-to",
         "category": "olympics",
-        "excerpt": "Every option for getting from Milan to Cortina with children—trains, buses, rental cars, and private transfers compared.",
+        "excerpt": "Every option for getting from Milan to Cortina with children. Trains, buses, rental cars, and private transfers compared.",
         "author": "Snowthere Team",
         "content": {
             "sections": [
@@ -660,17 +664,17 @@ GUIDES = [
                 {
                     "type": "text",
                     "title": "Option 1: Rental Car (Recommended)",
-                    "content": "<p><strong>Best for:</strong> Families who want flexibility and can handle winter driving</p><p><strong>Route:</strong> Milan → A4 to Brescia → A22 to Brenner → Exit Bressanone → SS49/SS51 to Cortina</p><p><strong>What to know:</strong></p><ul><li>Winter tires mandatory (included with rental)</li><li>Tolls cost ~€35-45 one way</li><li>Last 2 hours are mountain roads—beautiful but slow</li><li>Olympic traffic controls start ~10km from Cortina</li><li>Pre-book parking in Cortina or use park-and-ride</li></ul><p><strong>Pro tip:</strong> Rent from Venice instead of Milan—it's 2 hours closer to Cortina and avoids Milan traffic.</p>"
+                    "content": "<p><strong>Best for:</strong> Families who want flexibility and can handle winter driving</p><p><strong>Route:</strong> Milan → A4 to Brescia → A22 to Brenner → Exit Bressanone → SS49/SS51 to Cortina</p><p><strong>What to know:</strong></p><ul><li>Winter tires mandatory (included with rental)</li><li>Tolls cost ~€35-45 one way</li><li>Last 2 hours are mountain roads, beautiful but slow</li><li>Olympic traffic controls start about 10km from Cortina</li><li>Pre-book parking in Cortina or use park-and-ride</li></ul><p><strong>The move:</strong> Rent from Venice instead of Milan. It's 2 hours closer to Cortina and avoids Milan traffic entirely.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Option 2: Train + Bus",
-                    "content": "<p><strong>Best for:</strong> Families who don't want to drive in mountains</p><p><strong>Route:</strong> Milan Centrale → Train to Calalzo di Cadore (3.5h) → Dolomiti Bus to Cortina (1h)</p><p><strong>What to know:</strong></p><ul><li>Trenitalia runs trains to Calalzo (~€25-50/person)</li><li>Dolomiti Bus connects to Cortina (€5/person)</li><li>Bus timing syncs with train arrivals—check schedules</li><li>Kids under 4 free on trains, 4-12 half price</li><li>Bring snacks and entertainment for kids</li></ul><p><strong>Warning for Olympics:</strong> Buses will be crowded. Consider pre-booking private shuttle from Calalzo.</p>"
+                    "content": "<p><strong>Best for:</strong> Families who don't want to drive in mountains</p><p><strong>Route:</strong> Milan Centrale → Train to Calalzo di Cadore (3.5h) → Dolomiti Bus to Cortina (1h)</p><p><strong>What to know:</strong></p><ul><li>Trenitalia runs trains to Calalzo (~€25-50/person)</li><li>Dolomiti Bus connects to Cortina (€5/person)</li><li>Bus timing syncs with train arrivals, so check schedules</li><li>Kids under 4 free on trains, 4-12 half price</li><li>Bring snacks and entertainment for kids</li></ul><p><strong>Warning for Olympics:</strong> Buses will be crowded. Consider pre-booking private shuttle from Calalzo.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Option 3: Private Transfer",
-                    "content": "<p><strong>Best for:</strong> Families who want door-to-door comfort</p><p><strong>Companies:</strong> Alps2Alps, Cortina Transfer, Dolomitiwebtransfer</p><p><strong>What to know:</strong></p><ul><li>€400-600 for family of 4 (Milan airport to Cortina)</li><li>Child seats available on request</li><li>Driver handles traffic, parking, mountain roads</li><li>BOOK EARLY for Olympics weeks—limited availability</li><li>Some services include stop for lunch en route</li></ul><p><strong>Pro tip:</strong> Group with another family to split costs—vans fit 6-8.</p>"
+                    "content": "<p><strong>Best for:</strong> Families who want door-to-door comfort</p><p><strong>Companies:</strong> Alps2Alps, Cortina Transfer, Dolomitiwebtransfer</p><p><strong>What to know:</strong></p><ul><li>€400-600 for family of 4 (Milan airport to Cortina)</li><li>Child seats available on request</li><li>Driver handles traffic, parking, mountain roads</li><li>BOOK EARLY for Olympics weeks, limited availability</li><li>Some services include stop for lunch en route</li></ul><p>Split costs with another family. Transfer vans fit 6 to 8 people.</p>"
                 },
                 {
                     "type": "text",
@@ -690,7 +694,7 @@ GUIDES = [
                         {"text": "Have Euros in cash for tolls and parking"},
                         {"text": "Save hotel address in phone GPS"},
                         {"text": "Pack motion sickness meds (mountain roads!)"},
-                        {"text": "Bring layers—car/train temps vary"}
+                        {"text": "Bring layers, car and train temps vary"}
                     ]
                 },
                 {
@@ -699,7 +703,7 @@ GUIDES = [
                     "items": [
                         {
                             "question": "Do I need snow chains?",
-                            "answer": "Winter tires are mandatory Nov-April on mountain roads. Chains must be carried in the car even with winter tires. Rentals include both—confirm when booking."
+                            "answer": "Winter tires are mandatory Nov-April on mountain roads. Chains must be carried in the car even with winter tires. Rentals include both. Confirm when booking."
                         },
                         {
                             "question": "Is the drive scary?",
@@ -711,7 +715,7 @@ GUIDES = [
                         },
                         {
                             "question": "What about the Autostrada tolls?",
-                            "answer": "Tolls are paid at exit booths. Credit cards accepted. Total Milan→Cortina is ~€35-45. Don't use Telepass lanes without a Telepass device."
+                            "answer": "Tolls are paid at exit booths. Credit cards accepted. Total Milan to Cortina is about €35 to 45. Don't use Telepass lanes without a Telepass device."
                         }
                     ]
                 }
@@ -728,38 +732,38 @@ GUIDES = [
         "title": "Olympics With Kids: A 5-Day Italy Itinerary That Actually Works",
         "guide_type": "how-to",
         "category": "olympics",
-        "excerpt": "A realistic day-by-day plan for families visiting the 2026 Milan-Cortina Winter Olympics—with built-in flexibility for meltdowns.",
+        "excerpt": "A realistic day-by-day plan for families visiting the 2026 Milan-Cortina Winter Olympics, with built-in flexibility for meltdowns.",
         "author": "Snowthere Team",
         "content": {
             "sections": [
                 {
                     "type": "intro",
-                    "content": "<p>Here's the thing about taking kids to the Olympics: if you try to see everything, you'll see nothing except tantrums. This itinerary is designed for <strong>real families who need naps, snacks, and bathroom breaks</strong>.</p><p>We're basing this around Alta Badia (our recommended family base), with day trips to Cortina for Olympics action. Adjust as needed, but resist the urge to add more—less is more with kids.</p>"
+                    "content": "<p>If you try to see everything at the Olympics with kids, you'll see nothing except tantrums. This itinerary is designed for <strong>real families who need naps, snacks, and bathroom breaks</strong>.</p><p>We're basing this around Alta Badia (our recommended family base), with day trips to Cortina for Olympics action. Adjust as needed, but resist the urge to add more. Less is more with kids.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Day 1: Arrival & Settle In",
-                    "content": "<p><strong>Morning:</strong> Arrive Milan Malpensa, pick up rental car</p><p><strong>Midday:</strong> Drive to Alta Badia (4-5 hours with stops)</p><p><strong>Stop suggestion:</strong> Lunch break in Verona or at Lake Garda—stretch legs, see something beautiful</p><p><strong>Afternoon:</strong> Arrive Alta Badia, check into hotel/apartment</p><p><strong>Evening:</strong> Easy dinner at hotel or nearby pizzeria. Early bedtime—everyone's tired.</p><p><strong>Key tasks:</strong></p><ul><li>Pick up ski rentals (many shops open until 7pm)</li><li>Confirm ski school for tomorrow</li><li>Buy groceries for snacks</li><li>Let kids explore the village</li></ul><p><strong>No skiing today.</strong> Arrival days are for recovery, not activity.</p>"
+                    "content": "<p><strong>Morning:</strong> Arrive Milan Malpensa, pick up rental car</p><p><strong>Midday:</strong> Drive to Alta Badia (4-5 hours with stops)</p><p><strong>Stop suggestion:</strong> Lunch break in Verona or at Lake Garda. Stretch legs, see something beautiful</p><p><strong>Afternoon:</strong> Arrive Alta Badia, check into hotel/apartment</p><p><strong>Evening:</strong> Easy dinner at hotel or nearby pizzeria. Early bedtime. Everyone's tired.</p><p><strong>Key tasks:</strong></p><ul><li>Pick up ski rentals (many shops open until 7pm)</li><li>Confirm ski school for tomorrow</li><li>Buy groceries for snacks</li><li>Let kids explore the village</li></ul><p><strong>No skiing today.</strong> Arrival days are for recovery, not activity.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Day 2: Ski Day (Full Family)",
-                    "content": "<p><strong>Morning:</strong></p><ul><li>8:00 AM - Big breakfast at hotel</li><li>9:30 AM - Kids to ski school (drop-off takes time)</li><li>10:00 AM - Parents ski! You've earned it.</li></ul><p><strong>Midday:</strong></p><ul><li>12:00 PM - Pick up kids from ski school</li><li>12:30 PM - Lunch at mountain rifugio (book ahead for window seat)</li></ul><p><strong>Afternoon:</strong></p><ul><li>2:00 PM - Family skiing on easy slopes OR more ski school</li><li>3:30 PM - Hot chocolate break (non-negotiable)</li><li>4:00 PM - Last runs or call it quits</li></ul><p><strong>Evening:</strong></p><ul><li>Après-ski: Find a hotel with a pool/spa for tired muscles</li><li>Dinner: Try a traditional South Tyrolean restaurant</li></ul><p><strong>Don't overdo it.</strong> First ski day fatigue is real. 4-5 hours total is plenty.</p>"
+                    "content": "<p><strong>Morning:</strong></p><ul><li>8:00 AM - Big breakfast at hotel</li><li>9:30 AM - Kids to ski school (drop-off takes time)</li><li>10:00 AM - Parents ski! You've earned it.</li></ul><p><strong>Midday:</strong></p><ul><li>12:00 PM - Pick up kids from ski school</li><li>12:30 PM - Lunch at mountain rifugio (book ahead for window seat)</li></ul><p><strong>Afternoon:</strong></p><ul><li>2:00 PM - Family skiing on easy slopes OR more ski school</li><li>3:30 PM - Hot chocolate break (non-negotiable)</li><li>4:00 PM - Last runs or call it quits</li></ul><p><strong>Evening:</strong></p><ul><li>Après-ski: Find a hotel with a pool/spa for tired muscles</li><li>Dinner: Try a traditional South Tyrolean restaurant</li></ul><p><strong>Don't overdo it.</strong> First ski day fatigue hits hard. 4 to 5 hours total is plenty.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Day 3: Olympics Day in Cortina",
-                    "content": "<p><strong>This is your big Olympics day. Go all in on the experience, skip skiing.</strong></p><p><strong>Morning:</strong></p><ul><li>7:30 AM - Early breakfast</li><li>8:30 AM - Drive to Cortina (30 min from Alta Badia)</li><li>9:00 AM - Park at official Olympic park-and-ride</li><li>9:30 AM - Shuttle to Olympic venue</li><li>10:00 AM - Your Olympic event (book morning session for kids)</li></ul><p><strong>Midday:</strong></p><ul><li>After event - Walk the Cortina Corso Italia (main street)</li><li>Lunch in Cortina village (pricey but festive)</li><li>Browse the Olympic fan zone, take photos with mascots</li></ul><p><strong>Afternoon:</strong></p><ul><li>2:00 PM - Free time in Cortina OR second event if you have tickets</li><li>4:00 PM - Drive back to Alta Badia before dark</li></ul><p><strong>Evening:</strong></p><ul><li>Early, easy dinner</li><li>Kids will be exhausted—don't fight it</li></ul><p><strong>Tip:</strong> Bring snacks. Olympic venue food is expensive and lines are long.</p>"
+                    "content": "<p><strong>This is your big Olympics day. Go all in on the experience, skip skiing.</strong></p><p><strong>Morning:</strong></p><ul><li>7:30 AM - Early breakfast</li><li>8:30 AM - Drive to Cortina (30 min from Alta Badia)</li><li>9:00 AM - Park at official Olympic park-and-ride</li><li>9:30 AM - Shuttle to Olympic venue</li><li>10:00 AM - Your Olympic event (book morning session for kids)</li></ul><p><strong>Midday:</strong></p><ul><li>After event - Walk the Cortina Corso Italia (main street)</li><li>Lunch in Cortina village (pricey but festive)</li><li>Browse the Olympic fan zone, take photos with mascots</li></ul><p><strong>Afternoon:</strong></p><ul><li>2:00 PM - Free time in Cortina OR second event if you have tickets</li><li>4:00 PM - Drive back to Alta Badia before dark</li></ul><p><strong>Evening:</strong></p><ul><li>Early, easy dinner</li><li>Kids will be exhausted. Don't fight it</li></ul><p><strong>Tip:</strong> Bring snacks. Olympic venue food is expensive and lines are long.</p>"
                 },
                 {
                     "type": "text",
                     "title": "Day 4: Recovery Ski Day",
-                    "content": "<p><strong>Chill day. No agenda, no pressure.</strong></p><p><strong>Morning:</strong></p><ul><li>Sleep in (you need it after Olympics day)</li><li>10:00 AM - Late start on the slopes</li><li>Ski at a relaxed pace—explore a new area</li></ul><p><strong>Option: Sella Ronda Circuit</strong><br>If you have confident intermediate skiers, try the famous Sella Ronda (4 valleys, one loop). Start by 10 AM to finish by 4 PM. Not recommended for beginners or kids under 8.</p><p><strong>Midday:</strong></p><ul><li>Long lunch at a mountain rifugio—this is what Italian skiing is about</li><li>Try the local specialties: canederli (bread dumplings), speck, apple strudel</li></ul><p><strong>Afternoon:</strong></p><ul><li>More skiing if kids have energy</li><li>Or quit early for swimming pool/spa time</li><li>Non-ski option: sledding at many resorts</li></ul><p><strong>Evening:</strong></p><ul><li>Pizza night—kids love predictability after a long week</li></ul>"
+                    "content": "<p><strong>Chill day. No agenda, no pressure.</strong></p><p><strong>Morning:</strong></p><ul><li>Sleep in (you need it after Olympics day)</li><li>10:00 AM - Late start on the slopes</li><li>Ski at a relaxed pace, explore a new area</li></ul><p><strong>Option: Sella Ronda Circuit</strong><br>If you have confident intermediate skiers, try the famous Sella Ronda (4 valleys, one loop). Start by 10 AM to finish by 4 PM. Not recommended for beginners or kids under 8.</p><p><strong>Midday:</strong></p><ul><li>Long lunch at a mountain rifugio. This is what Italian skiing is about</li><li>Try the local specialties: canederli (bread dumplings), speck, apple strudel</li></ul><p><strong>Afternoon:</strong></p><ul><li>More skiing if kids have energy</li><li>Or quit early for swimming pool/spa time</li><li>Non-ski option: sledding at many resorts</li></ul><p><strong>Evening:</strong></p><ul><li>Pizza night. Kids love predictability after a long week</li></ul>"
                 },
                 {
                     "type": "text",
                     "title": "Day 5: Last Morning & Departure",
-                    "content": "<p><strong>Resist the urge to squeeze in more skiing.</strong></p><p><strong>Morning:</strong></p><ul><li>Option A: One last ski (8:30 AM fresh corduroy is magical)</li><li>Option B: Sleep in, pack leisurely</li></ul><p><strong>10:00 AM:</strong> Check out (leave bags at hotel if skiing)</p><p><strong>11:00 AM:</strong> Return ski rentals, final village walk</p><p><strong>12:00 PM:</strong> Lunch in Alta Badia (last Italian meal—make it good)</p><p><strong>1:30 PM:</strong> Start drive to Milan (or Venice) airport</p><p><strong>Pro tip:</strong> Don't book an early flight. Give yourself 5-6 hours door-to-gate. Traffic near airports during Olympics will be worse than normal.</p><p><strong>Alternative:</strong> Add a night in Verona or Venice for a softer landing. Both are on the route to Milan and offer non-ski cultural experiences.</p>"
+                    "content": "<p><strong>Resist the urge to squeeze in more skiing.</strong></p><p><strong>Morning:</strong></p><ul><li>Option A: One last ski (8:30 AM fresh corduroy is magical)</li><li>Option B: Sleep in, pack leisurely</li></ul><p><strong>10:00 AM:</strong> Check out (leave bags at hotel if skiing)</p><p><strong>11:00 AM:</strong> Return ski rentals, final village walk</p><p><strong>12:00 PM:</strong> Lunch in Alta Badia (last Italian meal, make it count)</p><p><strong>1:30 PM:</strong> Start drive to Milan (or Venice) airport</p><p>Don't book an early flight. Give yourself 5 to 6 hours door-to-gate. Traffic near airports during Olympics will be worse than normal.</p><p><strong>Alternative:</strong> Add a night in Verona or Venice for a softer landing. Both are on the route to Milan and offer non-ski cultural experiences.</p>"
                 },
                 {
                     "type": "checklist",
@@ -801,6 +805,10 @@ GUIDES = [
                         {
                             "question": "What's the biggest mistake families make?",
                             "answer": "Trying to see too many Olympic events. One event, experienced fully, beats three events with exhausted, cranky kids. Quality over quantity."
+                        },
+                        {
+                            "question": "Do we need to speak Italian?",
+                            "answer": "The Dolomites are bilingual (Italian and German/Ladin). Most hotel staff and ski school instructors speak English. During the Olympics, English will be widely supported. Learn 'grazie' and 'prego' and you'll be fine."
                         }
                     ]
                 }
@@ -817,13 +825,13 @@ GUIDES = [
         "title": "Ski Like an Olympian: Resorts Where You Can Ski the Olympic Runs",
         "guide_type": "comparison",
         "category": "olympics",
-        "excerpt": "Ski the same runs as Olympic champions. These resorts hosted Winter Olympics skiing events—and you can still ski them today.",
+        "excerpt": "Ski the same runs as Olympic champions. These resorts hosted Winter Olympics skiing events, and you can still ski them today.",
         "author": "Snowthere Team",
         "content": {
             "sections": [
                 {
                     "type": "intro",
-                    "content": "<p>There's something magical about skiing the same run where Lindsey Vonn won gold or where legends like Franz Klammer made history. The best part? <strong>Many Olympic downhill courses are open to the public</strong>—you don't need to be an Olympian to ski them.</p><p>Here are the top resorts where families can ski actual Olympic venues, ranked by accessibility, family-friendliness, and how easy it is to find the famous runs.</p><p><strong>Note:</strong> Olympic downhill courses are typically expert terrain. But every Olympic resort also has family-friendly skiing, and kids love saying they skied \"where the Olympics happened.\"</p>"
+                    "content": "<p>There's something magical about skiing the same run where Lindsey Vonn won gold or where legends like Franz Klammer made history. The best part? <strong>Many Olympic downhill courses are open to the public.</strong> You don't need to be an Olympian to ski them.</p><p>Here are the top resorts where families can ski actual Olympic venues, ranked by accessibility, family-friendliness, and how easy it is to find the famous runs.</p><p><strong>Note:</strong> Olympic downhill courses are typically expert terrain. But every Olympic resort also has family-friendly skiing, and kids love saying they skied \"where the Olympics happened.\"</p>"
                 },
                 {
                     "type": "list",
@@ -831,52 +839,52 @@ GUIDES = [
                     "items": [
                         {
                             "name": "Whistler Blackcomb, Canada (2010)",
-                            "description": "<strong>Olympic Runs:</strong> Dave Murray Downhill (men's), Franz's Run (women's downhill)<br><strong>Family-Friendly?</strong> Yes! Massive beginner area, excellent ski school.<br><strong>The Run:</strong> Dave Murray Downhill starts at 5,280 ft elevation with 3,248 ft of vertical. It's a genuine expert run—but the resort has terrain for everyone.<br><strong>Pro tip:</strong> Take the Peak 2 Peak Gondola for non-skiers. Views of where history was made.",
-                            "resort_slug": "canada/whistler"
+                            "description": "<strong>Olympic Runs:</strong> Dave Murray Downhill (men's), Franz's Run (women's downhill)<br><strong>Family-Friendly?</strong> Yes! Massive beginner area, excellent ski school.<br><strong>The Run:</strong> Dave Murray Downhill starts at 5,280 ft elevation with 3,248 ft of vertical. It's a genuine expert run, but the resort has terrain for everyone.<br>The Peak 2 Peak Gondola is a must for non-skiers. Views of where history was made.",
+                            "resort_slug": "canada/whistler-blackcomb"
                         },
                         {
                             "name": "Park City, USA (2002)",
-                            "description": "<strong>Olympic Runs:</strong> Champions Run (giant slalom), 3000 (men's GS), plus Utah Olympic Park nearby<br><strong>Family-Friendly?</strong> Excellent. Purpose-built family zones, kids ski free under 6.<br><strong>The Run:</strong> Champion run is an intermediate cruiser—one of the few Olympic runs families can actually ski together!<br><strong>Pro tip:</strong> Visit Utah Olympic Park to try the bobsled experience. Kids can also ski their youth programs.",
+                            "description": "<strong>Olympic Runs:</strong> Champions Run (giant slalom), 3000 (men's GS), plus Utah Olympic Park nearby<br><strong>Family-Friendly?</strong> Excellent. Purpose-built family zones, kids ski free under 6.<br><strong>The Run:</strong> Champion run is an intermediate cruiser, one of the few Olympic runs families can actually ski together.<br>Don't miss Utah Olympic Park for the bobsled experience. Kids can also ski their youth programs.",
                             "resort_slug": "united-states/park-city"
                         },
                         {
                             "name": "Cortina d'Ampezzo, Italy (1956 & 2026)",
-                            "description": "<strong>Olympic Runs:</strong> Tofana Schuss (1956), Olympia delle Tofane (2026 women's downhill)<br><strong>Family-Friendly?</strong> Very good. Beautiful village, excellent Italian ski schools.<br><strong>The Run:</strong> The 1956 course is intermediate-friendly. The 2026 course will be more challenging. Both accessible via lifts.<br><strong>Pro tip:</strong> Come after February 2026 for the \"freshly Olympic\" experience without the crowds.",
+                            "description": "<strong>Olympic Runs:</strong> Tofana Schuss (1956), Olympia delle Tofane (2026 women's downhill)<br><strong>Family-Friendly?</strong> Very good. Beautiful village, excellent Italian ski schools.<br><strong>The Run:</strong> The 1956 course is intermediate-friendly. The 2026 course will be more challenging. Both accessible via lifts.<br>The move: Come after February 2026 for the \"freshly Olympic\" experience without the crowds.",
                             "resort_slug": "italy/cortina-dampezzo"
                         },
                         {
                             "name": "Val d'Isère, France (1992 & 2009 Worlds)",
-                            "description": "<strong>Olympic Runs:</strong> La Face de Bellevarde (men's downhill)—one of the most famous in skiing history<br><strong>Family-Friendly?</strong> Yes, with excellent beginner areas separate from expert terrain.<br><strong>The Run:</strong> La Face is STEEP (average 34% grade). Black run, experts only. But standing at the top where Jean-Claude Killy won? Incredible.<br><strong>Pro tip:</strong> La Daille sector has gentler slopes while parents take turns attempting La Face.",
+                            "description": "<strong>Olympic Runs:</strong> La Face de Bellevarde (men's downhill), one of the most famous in skiing history<br><strong>Family-Friendly?</strong> Yes, with excellent beginner areas separate from expert terrain.<br><strong>The Run:</strong> La Face is STEEP (average 34% grade). Black run, experts only. But standing at the top where Jean-Claude Killy won? Incredible.<br>La Daille sector has gentler slopes while parents take turns attempting La Face.",
                             "resort_slug": "france/val-disere"
                         },
                         {
                             "name": "Lake Placid, USA (1932 & 1980)",
-                            "description": "<strong>Olympic Runs:</strong> Whiteface Mountain—site of the \"Miracle on Ice\" era downhill events<br><strong>Family-Friendly?</strong> Good. Classic East Coast resort with family programs.<br><strong>The Run:</strong> The original Olympic trails are mostly intermediate. Cloudspin and Excelsior trace the 1980 routes.<br><strong>Pro tip:</strong> The Olympic Center in town has public skating on the 1980 rink. Kids love it.",
+                            "description": "<strong>Olympic Runs:</strong> Whiteface Mountain, site of the \"Miracle on Ice\" era downhill events<br><strong>Family-Friendly?</strong> Good. Classic East Coast resort with family programs.<br><strong>The Run:</strong> The original Olympic trails are mostly intermediate. Cloudspin and Excelsior trace the 1980 routes.<br>The Olympic Center in town has public skating on the 1980 rink. Kids love it.",
                             "resort_slug": "united-states/lake-placid"
                         },
                         {
                             "name": "Innsbruck/Axamer Lizum, Austria (1964 & 1976)",
-                            "description": "<strong>Olympic Runs:</strong> Multiple venues across the region—Patscherkofel, Axamer Lizum<br><strong>Family-Friendly?</strong> Excellent. Austrian ski schools are world-class.<br><strong>The Run:</strong> Patscherkofel's Olympic downhill is accessible to strong intermediates. Historic signage marks the route.<br><strong>Pro tip:</strong> Stay in Innsbruck for city + ski combo. Tram goes directly to slopes.",
+                            "description": "<strong>Olympic Runs:</strong> Multiple venues across the region: Patscherkofel, Axamer Lizum<br><strong>Family-Friendly?</strong> Excellent. Austrian ski schools are world-class.<br><strong>The Run:</strong> Patscherkofel's Olympic downhill is accessible to strong intermediates. Historic signage marks the route.<br>Stay in Innsbruck for the city + ski combo. Tram goes directly to slopes.",
                             "resort_slug": "austria/innsbruck"
                         },
                         {
                             "name": "St. Moritz, Switzerland (1928 & 1948)",
-                            "description": "<strong>Olympic Runs:</strong> Corviglia (slalom, GS)—the birthplace of Alpine ski racing<br><strong>Family-Friendly?</strong> Yes, though expensive. Excellent ski school, gentle upper slopes.<br><strong>The Run:</strong> The original Olympic courses are intermediate-friendly. Ski where the sport began.<br><strong>Pro tip:</strong> Take the Cresta Run toboggan for a different kind of Olympic thrill (16+ only).",
+                            "description": "<strong>Olympic Runs:</strong> Corviglia (slalom, GS), the birthplace of Alpine ski racing<br><strong>Family-Friendly?</strong> Yes, though expensive. Excellent ski school, gentle upper slopes.<br><strong>The Run:</strong> The original Olympic courses are intermediate-friendly. Ski where the sport began.<br>The Cresta Run toboggan is a different kind of Olympic thrill (16+ only).",
                             "resort_slug": "switzerland/st-moritz"
                         },
                         {
                             "name": "Sestriere, Italy (2006)",
-                            "description": "<strong>Olympic Runs:</strong> Kandahar Giovanni Alberto Agnelli (men's downhill), Kandahar Banchetta (women's)<br><strong>Family-Friendly?</strong> Good. Connected to the large Via Lattea ski area.<br><strong>The Run:</strong> The Kandahar runs are genuine expert terrain. But the resort has plenty of blues and greens.<br><strong>Pro tip:</strong> The Olympic gondola gives amazing views even for non-skiers. Sauze d'Oulx nearby is more family-oriented.",
+                            "description": "<strong>Olympic Runs:</strong> Kandahar Giovanni Alberto Agnelli (men's downhill), Kandahar Banchetta (women's)<br><strong>Family-Friendly?</strong> Good. Connected to the large Via Lattea ski area.<br><strong>The Run:</strong> The Kandahar runs are genuine expert terrain. But the resort has plenty of blues and greens.<br>The Olympic gondola gives amazing views even for non-skiers. Sauze d'Oulx nearby is more family-oriented.",
                             "resort_slug": "italy/sestriere"
                         },
                         {
                             "name": "Hakuba, Japan (1998)",
-                            "description": "<strong>Olympic Runs:</strong> Happo-one—site of men's and women's downhill/Super-G<br><strong>Family-Friendly?</strong> Very. Japanese hospitality is unmatched. Ski schools in English available.<br><strong>The Run:</strong> The Olympic downhill course on Happo-one is challenging but skiable by strong intermediates. Stunning views of Japanese Alps.<br><strong>Pro tip:</strong> Combine skiing with onsen (hot spring) visits. Kids love the snow monkeys nearby.",
-                            "resort_slug": "japan/hakuba"
+                            "description": "<strong>Olympic Runs:</strong> Happo-one, site of men's and women's downhill/Super-G<br><strong>Family-Friendly?</strong> Very. Japanese hospitality is unmatched. Ski schools in English available.<br><strong>The Run:</strong> The Olympic downhill course on Happo-one is challenging but skiable by strong intermediates. Stunning views of Japanese Alps.<br>Combine skiing with onsen (hot spring) visits. Kids love the snow monkeys nearby.",
+                            "resort_slug": "japan/hakuba-valley"
                         },
                         {
                             "name": "Lillehammer/Kvitfjell, Norway (1994)",
-                            "description": "<strong>Olympic Runs:</strong> Kvitfjell hosted downhill/Super-G; Hafjell hosted slalom/GS<br><strong>Family-Friendly?</strong> Excellent. Norwegian resorts are designed around families.<br><strong>The Run:</strong> The Kvitfjell Olympic downhill is genuinely steep, but signposted. Hafjell's slalom hill is more approachable.<br><strong>Pro tip:</strong> Visit the Lillehammer Olympic Museum with kids—interactive and engaging.",
+                            "description": "<strong>Olympic Runs:</strong> Kvitfjell hosted downhill/Super-G; Hafjell hosted slalom/GS<br><strong>Family-Friendly?</strong> Excellent. Norwegian resorts are designed around families.<br><strong>The Run:</strong> The Kvitfjell Olympic downhill is genuinely steep, but signposted. Hafjell's slalom hill is more approachable.<br>Visit the Lillehammer Olympic Museum with kids. Interactive and engaging.",
                             "resort_slug": "norway/lillehammer"
                         }
                     ]
@@ -901,7 +909,7 @@ GUIDES = [
                 {
                     "type": "text",
                     "title": "Easiest Olympic Runs for Families",
-                    "content": "<p>Most Olympic downhill courses are expert terrain—they're designed to challenge the world's best. But some are actually skiable by strong intermediates:</p><ol><li><strong>Park City's Champions Run</strong> - Wide, groomed, intermediate-friendly. Your whole family can ski this.</li><li><strong>Lake Placid's Cloudspin</strong> - East Coast blue/black. Manageable for confident intermediates.</li><li><strong>St. Moritz's Corviglia</strong> - The original Olympic venue is surprisingly accessible.</li><li><strong>Cortina's 1956 Tofana Schuss</strong> - Historic and intermediate-friendly.</li><li><strong>Hakuba's Happo-one</strong> - The upper sections are doable; lower sections get steeper.</li></ol><p><strong>What about the really famous ones?</strong> Runs like Val d'Isère's La Face, Kitzbühel's Streif, and Wengen's Lauberhorn are genuinely dangerous. Admire from the lift or watch from the bottom.</p>"
+                    "content": "<p>Most Olympic downhill courses are expert terrain. They're designed to challenge the world's best. But some are actually skiable by strong intermediates:</p><ol><li><strong>Park City's Champions Run</strong> - Wide, groomed, intermediate-friendly. Your whole family can ski this.</li><li><strong>Lake Placid's Cloudspin</strong> - East Coast blue/black. Manageable for confident intermediates.</li><li><strong>St. Moritz's Corviglia</strong> - The original Olympic venue is surprisingly accessible.</li><li><strong>Cortina's 1956 Tofana Schuss</strong> - Historic and intermediate-friendly.</li><li><strong>Hakuba's Happo-one</strong> - The upper sections are doable; lower sections get steeper.</li></ol><p><strong>What about the really famous ones?</strong> Runs like Val d'Isère's La Face, Kitzbühel's Streif, and Wengen's Lauberhorn are genuinely dangerous. Admire from the lift or watch from the bottom.</p>"
                 },
                 {
                     "type": "text",
@@ -946,7 +954,7 @@ GUIDES = [
         },
         "seo_meta": {
             "title": "Ski Olympic Runs - Resorts Where You Can Ski Like a Champion",
-            "description": "Ski the same runs as Olympic champions. 10 resorts where families can ski actual Olympic downhill courses, with difficulty ratings and family-friendliness scores.",
+            "description": "Ski the same runs as Olympic champions. 10 resorts where families can ski actual Olympic downhill courses, with difficulty and family ratings.",
             "keywords": ["ski Olympic runs", "Olympic ski resorts", "ski like an Olympian", "famous ski runs", "Olympic downhill courses", "family ski Olympic venues"]
         }
     }
