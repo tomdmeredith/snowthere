@@ -103,6 +103,58 @@ def slugify(name: str) -> str:
     return ascii_name.lower().replace(" ", "-").replace("'", "").replace(".", "")
 
 
+def calculate_content_word_count(content: dict[str, Any]) -> int:
+    """Calculate total word count across all content sections.
+
+    Strips HTML tags and counts words for SEO thin content detection.
+    Pages with < 500 words may need expansion.
+
+    Args:
+        content: Dict containing content sections (quick_take, getting_there, etc.)
+
+    Returns:
+        Total word count across all text sections
+    """
+    import re
+
+    def strip_html_and_count(html: str) -> int:
+        """Strip HTML tags and count words."""
+        if not html:
+            return 0
+        # Remove HTML tags
+        text = re.sub(r'<[^>]+>', ' ', html)
+        # Remove extra whitespace and count words
+        words = text.split()
+        return len(words)
+
+    # Content sections to count
+    sections = [
+        "quick_take",
+        "getting_there",
+        "where_to_stay",
+        "lift_tickets",
+        "on_mountain",
+        "off_mountain",
+        "parent_reviews_summary",
+        "tagline",
+    ]
+
+    total = 0
+    for section in sections:
+        section_content = content.get(section, "")
+        if isinstance(section_content, str):
+            total += strip_html_and_count(section_content)
+
+    # Also count FAQs (answers only)
+    faqs = content.get("faqs", [])
+    if isinstance(faqs, list):
+        for faq in faqs:
+            if isinstance(faq, dict):
+                total += strip_html_and_count(faq.get("answer", ""))
+
+    return total
+
+
 def calculate_confidence(research_data: dict[str, Any]) -> float:
     """Calculate confidence score from research quality.
 
@@ -750,10 +802,10 @@ async def run_resort_pipeline(
             country=country,
             research_data=research_data,
             quick_take_context={
-                "unique_angle": quick_take_context.unique_angle,
-                "signature_experience": quick_take_context.signature_experience,
-                "memorable_detail": quick_take_context.memorable_detail,
-            } if quick_take_context else None,
+                "unique_angle": qt_context_result.unique_angle,
+                "signature_experience": qt_context_result.signature_experience,
+                "memorable_detail": qt_context_result.memorable_detail,
+            } if qt_context_result else None,
         )
 
         # Get recent portfolio taglines for diversity awareness
@@ -884,6 +936,10 @@ async def run_resort_pipeline(
                 action="created_new",
                 reasoning=f"Created new resort entry (ID: {resort_id})",
             )
+
+        # Calculate word count for SEO thin content detection
+        content["word_count"] = calculate_content_word_count(content)
+        print(f"  Content word count: {content['word_count']}")
 
         # Update content - verify write succeeded
         content_result = update_resort_content(resort_id, content)
