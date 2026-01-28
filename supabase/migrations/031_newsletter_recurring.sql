@@ -10,12 +10,11 @@
 -- EXTEND EMAIL SEQUENCES FOR RECURRENCE
 -- =============================================================================
 
--- Add recurrence fields to email_sequences
-ALTER TABLE email_sequences
-ADD COLUMN IF NOT EXISTS recurrence_pattern TEXT CHECK (recurrence_pattern IN ('weekly', 'bi-weekly', 'monthly')),
-ADD COLUMN IF NOT EXISTS recurrence_day INTEGER CHECK (recurrence_day >= 0 AND recurrence_day <= 31),
-ADD COLUMN IF NOT EXISTS recurrence_time TIME DEFAULT '06:00',
-ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'America/Los_Angeles';
+-- Add recurrence fields to email_sequences (PostgreSQL requires separate statements)
+ALTER TABLE email_sequences ADD COLUMN IF NOT EXISTS recurrence_pattern TEXT CHECK (recurrence_pattern IN ('weekly', 'bi-weekly', 'monthly'));
+ALTER TABLE email_sequences ADD COLUMN IF NOT EXISTS recurrence_day INTEGER CHECK (recurrence_day >= 0 AND recurrence_day <= 31);
+ALTER TABLE email_sequences ADD COLUMN IF NOT EXISTS recurrence_time TIME DEFAULT '06:00';
+ALTER TABLE email_sequences ADD COLUMN IF NOT EXISTS timezone TEXT DEFAULT 'America/Los_Angeles';
 
 COMMENT ON COLUMN email_sequences.recurrence_pattern IS 'Recurring pattern: weekly, bi-weekly, monthly. NULL for one-time sequences';
 COMMENT ON COLUMN email_sequences.recurrence_day IS 'Day to send: 0-6 for weekly (0=Sunday, 4=Thursday), 1-31 for monthly';
