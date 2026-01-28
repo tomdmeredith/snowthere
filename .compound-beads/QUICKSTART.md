@@ -20,6 +20,7 @@
   - Migration 031_newsletter_recurring.sql applied to production
   - Removed AI disclosure references (cleaner messaging)
   - Added /methodology to footer navigation
+  - Fixed decimal score display (6.0 not 6)
 - R10: **Content Structure + Email System Fix** (Completed)
   - Built guide page infrastructure (`/guides/[slug]`)
   - Email sequence templates loaded into database

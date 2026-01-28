@@ -37,6 +37,7 @@
 - Added /methodology link to Footer navigation
 - Scores verified correct on /resorts page (decimal 5.4-7.8)
 - Quiz and homepage use correct database scores
+- Fixed decimal score display: all scores now show .toFixed(1) (e.g., 6.0 not 6)
 
 ---
 
