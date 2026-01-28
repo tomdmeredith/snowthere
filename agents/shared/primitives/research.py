@@ -111,7 +111,7 @@ async def exa_search(
     # Run in thread pool since exa-py is sync
     def _search():
         kwargs = {
-            "type": "neural",
+            "type": "auto",  # Changed from 'neural' (deprecated) - API now uses 'auto', 'fast', 'deep'
             "num_results": num_results,
             "text": {"max_characters": 1500},
         }

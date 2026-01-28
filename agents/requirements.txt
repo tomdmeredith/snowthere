@@ -26,6 +26,10 @@ tavily-python>=0.3.0
 # MCP Server (Model Context Protocol)
 mcp>=1.0.0
 
+# Google Search Console API
+google-api-python-client>=2.0.0
+google-auth>=2.0.0
+
 # Environment
 python-dotenv>=1.0.0
 
