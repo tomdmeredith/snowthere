@@ -4,6 +4,12 @@ import Link from 'next/link'
 import { Check, ChevronRight, HelpCircle } from 'lucide-react'
 import type { GuideSection, GuideListItem, GuideChecklistItem, GuideFAQItem, GuideCTA } from '@/lib/guides'
 
+// Build correct resort URL using country slug map
+function buildResortHref(slug: string, countryMap?: Record<string, string>): string {
+  const countrySlug = countryMap?.[slug]
+  return countrySlug ? `/resorts/${countrySlug}/${slug}` : `/resorts/${slug}`
+}
+
 // =============================================================================
 // SECTION RENDERERS
 // =============================================================================
@@ -33,7 +39,7 @@ function TextSection({ title, content }: { title?: string; content?: string }) {
   )
 }
 
-function ListSection({ title, items }: { title?: string; items?: GuideListItem[] }) {
+function ListSection({ title, items, resortCountryMap }: { title?: string; items?: GuideListItem[]; resortCountryMap?: Record<string, string> }) {
   if (!items || items.length === 0) return null
 
   return (
@@ -55,7 +61,7 @@ function ListSection({ title, items }: { title?: string; items?: GuideListItem[]
                 <h3 className="font-semibold text-gray-900 mb-1">
                   {item.resort_slug ? (
                     <Link
-                      href={`/resorts/${item.resort_slug}`}
+                      href={buildResortHref(item.resort_slug, resortCountryMap)}
                       className="hover:text-coral-500 transition-colors"
                     >
                       {item.name}
@@ -70,7 +76,7 @@ function ListSection({ title, items }: { title?: string; items?: GuideListItem[]
               </div>
               {item.resort_slug && (
                 <Link
-                  href={`/resorts/${item.resort_slug}`}
+                  href={buildResortHref(item.resort_slug, resortCountryMap)}
                   className="flex-shrink-0 text-coral-500 hover:text-coral-600"
                 >
                   <ChevronRight className="w-5 h-5" />
@@ -221,9 +227,10 @@ function CTASection({ cta }: { cta?: GuideCTA }) {
 
 interface GuideContentProps {
   sections: GuideSection[]
+  resortCountryMap?: Record<string, string>
 }
 
-export function GuideContent({ sections }: GuideContentProps) {
+export function GuideContent({ sections, resortCountryMap }: GuideContentProps) {
   return (
     <div className="space-y-12">
       {sections.map((section, idx) => {
@@ -238,6 +245,7 @@ export function GuideContent({ sections }: GuideContentProps) {
                 key={idx}
                 title={section.title}
                 items={section.items as GuideListItem[]}
+                resortCountryMap={resortCountryMap}
               />
             )
           case 'checklist':

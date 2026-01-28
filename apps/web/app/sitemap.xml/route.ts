@@ -27,6 +27,15 @@ export async function GET() {
 
   const resorts = (resortsData as Resort[] | null) || []
 
+  // Fetch all published guides
+  const { data: guidesData } = await supabase
+    .from('guides')
+    .select('slug, updated_at')
+    .eq('status', 'published')
+    .order('updated_at', { ascending: false })
+
+  const guides = (guidesData as { slug: string; updated_at: string }[] | null) || []
+
   // Get unique countries
   const countries = Array.from(new Set(resorts.map((r) => r.country)))
 
@@ -62,11 +71,29 @@ export async function GET() {
   </url>`)
     .join('\n')
 
+  const guideIndexUrl = `  <url>
+    <loc>${BASE_URL}/guides</loc>
+    <lastmod>${formatDate(new Date())}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`
+
+  const guideUrls = guides
+    .map((guide) => `  <url>
+    <loc>${BASE_URL}/guides/${guide.slug}</loc>
+    <lastmod>${formatDate(new Date(guide.updated_at))}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>`)
+    .join('\n')
+
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${staticUrls}
 ${countryUrls}
 ${resortUrls}
+${guideIndexUrl}
+${guideUrls}
 </urlset>`
 
   return new Response(xml, {

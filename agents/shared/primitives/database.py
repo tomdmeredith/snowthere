@@ -87,6 +87,7 @@ RESORT_CONTENT_COLUMNS = frozenset({
     "seo_meta",
     "content_version",
     "tagline",
+    "word_count",  # SEO thin content detection
 })
 
 
@@ -1067,3 +1068,48 @@ def get_recent_portfolio_taglines(
             break
 
     return diverse_taglines
+
+
+# =============================================================================
+# CONTENT QUALITY QUERIES
+# =============================================================================
+
+
+def get_thin_content_pages(threshold: int = 500, limit: int = 20) -> list[dict]:
+    """
+    Get resort pages with word count below threshold (potential SEO issue).
+
+    Thin content pages may need expansion for better SEO performance.
+
+    Args:
+        threshold: Word count below which content is "thin" (default 500)
+        limit: Maximum results to return
+
+    Returns:
+        List of resorts with thin content, sorted by word count ascending
+    """
+    client = get_supabase_client()
+
+    response = (
+        client.table("resort_content")
+        .select("resort_id, word_count, quick_take, resorts(name, slug, country, status)")
+        .lt("word_count", threshold)
+        .not_.is_("word_count", "null")
+        .order("word_count", desc=False)
+        .limit(limit)
+        .execute()
+    )
+
+    results = []
+    for row in response.data or []:
+        resorts_data = row.get("resorts", {})
+        results.append({
+            "resort_id": row.get("resort_id"),
+            "word_count": row.get("word_count"),
+            "name": resorts_data.get("name"),
+            "slug": resorts_data.get("slug"),
+            "country": resorts_data.get("country"),
+            "status": resorts_data.get("status"),
+        })
+
+    return results

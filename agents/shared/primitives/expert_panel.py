@@ -29,12 +29,14 @@ Usage:
 
 import asyncio
 import json
+import logging
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 import anthropic
 
 from ..config import settings
+from ..supabase_client import get_supabase_client
 from ..voice_profiles import get_voice_profile
 from .approval import (
     FORBIDDEN_PATTERNS,
@@ -539,3 +541,218 @@ def _cleanup_text(text: str) -> str:
     text = re.sub(r"\s+([.,!?])", r"\1", text)
     text = text.strip()
     return text
+
+
+# =============================================================================
+# Approval Loop (Mirrors approval.py's approval_loop for any content type)
+# =============================================================================
+
+
+@dataclass
+class ExpertApprovalLoopResult:
+    """Result of the expert panel approval iteration loop."""
+
+    final_content: Any
+    approved: bool
+    iterations: int
+    panel_history: list[PanelResult] = field(default_factory=list)
+    final_issues: list[str] = field(default_factory=list)
+
+
+async def improve_content_from_panel(
+    content: Any,
+    issues: list[str],
+    suggestions: list[str],
+    content_type: str = "guide",
+    voice_profile: str = "snowthere_guide",
+) -> Any:
+    """Improve content based on expert panel feedback.
+
+    Works on both dict and string content. Uses Claude to revise
+    content addressing specific issues while maintaining voice.
+
+    Args:
+        content: Content to improve (dict or string)
+        issues: Issues identified by the panel
+        suggestions: Suggested improvements
+        content_type: Type of content being improved
+        voice_profile: Target voice profile
+
+    Returns:
+        Improved content (same type as input)
+    """
+    profile = get_voice_profile(voice_profile)
+    formatted = _format_content_for_review(content)
+
+    issues_str = "\n".join(f"- {issue}" for issue in issues) if issues else "None"
+    suggestions_str = (
+        "\n".join(f"- {s}" for s in suggestions) if suggestions else "None"
+    )
+
+    prompt = f"""Improve this {content_type} content based on expert panel feedback.
+
+CURRENT CONTENT:
+{formatted}
+
+ISSUES TO FIX:
+{issues_str}
+
+SUGGESTIONS:
+{suggestions_str}
+
+TARGET VOICE: {profile.name}
+{profile.description}
+
+Instructions:
+1. Address each issue specifically
+2. Incorporate suggestions where possible
+3. Maintain the target voice profile
+4. Keep all accurate information
+5. Be surgical: fix issues without rewriting content that's already good
+
+Return the improved content as JSON with the same structure as the input.
+Only include sections that exist in the input."""
+
+    system = f"""You are an expert editor improving {content_type} content.
+Fix specific issues while maintaining quality and voice.
+Voice: {profile.name} - {', '.join(profile.tone[:3])}
+Avoid: {', '.join(profile.avoid[:3])}"""
+
+    response = _call_claude(prompt, system=system)
+
+    try:
+        improved = _parse_json_response(response)
+        if isinstance(content, dict):
+            # Preserve keys not in response
+            for key, value in content.items():
+                if key not in improved:
+                    improved[key] = value
+            return apply_voice_cleanup(improved)
+        return apply_voice_cleanup(improved)
+    except (json.JSONDecodeError, ValueError):
+        # Return original with voice cleanup if parsing fails
+        return apply_voice_cleanup(content)
+
+
+async def expert_approval_loop(
+    content: Any,
+    content_type: str = "guide",
+    voice_profile: str = "snowthere_guide",
+    context: str = "",
+    max_iterations: int = 3,
+) -> ExpertApprovalLoopResult:
+    """Run the full expert panel approval iteration loop.
+
+    Mirrors approval.py's approval_loop but works for any content type
+    using configurable expert panels instead of hardcoded reviewers.
+
+    Flow:
+    1. Run expert panel (5 experts for guides, 3 for newsletters)
+    2. If approved (majority), return success
+    3. If not approved, improve content from feedback
+    4. Repeat until approved or max iterations
+
+    Args:
+        content: Content to evaluate and improve
+        content_type: Type for expert panel selection
+        voice_profile: Target voice profile
+        context: Additional context for evaluation
+        max_iterations: Maximum improvement iterations (default 3)
+
+    Returns:
+        ExpertApprovalLoopResult with final content and approval status
+    """
+    current_content = content
+    panel_history: list[PanelResult] = []
+
+    for iteration in range(1, max_iterations + 1):
+        # Run the expert panel
+        panel_result = await run_expert_panel(
+            content=current_content,
+            content_type=content_type,
+            voice_profile=voice_profile,
+            context=context,
+        )
+        panel_history.append(panel_result)
+
+        if panel_result.approved:
+            # Apply voice cleanup as final pass
+            final = apply_voice_cleanup(current_content)
+            return ExpertApprovalLoopResult(
+                final_content=final,
+                approved=True,
+                iterations=iteration,
+                panel_history=panel_history,
+                final_issues=[],
+            )
+
+        # Not approved - check if we should iterate
+        if iteration < max_iterations:
+            current_content = await improve_content_from_panel(
+                current_content,
+                panel_result.combined_issues,
+                panel_result.combined_suggestions,
+                content_type=content_type,
+                voice_profile=voice_profile,
+            )
+        else:
+            # Max iterations reached
+            final = apply_voice_cleanup(current_content)
+            return ExpertApprovalLoopResult(
+                final_content=final,
+                approved=False,
+                iterations=iteration,
+                panel_history=panel_history,
+                final_issues=panel_result.combined_issues,
+            )
+
+    # Edge case fallback
+    return ExpertApprovalLoopResult(
+        final_content=apply_voice_cleanup(current_content),
+        approved=False,
+        iterations=max_iterations,
+        panel_history=panel_history,
+        final_issues=["Max iterations reached without approval"],
+    )
+
+
+def log_panel_result(
+    content_type: str,
+    content_id: str,
+    result: ExpertApprovalLoopResult,
+) -> None:
+    """Log expert panel result to agent_audit_log for unified quality tracking.
+
+    Args:
+        content_type: Type of content reviewed (guide, newsletter, resort)
+        content_id: ID of the content item
+        result: The approval loop result
+    """
+    try:
+        supabase = get_supabase_client()
+
+        # Build summary from panel history
+        summaries = []
+        for i, panel in enumerate(result.panel_history):
+            votes = ", ".join(
+                f"{v.agent_name}:{v.verdict}" for v in panel.votes
+            )
+            summaries.append(f"Iteration {i+1}: {votes}")
+
+        supabase.table("agent_audit_log").insert({
+            "task_id": content_id,
+            "action": f"expert_panel_{content_type}",
+            "reasoning": (
+                f"Expert panel review: {'APPROVED' if result.approved else 'NOT APPROVED'} "
+                f"after {result.iterations} iteration(s). "
+                + "; ".join(summaries)
+            ),
+            "metadata": {
+                "content_type": content_type,
+                "approved": result.approved,
+                "iterations": result.iterations,
+                "final_issues": result.final_issues,
+            },
+        }).execute()
+    except Exception as e:
+        logging.getLogger(__name__).warning(f"Failed to log panel result: {e}")

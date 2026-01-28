@@ -377,6 +377,35 @@ from .quick_take import (
     FORBIDDEN_PHRASES,
 )
 
+# Expert Panel primitives (Content-agnostic quality evaluation)
+from .expert_panel import (
+    # Data classes
+    ExpertRole,
+    ExpertPanelResult,
+    ExpertApprovalLoopResult,
+    # Expert definitions
+    ACCURACY_EXPERT,
+    FAMILY_USEFULNESS_EXPERT,
+    VOICE_EXPERT,
+    SEO_GEO_EXPERT,
+    SKEPTIC_EXPERT,
+    BUSY_PARENT_EXPERT,
+    # Registry
+    EXPERT_PANELS,
+    get_experts_for_content_type,
+    # Evaluation
+    evaluate_with_expert,
+    run_expert_panel as run_content_expert_panel,
+    # Review
+    review_and_summarize,
+    # Approval loop
+    expert_approval_loop,
+    improve_content_from_panel,
+    log_panel_result,
+    # Voice cleanup
+    apply_voice_cleanup,
+)
+
 # Scoring primitives (Deterministic family score calculation)
 from .scoring import (
     # Data classes
@@ -724,4 +753,29 @@ __all__ = [
     "calculate_family_score",
     "calculate_family_score_with_breakdown",
     "format_score_explanation",
+    # Expert Panel - Data classes
+    "ExpertRole",
+    "ExpertPanelResult",
+    "ExpertApprovalLoopResult",
+    # Expert Panel - Expert definitions
+    "ACCURACY_EXPERT",
+    "FAMILY_USEFULNESS_EXPERT",
+    "VOICE_EXPERT",
+    "SEO_GEO_EXPERT",
+    "SKEPTIC_EXPERT",
+    "BUSY_PARENT_EXPERT",
+    # Expert Panel - Registry
+    "EXPERT_PANELS",
+    "get_experts_for_content_type",
+    # Expert Panel - Evaluation
+    "evaluate_with_expert",
+    "run_content_expert_panel",
+    # Expert Panel - Review
+    "review_and_summarize",
+    # Expert Panel - Approval loop
+    "expert_approval_loop",
+    "improve_content_from_panel",
+    "log_panel_result",
+    # Expert Panel - Voice cleanup
+    "apply_voice_cleanup",
 ]

@@ -496,8 +496,57 @@ Created analytics utility with GA4 event tracking, integrated into UsefulLinks c
 - R7.3: Pipeline link injection (Stage 4.9)
 - R7.4: GA4 outbound click tracking
 
+### Round 7.2: Comprehensive Affiliate Program Research (Completed 2026-01-27)
+
+**Problem Statement:**
+Only 3 placeholder affiliate programs existed (Booking.com, Ski.com, Liftopia). Needed comprehensive research into ALL relevant affiliate programs for a family ski directory.
+
+**Research Completed:**
+Extensive analysis of 30+ affiliate programs across 13 categories:
+1. **Accommodation** - Booking.com, VRBO, Expedia, TripAdvisor, Interhome, Alps Resorts, Europe-Mountains
+2. **Tour Operators** - Sunweb (9x World Best winner), Skiweekends, Crystal Ski, Skiworld, Esprit Ski, Ski Famille
+3. **Lift Tickets** - Liftopia, GetSkiTickets, Epic Pass
+4. **Equipment Rentals** - Skiset, Snow Rental
+5. **Flights** - Skyscanner
+6. **Airport Transfers** - Alps2Alps (€24 flat per booking!)
+7. **Car Rental** - Discover Cars (23-54% commission!), Auto Europe
+8. **Gear/Apparel** - REI, Backcountry, evo, Burton, GoPro, The North Face, Columbia, Patagonia, Helly Hansen, Peter Glenn (150-day cookie!)
+9. **Travel Insurance** - World Nomads, Allianz Travel
+10. **Activities** - Viator, GetYourGuide
+11. **Baby Gear** - BabyQuip (10% commission)
+
+**Priority Tiers:**
+- **Tier 1 (Must Have)**: Discover Cars, Booking.com, Alps2Alps, Sunweb, Skiweekends, World Nomads, Viator
+- **Tier 2 (High Value)**: Skiset, Snow Rental, Crystal Ski, Backcountry, REI, BabyQuip, GetSkiTickets, Interhome, VRBO, Expedia, TripAdvisor, Skyscanner, evo, Auto Europe
+- **Tier 3 (Supplementary)**: Burton, GoPro, Epic Pass, Esprit Ski, Ski Famille, Skiworld, Allianz Travel, and more
+
+**Migration Created:**
+- `supabase/migrations/032_comprehensive_affiliate_programs.sql`
+  - Added new columns: category, network, cookie_duration, priority_tier, signup_url
+  - Inserted 30+ affiliate programs with placeholder affiliate_ids
+  - Created `affiliate_programs_summary` view for category breakdown
+  - All programs have signup_url for manual registration
+
+**Affiliate Networks to Join:**
+- Travelpayouts (Booking.com, Discover Cars, Viator, flights)
+- Awin (Burton, Snow Rental, Crystal Ski)
+- Impact Radius (Backcountry, outdoor brands)
+- AvantLink (REI, evo, Patagonia, Helly Hansen)
+- CJ Affiliate (Skyscanner, VRBO, Expedia, GoPro, Columbia)
+- FlexOffers (Sunweb, The North Face, Alps Resorts)
+- Admitad (Alps2Alps)
+
+**Next Steps (Manual):**
+1. Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
+2. Apply to individual programs through each network
+3. Update `affiliate_config.affiliate_id` with real IDs as approved
+4. Run migration 032 via Supabase Dashboard
+
+**Key Files:**
+- `supabase/migrations/032_comprehensive_affiliate_programs.sql`
+
 **Remaining:**
-- R7.2: Manual affiliate program signups (Booking.com, Ski.com, Liftopia)
+- Manual affiliate network signups and program applications
 
 ---
 
@@ -878,8 +927,11 @@ The DB schema was incomplete. Expand schema to match user needs, don't shrink ca
 - Implement new homepage components
 - A/B test conversion
 
-**R7.2: Affiliate Signups** (pending)
-- Apply to Booking.com, Ski.com, Liftopia affiliate programs
+**R7.2: Affiliate Program Database** ✅ RESEARCH COMPLETE (2026-01-27)
+- Created migration 032_comprehensive_affiliate_programs.sql with 30+ programs
+- Organized into Tier 1 (Must Have), Tier 2 (High Value), Tier 3 (Supplementary)
+- Categories: accommodation, tour_operator, lift_tickets, rentals, flights, car_rental, gear, insurance, activities, baby_gear, camera
+- **PENDING MANUAL ACTION**: Sign up for affiliate networks and update affiliate_id values
 
 **Data Quality Improvement** (ongoing)
 - Improve childcare/terrain data to get higher scores

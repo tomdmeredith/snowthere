@@ -852,3 +852,173 @@ async def inject_links_in_content_sections(
             all_injected_links.extend(result.links_injected)
 
     return modified_content, all_injected_links
+
+
+# =============================================================================
+# EXTERNAL LINK VALIDATION
+# =============================================================================
+
+
+@dataclass
+class LinkValidationResult:
+    """Result of validating external links."""
+
+    success: bool
+    total_checked: int
+    valid_count: int
+    invalid_count: int
+    skipped_count: int
+    broken_links: list[dict]  # List of {url, name, entity_type, error}
+    error: str | None = None
+
+
+async def validate_external_links(
+    max_links: int = 100,
+    timeout_seconds: float = 10.0,
+) -> LinkValidationResult:
+    """
+    Validate external links in entity_link_cache.
+
+    Checks if direct_url links return 200 OK.
+    Run weekly to detect broken links that hurt SEO trust signals.
+
+    Args:
+        max_links: Maximum number of links to check per run
+        timeout_seconds: Timeout for each HTTP request
+
+    Returns:
+        LinkValidationResult with counts and broken links list
+    """
+    client = get_supabase_client()
+
+    # Get links to validate (direct_url not null)
+    response = (
+        client.table("entity_link_cache")
+        .select("id, name_normalized, entity_type, location_context, direct_url")
+        .not_.is_("direct_url", "null")
+        .limit(max_links)
+        .execute()
+    )
+
+    links = response.data or []
+
+    if not links:
+        return LinkValidationResult(
+            success=True,
+            total_checked=0,
+            valid_count=0,
+            invalid_count=0,
+            skipped_count=0,
+            broken_links=[],
+        )
+
+    valid = 0
+    invalid = 0
+    skipped = 0
+    broken: list[dict] = []
+
+    async with httpx.AsyncClient(
+        timeout=timeout_seconds,
+        follow_redirects=True,
+        headers={"User-Agent": "Snowthere-LinkChecker/1.0"},
+    ) as http_client:
+        for link in links:
+            url = link.get("direct_url")
+            if not url:
+                skipped += 1
+                continue
+
+            try:
+                # HEAD request is faster and sufficient for validation
+                resp = await http_client.head(url)
+
+                if resp.status_code == 405:
+                    # Some servers don't allow HEAD, try GET
+                    resp = await http_client.get(url)
+
+                if resp.status_code < 400:
+                    valid += 1
+                else:
+                    invalid += 1
+                    broken.append({
+                        "url": url,
+                        "name": link.get("name_normalized"),
+                        "entity_type": link.get("entity_type"),
+                        "location": link.get("location_context"),
+                        "status_code": resp.status_code,
+                        "error": f"HTTP {resp.status_code}",
+                    })
+
+            except httpx.TimeoutException:
+                invalid += 1
+                broken.append({
+                    "url": url,
+                    "name": link.get("name_normalized"),
+                    "entity_type": link.get("entity_type"),
+                    "location": link.get("location_context"),
+                    "error": "Timeout",
+                })
+            except httpx.ConnectError:
+                invalid += 1
+                broken.append({
+                    "url": url,
+                    "name": link.get("name_normalized"),
+                    "entity_type": link.get("entity_type"),
+                    "location": link.get("location_context"),
+                    "error": "Connection failed",
+                })
+            except Exception as e:
+                skipped += 1  # Count as skipped for unexpected errors
+
+    return LinkValidationResult(
+        success=True,
+        total_checked=len(links),
+        valid_count=valid,
+        invalid_count=invalid,
+        skipped_count=skipped,
+        broken_links=broken,
+    )
+
+
+def clear_broken_link(link_id: str) -> bool:
+    """
+    Clear a broken link from the cache.
+
+    Call this after identifying a broken link that should be removed.
+
+    Args:
+        link_id: UUID of the entity_link_cache row
+
+    Returns:
+        True if deleted, False otherwise
+    """
+    client = get_supabase_client()
+
+    try:
+        client.table("entity_link_cache").delete().eq("id", link_id).execute()
+        return True
+    except Exception:
+        return False
+
+
+def get_broken_link_count() -> int:
+    """
+    Get count of potentially broken links (for monitoring).
+
+    This is a quick check - actual validation happens in validate_external_links.
+
+    Returns:
+        Count of links that haven't been validated recently
+    """
+    # This is a placeholder - in production you might want to track
+    # validation dates and count links not validated in 7+ days
+    client = get_supabase_client()
+
+    response = (
+        client.table("entity_link_cache")
+        .select("id", count="exact")
+        .not_.is_("direct_url", "null")
+        .execute()
+    )
+
+    return response.count or 0

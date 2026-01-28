@@ -4,7 +4,7 @@ This orchestrator handles the complete guide generation pipeline:
 1. Topic discovery and selection
 2. Research and planning
 3. Content generation
-4. Approval panel (3 reviewers)
+4. Expert panel review (5 experts, up to 3 improvement iterations)
 5. Publication or draft
 
 Usage:
@@ -15,11 +15,10 @@ Usage:
 Design:
     - Runs 2x/week as part of cron job
     - Target: 2 guides/week (8/month)
-    - Uses same approval pattern as resort content
+    - Uses expert_panel.py for content-agnostic quality review
+    - 5 expert reviewers with iterative improvement (vs old 3-reviewer single-shot)
 """
 
-import asyncio
-import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -36,9 +35,8 @@ from shared.primitives.guides import (
     publish_guide,
     link_resorts_to_guide,
     check_guide_exists,
-    list_guides,
 )
-from shared.primitives.research import search_resort_info
+from shared.primitives.expert_panel import expert_approval_loop, ExpertApprovalLoopResult
 from shared.primitives.publishing import revalidate_page
 from shared.supabase_client import get_supabase_client
 
@@ -52,28 +50,6 @@ PT_TIMEZONE = ZoneInfo("America/Los_Angeles")
 
 
 @dataclass
-class GuideApprovalVote:
-    """A single reviewer's vote on guide content."""
-
-    reviewer: str  # TrustGuard, FamilyValue, VoiceCoach
-    approved: bool
-    confidence: float
-    reasoning: str
-    suggestions: list[str] = field(default_factory=list)
-
-
-@dataclass
-class GuideApprovalResult:
-    """Result of the 3-agent approval panel."""
-
-    approved: bool
-    votes: list[GuideApprovalVote]
-    unanimous: bool
-    majority_confidence: float
-    summary: str
-
-
-@dataclass
 class GuideResult:
     """Result of processing a single guide."""
 
@@ -83,7 +59,7 @@ class GuideResult:
     title: str | None = None
     status: str = "unknown"  # draft, published, failed
     confidence: float = 0.0
-    approval_result: GuideApprovalResult | None = None
+    approval_result: ExpertApprovalLoopResult | None = None
     error: str | None = None
 
 
@@ -97,177 +73,6 @@ class GuidePipelineResult:
     draft_count: int = 0
     failed_count: int = 0
     duration_seconds: float = 0.0
-
-
-# =============================================================================
-# APPROVAL PANEL
-# =============================================================================
-
-
-async def run_approval_panel(
-    guide_title: str,
-    guide_type: str,
-    content: dict[str, Any],
-    outline: GuideOutline,
-) -> GuideApprovalResult:
-    """
-    Run the 3-agent approval panel on guide content.
-
-    Reviewers:
-    - TrustGuard: Fact accuracy, source reliability
-    - FamilyValue: Usefulness for families
-    - VoiceCoach: Tone and brand consistency
-
-    Approval requires 2/3 majority.
-    """
-    import anthropic
-    from shared.config import settings
-
-    client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
-    votes = []
-
-    content_summary = json.dumps(content, indent=2, default=str)[:4000]
-
-    # Reviewer 1: TrustGuard - Fact accuracy
-    trust_prompt = f"""You are TrustGuard, a fact-checking reviewer for ski guides.
-
-GUIDE: {guide_title} ({guide_type})
-
-CONTENT:
-{content_summary}
-
-Review for:
-1. Factual accuracy - Are claims verifiable?
-2. Source reliability - Could this be verified against resort websites?
-3. Currency - Is information likely current?
-4. Completeness - Are important caveats included?
-
-Return JSON:
-{{
-    "approved": true/false,
-    "confidence": 0.0-1.0,
-    "reasoning": "2-3 sentence assessment",
-    "suggestions": ["improvement1", "improvement2"]
-}}
-
-Be strict. Reject if you find factual errors or unsupported claims."""
-
-    # Reviewer 2: FamilyValue - Usefulness for families
-    family_prompt = f"""You are FamilyValue, reviewing guides for family usefulness.
-
-GUIDE: {guide_title} ({guide_type})
-
-CONTENT:
-{content_summary}
-
-Review for:
-1. Actionability - Can families use this to make decisions?
-2. Relevance - Does this address real family concerns?
-3. Age-appropriate - Does it consider different child ages?
-4. Practicality - Are tips actually doable?
-
-Return JSON:
-{{
-    "approved": true/false,
-    "confidence": 0.0-1.0,
-    "reasoning": "2-3 sentence assessment",
-    "suggestions": ["improvement1", "improvement2"]
-}}
-
-Be helpful. Approve if families will find this useful."""
-
-    # Reviewer 3: VoiceCoach - Tone and brand
-    voice_prompt = f"""You are VoiceCoach, reviewing content for brand voice consistency.
-
-GUIDE: {guide_title} ({guide_type})
-
-CONTENT:
-{content_summary}
-
-BRAND VOICE: Snowthere - warm, practical, encouraging. Like a helpful ski mom friend.
-- Uses "you" and "your family"
-- Specific and actionable, not generic
-- Encouraging without being overwhelming
-- Honest about challenges
-
-Review for:
-1. Voice consistency - Does it sound like Snowthere?
-2. Engagement - Is it readable and compelling?
-3. Tone - Is it appropriate for the content type?
-4. Clarity - Is it easy to understand?
-
-Return JSON:
-{{
-    "approved": true/false,
-    "confidence": 0.0-1.0,
-    "reasoning": "2-3 sentence assessment",
-    "suggestions": ["improvement1", "improvement2"]
-}}
-
-Be generous. Approve if voice is generally on-brand."""
-
-    # Run all three reviews
-    reviewers = [
-        ("TrustGuard", trust_prompt),
-        ("FamilyValue", family_prompt),
-        ("VoiceCoach", voice_prompt),
-    ]
-
-    for reviewer_name, prompt in reviewers:
-        try:
-            response = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=500,
-                messages=[{"role": "user", "content": prompt}],
-                system="You are a content reviewer. Return valid JSON only.",
-            )
-
-            text = response.content[0].text
-            # Parse JSON
-            if "```json" in text:
-                text = text.split("```json")[1].split("```")[0]
-            elif "```" in text:
-                text = text.split("```")[1].split("```")[0]
-
-            parsed = json.loads(text.strip())
-
-            votes.append(GuideApprovalVote(
-                reviewer=reviewer_name,
-                approved=parsed.get("approved", False),
-                confidence=float(parsed.get("confidence", 0.5)),
-                reasoning=parsed.get("reasoning", ""),
-                suggestions=parsed.get("suggestions", []),
-            ))
-
-        except Exception as e:
-            logger.error(f"{reviewer_name} review failed: {e}")
-            # Conservative: count as rejection if review fails
-            votes.append(GuideApprovalVote(
-                reviewer=reviewer_name,
-                approved=False,
-                confidence=0.3,
-                reasoning=f"Review failed: {e}",
-            ))
-
-    # Calculate approval (2/3 majority)
-    approval_count = sum(1 for v in votes if v.approved)
-    approved = approval_count >= 2
-    unanimous = approval_count == 3
-
-    avg_confidence = sum(v.confidence for v in votes) / len(votes) if votes else 0
-
-    summary_parts = []
-    for v in votes:
-        status = "approved" if v.approved else "rejected"
-        summary_parts.append(f"{v.reviewer}: {status} ({v.confidence:.2f})")
-
-    return GuideApprovalResult(
-        approved=approved,
-        votes=votes,
-        unanimous=unanimous,
-        majority_confidence=avg_confidence,
-        summary="; ".join(summary_parts),
-    )
 
 
 # =============================================================================
@@ -327,16 +132,24 @@ async def generate_single_guide(
         logger.info(f"  Generating content ({len(outline.sections)} sections)...")
         content = await generate_guide_content(outline, research_data)
 
-        # Stage 5: Run approval panel
-        logger.info(f"  Running approval panel...")
-        approval = await run_approval_panel(
-            topic.title,
-            topic.guide_type,
-            content,
-            outline,
+        # Stage 5: Run expert approval loop (5 experts, up to 3 iterations)
+        logger.info(f"  Running expert approval panel...")
+        approval = await expert_approval_loop(
+            content=content,
+            content_type="guide",
+            voice_profile="snowthere_guide",
+            context=f"Guide: {topic.title} ({topic.guide_type})",
+            max_iterations=3,
         )
 
-        logger.info(f"  Approval: {approval.summary}")
+        logger.info(
+            f"  Approval: {'approved' if approval.approved else 'not approved'} "
+            f"after {approval.iterations} iteration(s)"
+        )
+
+        # Use improved content if iterations were applied
+        if approval.approved and approval.final_content is not None:
+            content = approval.final_content
 
         # Stage 6: Create guide in database
         logger.info(f"  Creating guide in database...")
@@ -377,13 +190,22 @@ async def generate_single_guide(
         else:
             logger.info(f"  Saving as draft (not approved)")
 
+        # Extract confidence from the last panel result
+        confidence = 0.0
+        if approval.panel_history:
+            last_panel = approval.panel_history[-1]
+            if hasattr(last_panel, "evaluations") and last_panel.evaluations:
+                confidence = sum(
+                    e.confidence for e in last_panel.evaluations
+                ) / len(last_panel.evaluations)
+
         return GuideResult(
             success=True,
             guide_id=guide_id,
             slug=slug,
             title=topic.title,
             status=final_status,
-            confidence=approval.majority_confidence,
+            confidence=confidence,
             approval_result=approval,
         )
 

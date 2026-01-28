@@ -193,6 +193,7 @@ async def run_weekly_newsletter() -> dict:
     from shared.primitives.newsletter import (
         check_newsletter_due,
         generate_newsletter,
+        review_newsletter_content,
         send_newsletter,
     )
 
@@ -222,6 +223,28 @@ async def run_weekly_newsletter() -> dict:
 
         print(f"✓ Newsletter #{gen_result.issue_number} generated")
         print(f"  Subject: {gen_result.content.subject if gen_result.content else 'N/A'}")
+
+        # Review newsletter content with expert panel
+        print("  Running quality review...")
+        review_result = await review_newsletter_content(gen_result)
+
+        if not review_result.approved:
+            print(f"⚠️  Newsletter rejected by expert panel: {review_result.message}")
+            for issue in review_result.issues[:5]:
+                print(f"    - {issue}")
+            return {
+                "success": False,
+                "status": "review_rejected",
+                "issue_number": gen_result.issue_number,
+                "issue_id": gen_result.issue_id,
+                "review_message": review_result.message,
+                "review_issues": review_result.issues,
+            }
+
+        print(f"✓ Newsletter approved ({review_result.message})")
+        if review_result.issues:
+            for issue in review_result.issues:
+                print(f"    ⚠️  {issue}")
 
         # Send the newsletter
         print("  Sending to subscribers...")

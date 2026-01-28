@@ -17,11 +17,22 @@ export async function GET() {
     .eq('status', 'published')
     .order('name')
 
+  // Fetch all published guides
+  const { data: guides } = await supabase
+    .from('guides')
+    .select('title, slug, guide_type, excerpt')
+    .eq('status', 'published')
+    .order('title')
+
   const countryToSlug = (country: string) =>
     country.toLowerCase().replace(/\s+/g, '-')
 
   const resortList = (resorts as Resort[] || [])
     .map((r) => `- [${r.name}, ${r.country}](${BASE_URL}/resorts/${countryToSlug(r.country)}/${r.slug}/llms.txt)`)
+    .join('\n')
+
+  const guideList = ((guides as { title: string; slug: string; guide_type: string; excerpt: string | null }[]) || [])
+    .map((g) => `- [${g.title}](${BASE_URL}/guides/${g.slug}/llms.txt) (${g.guide_type})`)
     .join('\n')
 
   const countries = Array.from(new Set((resorts as Resort[] || []).map((r) => r.country))).sort()
@@ -64,6 +75,10 @@ ${countryList}
 ## Resort Directory
 
 ${resortList}
+
+## Guide Directory
+
+${guideList || 'No guides published yet.'}
 
 ## Data Freshness
 

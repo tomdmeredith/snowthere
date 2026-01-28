@@ -597,6 +597,108 @@ async def generate_newsletter() -> NewsletterGenerationResult:
 
 
 # =============================================================================
+# NEWSLETTER QUALITY REVIEW
+# =============================================================================
+
+
+@dataclass
+class NewsletterReviewResult:
+    """Result of newsletter quality review."""
+
+    approved: bool
+    message: str
+    iterations: int = 0
+    issues: list[str] = field(default_factory=list)
+    improved_content: NewsletterContent | None = None
+
+
+async def review_newsletter_content(
+    gen_result: "NewsletterGenerationResult",
+) -> NewsletterReviewResult:
+    """
+    Review newsletter content with expert panel before sending.
+
+    Uses the 'newsletter' expert panel (3 experts, 1 iteration).
+    Non-blocking: if all experts approve/improve → allow send.
+    If any expert rejects → block send, keep as draft.
+
+    Args:
+        gen_result: The result from generate_newsletter()
+
+    Returns:
+        NewsletterReviewResult with approval status
+    """
+    from .expert_panel import expert_approval_loop
+
+    if not gen_result.content:
+        return NewsletterReviewResult(
+            approved=False,
+            message="No content to review",
+            issues=["Newsletter content is None"],
+        )
+
+    # Build reviewable content from the newsletter sections
+    content_for_review = {
+        "subject": gen_result.content.subject,
+        "preview_text": gen_result.content.preview_text,
+        "sections": [
+            {
+                "type": s.section_type,
+                "title": s.title,
+                "html": s.content_html,
+            }
+            for s in gen_result.content.sections
+        ],
+    }
+
+    context = (
+        f"Newsletter #{gen_result.issue_number}: {gen_result.content.subject}\n"
+        f"Sections: {len(gen_result.content.sections)}\n"
+        f"This is a weekly newsletter for family ski trip planners."
+    )
+
+    try:
+        approval = await expert_approval_loop(
+            content=content_for_review,
+            content_type="newsletter",
+            voice_profile="snowthere_guide",
+            context=context,
+            max_iterations=1,  # Single pass for newsletters (cost: ~$0.05)
+        )
+
+        if approval.approved:
+            logger.info(
+                f"Newsletter #{gen_result.issue_number} approved by expert panel"
+            )
+            return NewsletterReviewResult(
+                approved=True,
+                message=f"Approved after {approval.iterations} iteration(s)",
+                iterations=approval.iterations,
+            )
+        else:
+            issues = approval.final_issues or []
+            logger.warning(
+                f"Newsletter #{gen_result.issue_number} rejected by expert panel: "
+                f"{', '.join(issues[:3])}"
+            )
+            return NewsletterReviewResult(
+                approved=False,
+                message=f"Rejected after {approval.iterations} iteration(s)",
+                iterations=approval.iterations,
+                issues=issues,
+            )
+
+    except Exception as e:
+        logger.error(f"Newsletter review failed: {e}")
+        # On review failure, allow send with warning (non-blocking)
+        return NewsletterReviewResult(
+            approved=True,
+            message=f"Review failed ({e}), allowing send with warning",
+            issues=[f"Review error: {e}"],
+        )
+
+
+# =============================================================================
 # NEWSLETTER SENDING
 # =============================================================================
 
