@@ -1,6 +1,5 @@
 import { supabase } from '@/lib/supabase'
-
-const BASE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com').trim()
+import { SITE_URL } from '@/lib/constants'
 
 interface Resort {
   slug: string
@@ -41,13 +40,13 @@ export async function GET() {
 
   // Build XML parts
   const staticUrls = `  <url>
-    <loc>${BASE_URL}</loc>
+    <loc>${SITE_URL}</loc>
     <lastmod>${formatDate(new Date())}</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>${BASE_URL}/resorts</loc>
+    <loc>${SITE_URL}/resorts</loc>
     <lastmod>${formatDate(new Date())}</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
@@ -55,7 +54,7 @@ export async function GET() {
 
   const countryUrls = countries
     .map((country) => `  <url>
-    <loc>${BASE_URL}/resorts/${countryToSlug(country)}</loc>
+    <loc>${SITE_URL}/resorts/${countryToSlug(country)}</loc>
     <lastmod>${formatDate(new Date())}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>
@@ -64,7 +63,7 @@ export async function GET() {
 
   const resortUrls = resorts
     .map((resort) => `  <url>
-    <loc>${BASE_URL}/resorts/${countryToSlug(resort.country)}/${resort.slug}</loc>
+    <loc>${SITE_URL}/resorts/${countryToSlug(resort.country)}/${resort.slug}</loc>
     <lastmod>${formatDate(new Date(resort.last_refreshed || resort.updated_at))}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -72,7 +71,7 @@ export async function GET() {
     .join('\n')
 
   const guideIndexUrl = `  <url>
-    <loc>${BASE_URL}/guides</loc>
+    <loc>${SITE_URL}/guides</loc>
     <lastmod>${formatDate(new Date())}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -80,7 +79,7 @@ export async function GET() {
 
   const guideUrls = guides
     .map((guide) => `  <url>
-    <loc>${BASE_URL}/guides/${guide.slug}</loc>
+    <loc>${SITE_URL}/guides/${guide.slug}</loc>
     <lastmod>${formatDate(new Date(guide.updated_at))}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

@@ -66,6 +66,8 @@ def publish_resort(
     # Trigger revalidation
     if trigger_revalidation and resort:
         revalidate_resort_page(resort["slug"], resort["country"])
+        # Also revalidate homepage (featured resorts may have changed)
+        revalidate_page("/")
 
     # Ping IndexNow for instant Bing/Yandex indexing
     if trigger_indexnow and resort:

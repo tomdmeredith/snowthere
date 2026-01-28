@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
+import { SITE_URL } from '@/lib/constants'
 
 interface Props {
   params: { slug: string }
@@ -51,7 +50,7 @@ export async function GET(request: Request, { params }: Props) {
   }
 
   const guide = data as GuideData
-  const guideUrl = `${BASE_URL}/guides/${guide.slug}`
+  const guideUrl = `${SITE_URL}/guides/${guide.slug}`
   const sections = guide.content?.sections || []
 
   // Extract FAQ items

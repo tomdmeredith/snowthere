@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
 import { ResortWithDetails } from '@/lib/database.types'
+import { SITE_URL } from '@/lib/constants'
 import { createSanitizedHTML } from '@/lib/sanitize'
 import { injectResortLinks } from '@/lib/resort-linker'
 import { Navbar } from '@/components/layout/Navbar'
@@ -200,8 +201,6 @@ async function getSimilarResorts(resortId: string, limit: number = 6): Promise<S
     .slice(0, limit)
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resort = await getResort(params.country, params.slug)
   if (!resort) return { title: 'Resort Not Found' }
@@ -237,7 +236,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   // Build canonical URL
   const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
-  const canonicalUrl = `${BASE_URL}/resorts/${countrySlug}/${resort.slug}`
+  const canonicalUrl = `${SITE_URL}/resorts/${countrySlug}/${resort.slug}`
 
   // Build keywords from resort data
   const keywords = [
@@ -274,7 +273,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: 'en_US',
       images: [
         {
-          url: `${BASE_URL}/og/resort-${resort.slug}.png`,
+          url: `${SITE_URL}/og/resort-${resort.slug}.png`,
           width: 1200,
           height: 630,
           alt: `${resort.name} Family Ski Guide`,
@@ -285,7 +284,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title: `${resort.name} Family Ski Guide`,
       description,
-      images: [`${BASE_URL}/og/resort-${resort.slug}.png`],
+      images: [`${SITE_URL}/og/resort-${resort.slug}.png`],
     },
     other: {
       'article:published_time': resort.created_at,
@@ -355,7 +354,7 @@ export default async function ResortPage({ params }: Props) {
     description: content?.quick_take
       ? String(content.quick_take).replace(/<[^>]+>/g, '').slice(0, 200)
       : `Family ski resort in ${resort.country}`,
-    url: `${BASE_URL}/resorts/${countrySlug}/${resort.slug}`,
+    url: `${SITE_URL}/resorts/${countrySlug}/${resort.slug}`,
     address: {
       '@type': 'PostalAddress',
       addressRegion: resort.region || undefined,

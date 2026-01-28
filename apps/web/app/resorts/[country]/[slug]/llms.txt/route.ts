@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
+import { SITE_URL } from '@/lib/constants'
 
 interface Props {
   params: { country: string; slug: string }
@@ -52,7 +51,7 @@ export async function GET(request: Request, { params }: Props) {
   const content = resort.content as Record<string, unknown> | null
   const costs = resort.costs as Record<string, unknown> | null
 
-  const resortUrl = `${BASE_URL}/resorts/${countrySlug}/${slug}`
+  const resortUrl = `${SITE_URL}/resorts/${countrySlug}/${slug}`
 
   // Build structured llms.txt content for this specific resort
   const llmsContent = `# ${resort.name} - Family Ski Guide

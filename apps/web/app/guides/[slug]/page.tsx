@@ -12,6 +12,7 @@ import {
   User,
   ChevronRight,
 } from 'lucide-react'
+import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { GuideContent } from '@/components/guides/GuideContent'
@@ -34,8 +35,6 @@ const GUIDE_TYPE_ICONS: Record<string, React.ElementType> = {
   seasonal: Calendar,
   gear: Snowflake,
 }
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
 
 // A7: Static generation for all published guides
 export async function generateStaticParams() {
@@ -64,7 +63,7 @@ export async function generateMetadata({
     guide.seo_meta?.description ||
     guide.excerpt ||
     `Family ski guide: ${guide.title}`
-  const canonicalUrl = `${BASE_URL}/guides/${guide.slug}`
+  const canonicalUrl = `${SITE_URL}/guides/${guide.slug}`
   const keywords = [
     guide.title,
     'family skiing',
@@ -122,7 +121,7 @@ export async function generateMetadata({
 // A2: Build Schema.org JSON-LD schemas
 function buildSchemas(guide: GuideWithResorts) {
   const schemas: Record<string, unknown>[] = []
-  const canonicalUrl = `${BASE_URL}/guides/${guide.slug}`
+  const canonicalUrl = `${SITE_URL}/guides/${guide.slug}`
 
   // Article schema (all guides)
   schemas.push({
@@ -131,8 +130,8 @@ function buildSchemas(guide: GuideWithResorts) {
     headline: guide.title,
     description: guide.seo_meta?.description || guide.excerpt || undefined,
     url: canonicalUrl,
-    author: { '@type': 'Organization', name: 'Snowthere', url: BASE_URL },
-    publisher: { '@type': 'Organization', name: 'Snowthere', url: BASE_URL },
+    author: { '@type': 'Organization', name: 'Snowthere', url: SITE_URL },
+    publisher: { '@type': 'Organization', name: 'Snowthere', url: SITE_URL },
     ...(guide.published_at && { datePublished: guide.published_at }),
     dateModified: guide.updated_at,
     ...(guide.featured_image_url && { image: guide.featured_image_url }),
@@ -143,12 +142,12 @@ function buildSchemas(guide: GuideWithResorts) {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Home', item: BASE_URL },
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
       {
         '@type': 'ListItem',
         position: 2,
         name: 'Guides',
-        item: `${BASE_URL}/guides`,
+        item: `${SITE_URL}/guides`,
       },
       {
         '@type': 'ListItem',

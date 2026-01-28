@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { SITE_URL } from '@/lib/constants'
 import { Plus_Jakarta_Sans, Fraunces, Caveat } from 'next/font/google'
 import './globals.css'
 import { CookieConsent } from '@/components/CookieConsent'
@@ -31,6 +32,7 @@ const caveat = Caveat({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: 'Snowthere | Family Ski Resort Guides',
     template: '%s | Snowthere',

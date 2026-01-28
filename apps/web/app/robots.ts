@@ -1,6 +1,5 @@
 import { MetadataRoute } from 'next'
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
+import { SITE_URL } from '@/lib/constants'
 
 export default function robots(): MetadataRoute.Robots {
   return {
@@ -57,7 +56,7 @@ export default function robots(): MetadataRoute.Robots {
         allow: '/',
       },
     ],
-    sitemap: `${BASE_URL}/sitemap.xml`,
-    host: BASE_URL,
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   }
 }

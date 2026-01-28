@@ -65,8 +65,8 @@ async function getFeaturedResorts(): Promise<FeaturedResort[]> {
   return sorted.slice(0, 4)
 }
 
-// Force dynamic rendering to ensure fresh data and correct sorting
-export const dynamic = 'force-dynamic'
+// ISR: Revalidate every hour to show updated featured resorts
+export const revalidate = 3600
 
 export default async function HomePage() {
   const featuredResorts = await getFeaturedResorts()

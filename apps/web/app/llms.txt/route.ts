@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-
-const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://snowthere.com'
+import { SITE_URL } from '@/lib/constants'
 
 interface Resort {
   name: string
@@ -28,11 +27,11 @@ export async function GET() {
     country.toLowerCase().replace(/\s+/g, '-')
 
   const resortList = (resorts as Resort[] || [])
-    .map((r) => `- [${r.name}, ${r.country}](${BASE_URL}/resorts/${countryToSlug(r.country)}/${r.slug}/llms.txt)`)
+    .map((r) => `- [${r.name}, ${r.country}](${SITE_URL}/resorts/${countryToSlug(r.country)}/${r.slug}/llms.txt)`)
     .join('\n')
 
   const guideList = ((guides as { title: string; slug: string; guide_type: string; excerpt: string | null }[]) || [])
-    .map((g) => `- [${g.title}](${BASE_URL}/guides/${g.slug}/llms.txt) (${g.guide_type})`)
+    .map((g) => `- [${g.title}](${SITE_URL}/guides/${g.slug}/llms.txt) (${g.guide_type})`)
     .join('\n')
 
   const countries = Array.from(new Set((resorts as Resort[] || []).map((r) => r.country))).sort()
