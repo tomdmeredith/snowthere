@@ -1,11 +1,15 @@
-"""Image generation primitives with 3-tier fallback chain.
+"""Image generation primitives with 4-tier fallback chain.
 
 Following Agent Native principles, these primitives provide robust image
 generation capabilities with automatic failover between providers.
 
-Tier 1 (Primary): Google Gemini - Fast, cheap (~$0.002)
-Tier 2 (Backup): Glif Nano Banana Pro - High quality (~$0.01)
-Tier 3 (Tertiary): Replicate Flux Schnell - Reliable fallback (~$0.003)
+Nano Banana Pro is ALWAYS the default image model. It can be accessed via
+multiple providers — Replicate is the most reliable.
+
+Tier 1 (Primary): Nano Banana Pro on Replicate - Best quality (~$0.15)
+Tier 2 (Backup): Nano Banana Pro via Glif - Cheaper (~$0.01) but credits-limited
+Tier 3 (Tertiary): Google Gemini API - Fast, cheap (~$0.002)
+Tier 4 (Last Resort): Replicate Flux Schnell - Reliable cheap fallback (~$0.003)
 
 Key Design: NO CLOSE-UP FACES
 All prompts explicitly avoid faces to prevent AI uncanny valley:
@@ -47,9 +51,10 @@ class ImageType(str, Enum):
 class ImageProvider(str, Enum):
     """Image generation providers in fallback order."""
 
-    GEMINI = "gemini"
-    GLIF = "glif"
-    REPLICATE = "replicate"
+    NANO_BANANA = "nano_banana"  # Nano Banana Pro on Replicate (PRIMARY)
+    GLIF = "glif"  # Nano Banana Pro via Glif
+    GEMINI = "gemini"  # Google Gemini API
+    REPLICATE = "replicate"  # Flux Schnell fallback
     OFFICIAL = "official"  # Scraped from resort
 
 
@@ -271,6 +276,135 @@ async def generate_with_gemini(
         return ImageResult(
             success=False,
             error=f"Gemini generation failed: {str(e)}",
+        )
+
+
+async def generate_with_nano_banana(
+    prompt: str,
+    aspect_ratio: AspectRatio = AspectRatio.LANDSCAPE,
+) -> ImageResult:
+    """Tier 1 (PRIMARY): Generate image using Nano Banana Pro on Replicate.
+
+    Nano Banana Pro is Google DeepMind's state-of-the-art image generation
+    model built on Gemini 3 Pro. It creates detailed visuals with legible text,
+    advanced reasoning, and professional-grade creative controls.
+
+    Model: google/nano-banana-pro
+    Cost: ~$0.15 per image (2K resolution)
+    Speed: ~30-60 seconds
+    Quality: Excellent - best available
+    """
+    if not settings.replicate_api_token:
+        return ImageResult(
+            success=False,
+            error="REPLICATE_API_TOKEN not configured",
+        )
+
+    try:
+        # Map aspect ratio to Replicate/Nano Banana format
+        # Supported: 1:1, 2:3, 3:2, 3:4, 4:3, 4:5, 5:4, 9:16, 16:9, 21:9
+        aspect_map = {
+            AspectRatio.SQUARE: "1:1",
+            AspectRatio.LANDSCAPE: "16:9",
+            AspectRatio.PORTRAIT: "4:5",
+            AspectRatio.WIDE: "21:9",
+        }
+
+        import asyncio
+
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            # Create prediction using Nano Banana Pro
+            response = await client.post(
+                "https://api.replicate.com/v1/predictions",
+                headers={
+                    "Authorization": f"Token {settings.replicate_api_token}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "version": "0785fb14f5aaa30eddf06fd49b6cbdaac4541b8854eb314211666e23a29087e3",
+                    "input": {
+                        "prompt": prompt,
+                        "aspect_ratio": aspect_map.get(aspect_ratio, "16:9"),
+                        "resolution": "2K",
+                        "output_format": "jpg",
+                        "safety_filter_level": "block_only_high",
+                    },
+                },
+            )
+
+            if response.status_code != 201:
+                return ImageResult(
+                    success=False,
+                    error=f"Replicate API error (Nano Banana): {response.status_code} - {response.text[:200]}",
+                )
+
+            prediction = response.json()
+            prediction_id = prediction.get("id")
+
+            # Poll for completion (Nano Banana Pro can take 30-90 seconds)
+            max_attempts = 90
+            for _ in range(max_attempts):
+                status_response = await client.get(
+                    f"https://api.replicate.com/v1/predictions/{prediction_id}",
+                    headers={
+                        "Authorization": f"Token {settings.replicate_api_token}",
+                    },
+                )
+
+                status_data = status_response.json()
+                status = status_data.get("status")
+
+                if status == "succeeded":
+                    # Nano Banana Pro returns a single URI string, not an array
+                    output = status_data.get("output")
+                    if output:
+                        image_url = output if isinstance(output, str) else output[0]
+
+                        # Download and re-upload to Supabase Storage for permanence
+                        img_response = await client.get(image_url)
+                        if img_response.status_code == 200:
+                            mime = "image/jpeg" if image_url.endswith(".jpg") else "image/png"
+                            stored_url = await upload_image_to_storage(
+                                image_data=img_response.content,
+                                mime_type=mime,
+                                provider=ImageProvider.NANO_BANANA,
+                            )
+                            if stored_url:
+                                image_url = stored_url
+
+                        return ImageResult(
+                            success=True,
+                            url=image_url,
+                            source=ImageProvider.NANO_BANANA,
+                            prompt_used=prompt,
+                            aspect_ratio=aspect_map.get(aspect_ratio, "16:9"),
+                            cost=0.15,
+                            metadata={"model": "google/nano-banana-pro", "resolution": "2K"},
+                        )
+
+                    return ImageResult(
+                        success=False,
+                        error="Nano Banana Pro prediction succeeded but no output URL",
+                    )
+
+                elif status == "failed":
+                    error_msg = status_data.get("error", "Unknown error")
+                    return ImageResult(
+                        success=False,
+                        error=f"Nano Banana Pro prediction failed: {error_msg}",
+                    )
+
+                await asyncio.sleep(2)
+
+            return ImageResult(
+                success=False,
+                error="Nano Banana Pro prediction timed out (180s)",
+            )
+
+    except Exception as e:
+        return ImageResult(
+            success=False,
+            error=f"Nano Banana Pro generation failed: {str(e)}",
         )
 
 
@@ -513,10 +647,12 @@ async def upload_image_to_storage(
 
 def provider_configured(provider: ImageProvider) -> bool:
     """Check if a provider is configured with API keys."""
-    if provider == ImageProvider.GEMINI:
-        return bool(settings.google_api_key)
+    if provider == ImageProvider.NANO_BANANA:
+        return bool(settings.replicate_api_token)
     elif provider == ImageProvider.GLIF:
         return bool(settings.glif_api_key)
+    elif provider == ImageProvider.GEMINI:
+        return bool(settings.google_api_key)
     elif provider == ImageProvider.REPLICATE:
         return bool(settings.replicate_api_token)
     return False
@@ -527,10 +663,13 @@ async def generate_image_with_fallback(
     aspect_ratio: AspectRatio = AspectRatio.LANDSCAPE,
     task_id: str | None = None,
 ) -> ImageResult:
-    """Generate image with automatic 3-tier provider fallback.
+    """Generate image with automatic 4-tier provider fallback.
 
-    Tries providers in order: Gemini → Glif → Replicate
-    Skips providers that aren't configured.
+    Nano Banana Pro is ALWAYS the default. Fallback chain:
+    1. Nano Banana Pro on Replicate ($0.15) — best quality, most reliable
+    2. Nano Banana Pro via Glif ($0.01) — cheaper but credits-limited
+    3. Google Gemini API ($0.002) — if configured
+    4. Flux Schnell on Replicate ($0.003) — last resort
 
     Args:
         prompt: Image generation prompt
@@ -541,8 +680,9 @@ async def generate_image_with_fallback(
         ImageResult with generated image URL or error
     """
     providers = [
-        ("gemini", generate_with_gemini),
+        ("nano_banana", generate_with_nano_banana),
         ("glif", generate_with_glif),
+        ("gemini", generate_with_gemini),
         ("replicate", generate_with_replicate),
     ]
 

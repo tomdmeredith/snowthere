@@ -30,10 +30,11 @@ class Settings(BaseSettings):
     # AI
     anthropic_api_key: str
 
-    # Image Generation (3-tier fallback)
-    google_api_key: str | None = None  # Tier 1: Gemini
-    glif_api_key: str | None = None  # Tier 2: Nano Banana Pro
-    replicate_api_token: str | None = None  # Tier 3: Flux Schnell
+    # Image Generation (4-tier fallback — Nano Banana Pro is ALWAYS default)
+    replicate_api_token: str | None = None  # Tier 1: Nano Banana Pro on Replicate
+    glif_api_key: str | None = None  # Tier 2: Nano Banana Pro via Glif
+    google_api_key: str | None = None  # Tier 3: Google Gemini API
+    # Tier 4: Flux Schnell on Replicate (uses same replicate_api_token)
 
     # Google Places API (UGC photos)
     google_places_api_key: str | None = None
