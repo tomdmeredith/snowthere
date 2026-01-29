@@ -1,18 +1,55 @@
 # Snowthere Context
 
-> Last synced: 2026-01-28 (Round 13)
+> Last synced: 2026-01-29 (Round 13.1)
 > Agent: compound-beads v2.0
 
 ## Current State
 
-**All 13 rounds complete.** No active round. Site is live, pipeline is autonomous, all guides have Nano Banana Pro images.
+**All rounds through 13.1 complete.** No active round. Site is live, pipeline is autonomous, all guides have Nano Banana Pro images. Technical SEO audit complete — canonical tags on all pages, IndexNow verified, GSC API working.
 
 - **Resorts:** 35+ published, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
 - **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback)
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
-- **SEO:** Canonical URLs fixed, www domain, ISR caching, sitemaps resubmitted
+- **SEO:** All pages have canonical tags, IndexNow verified, GSC API connected, 7 priority pages submitted for indexing
+- **Indexing:** 4 indexed by Google (of 54 discovered), 7 pages manually requested for priority crawl
 - **Scores:** Deterministic decimal (5.4-7.8 range)
+
+---
+
+## Round 13.1: Technical SEO Audit & Indexing (2026-01-29) ✅
+
+**Goal:** Investigate GSC/Bing indexing gaps, fix canonical tags, configure IndexNow, request priority indexing
+
+### Investigation Findings
+- **Google Search Console:** 4 indexed, 39 not indexed (37 "Discovered - currently not indexed")
+- **Bing:** 0 indexed, sitemap accepted, IndexNow receiving pings
+- **Root causes:** 3 fixable issues + normal new-site patience (site is 11 days old)
+
+### Fixes Applied — DEPLOYED
+
+1. **Canonical tags on 8 pages:** Homepage, /resorts, /guides, /about, /methodology, /contact, /privacy, /terms — all now have explicit `alternates.canonical` and `openGraph.url` via Next.js Metadata API
+2. **IndexNow verification file:** Created `apps/web/public/fecbf60e758044b59c0e84c674c47765.txt`
+3. **INDEXNOW_KEY Railway env var:** Updated from `snowthere8f4a2b1c9e7d3f5a` to `fecbf60e758044b59c0e84c674c47765` (matching verification file)
+4. **ISR revalidation bug fix:** `26db039` — fixed Jan 28 pipeline failure, added /resorts revalidation on publish
+
+### Manual Actions Completed (via Playwright)
+5. **GSC priority indexing:** Requested indexing for 7 pages: /resorts/united-states, /resorts/canada, /resorts/canada/lake-louise, /resorts/switzerland/zermatt, /resorts/austria, /resorts/france, /resorts/switzerland
+6. **GSC quota hit** on /resorts/japan — retry needed tomorrow
+7. **Bing www property:** Confirmed already exists (both non-www and www properties)
+8. **GSC API verified:** Service account `snowthere-gsc@snowthere.iam.gserviceaccount.com` has Full permission, JSON key active (Jan 27), Search Console API enabled with 1 successful request
+
+### Discovery
+- `/resorts/canada` was "URL is unknown to Google" — country listing pages may not all be in sitemap
+- `/resorts` and `/guides` were already indexed (green checkmarks)
+- GSC daily quota limits indexing requests to ~10/day
+
+**Key commits:** `36fc555`, `26db039`
+
+**Arc:**
+- Started believing: Pages aren't indexed because the site is too new — just wait
+- Ended believing: 3 real technical issues were blocking indexing alongside normal new-site patience
+- Transformation: From assuming patience to systematic audit revealing fixable infrastructure gaps hidden behind normal new-site behavior
 
 ---
 
@@ -182,12 +219,14 @@
 | Service | Details |
 |---------|---------|
 | **Vercel** | www.snowthere.com, ISR, SPIELPLATZ design system |
-| **Railway** | creative-spontaneity, daily cron (resorts + guides + newsletter) |
+| **Railway** | snowthere-agents (creative-spontaneity), daily cron (resorts + guides + newsletter) |
 | **Supabase** | Snowthere, AWS us-east-2, 30+ tables |
-| **Google Search Console** | sc-domain:snowthere.com, sitemap: 54 pages |
-| **Bing Webmaster Tools** | snowthere.com verified, sitemap submitted |
+| **Google Search Console** | sc-domain:snowthere.com, sitemap: 54 pages, GSC API connected |
+| **Bing Webmaster Tools** | snowthere.com + www.snowthere.com verified, sitemap submitted, IndexNow active |
 | **Google Analytics** | GA4, linked to GSC |
+| **Google Cloud** | Project "Snowthere", Search Console API enabled, service account with JSON key |
 | **Resend** | Email delivery, domain verified (DKIM + SPF + MX) |
+| **IndexNow** | Verification key `fecbf60e758044b59c0e84c674c47765`, Railway env var configured |
 
 ## Pipeline Status
 
@@ -202,13 +241,15 @@
 - Google Places API 400 errors (blocks UGC photos) — needs investigation
 - Quick Take length occasionally exceeds 120 word limit (minor)
 - Affiliate programs: migration 032 created but manual network signups pending
+- ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
+- GSC daily quota hit — /resorts/japan needs indexing request tomorrow
 
 ## Pending Manual Work
 
 - Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
 - Run migration 032_comprehensive_affiliate_programs.sql on production
-- Monitor first autonomous guide generation (Monday)
-- Monitor first newsletter send (Thursday)
+- Request indexing for remaining GSC pages (daily quota, ~10/day)
+- Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
 
 ## Key Files
 
@@ -218,16 +259,16 @@
 | **Primitives** | `agents/shared/primitives/` (63+ atomic operations) |
 | **Frontend** | `apps/web/app/resorts/[country]/[slug]/page.tsx`, `guides/[slug]/page.tsx` |
 | **SEO** | `apps/web/lib/constants.ts`, `app/robots.ts`, `app/sitemap.xml/route.ts` |
+| **IndexNow** | `apps/web/public/fecbf60e758044b59c0e84c674c47765.txt` |
 | **Config** | `agents/shared/config.py`, `CLAUDE.md` |
-| **Plan** | `.claude/plans/snuggly-herding-liskov.md` |
 
 ## Recent Commits
 
 ```
+36fc555 fix: Add canonical tags to all pages + IndexNow verification key
+26db039 fix: Add /resorts revalidation on publish + Jan 28 failure remediation
+087acd4 docs: Close Round 13 — Compound Beads update + session handoff
 900f0f4 feat: Nano Banana Pro as primary image model (4-tier fallback)
 b34fc48 feat: Guides & non-resort content workflow overhaul (3 tracks)
 a1ac49b fix: Centralize SITE_URL, fix canonical URLs, www domain, homepage caching
-e51bcf0 feat: Guides & non-resort content workflow overhaul (3 tracks)
-9b001fb feat: Expert panel review fixes + generalized review primitive
-21198f6 feat: Add 6 Olympics guides for 2026 Milan-Cortina Winter Olympics
 ```
