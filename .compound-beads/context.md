@@ -1,19 +1,56 @@
 # Snowthere Context
 
-> Last synced: 2026-01-29 (Round 13.1)
+> Last synced: 2026-01-29 (Round 13.2)
 > Agent: compound-beads v2.0
 
 ## Current State
 
-**All rounds through 13.1 complete.** No active round. Site is live, pipeline is autonomous, all guides have Nano Banana Pro images. Technical SEO audit complete — canonical tags on all pages, IndexNow verified, GSC API working.
+**All rounds through 13.2 complete.** No active round. Site is live, pipeline is autonomous, Google Places API fixed. UGC photos and entity resolution will work on next pipeline run.
 
 - **Resorts:** 35+ published, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
-- **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback)
+- **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
 - **SEO:** All pages have canonical tags, IndexNow verified, GSC API connected, 7 priority pages submitted for indexing
 - **Indexing:** 4 indexed by Google (of 54 discovered), 7 pages manually requested for priority crawl
 - **Scores:** Deterministic decimal (5.4-7.8 range)
+- **Google Places:** Both APIs enabled, correct API key deployed to Railway
+
+---
+
+## Round 13.2: Google Places API Fix (2026-01-29) ✅
+
+**Goal:** Investigate and fix Google Places API 400 errors blocking UGC photos and entity resolution
+
+### Investigation Findings
+- **Root cause:** The Snowthere Google Cloud project had **zero Maps/Places APIs enabled** and the `GOOGLE_PLACES_API_KEY` on Railway pointed to a key that didn't exist on the project
+- **Two code paths affected:**
+  - `ugc_photos.py` — Uses legacy Places API (`maps.googleapis.com/maps/api/place/...`) for UGC photo fetching
+  - `external_links.py` — Uses Places API (New) (`places.googleapis.com/v1/places:searchText`) for entity resolution
+- **Code was graceful:** Both paths silently skip when no valid key is available (print warning, return None)
+- **Railway had 3 different Google keys:** `GOOGLE_API_KEY` (Gemini, from Tom Global project), `GOOGLE_PLACES_API_KEY` (invalid key), and the auto-generated Maps Platform key
+
+### Fixes Applied — DEPLOYED
+
+1. **Enabled Places API (legacy)** on Snowthere Google Cloud project (`places-backend.googleapis.com`)
+2. **Enabled Places API (New)** on Snowthere Google Cloud project (`places.googleapis.com`)
+3. **Auto-generated API key:** Google created "Maps Platform API Key" with 32 API restrictions
+4. **Updated Railway env var:** `GOOGLE_PLACES_API_KEY` changed from invalid key to correct Snowthere project key (`AIzaSyCGIoU3XO17vcRfhep6UzcRQ9rsUih4_38`)
+5. **Deployed** Railway service with updated variable
+
+### Discovery
+- The Snowthere project had 22 enabled APIs but zero were Maps/Places related
+- There are multiple Google Cloud projects (Snowthere, Tom Global, Cold Email, etc.) — keys from other projects don't work
+- The API key auto-restriction to "32 APIs" means all Maps Platform APIs are allowed by default
+- `GOOGLE_API_KEY` on Railway (`AIzaSyC8mfREzkQL4MPMJDMgXNVjlaMJ2y1fFHM`) is from the Tom Global project — used for Gemini, separate concern
+
+### Pending
+- Restrict the API key to only Places API + Places API (New) for security (currently allows all 32 Maps APIs)
+
+**Arc:**
+- Started believing: The 400 errors were from a code bug or API quota issue
+- Ended believing: The API wasn't enabled on the project and the key was from a non-existent credential
+- Transformation: From debugging code to auditing cloud project configuration — infrastructure correctness strikes again
 
 ---
 
@@ -224,7 +261,7 @@
 | **Google Search Console** | sc-domain:snowthere.com, sitemap: 54 pages, GSC API connected |
 | **Bing Webmaster Tools** | snowthere.com + www.snowthere.com verified, sitemap submitted, IndexNow active |
 | **Google Analytics** | GA4, linked to GSC |
-| **Google Cloud** | Project "Snowthere", Search Console API enabled, service account with JSON key |
+| **Google Cloud** | Project "Snowthere", Search Console API + Places API + Places API (New) enabled, Maps Platform API Key + service account |
 | **Resend** | Email delivery, domain verified (DKIM + SPF + MX) |
 | **IndexNow** | Verification key `fecbf60e758044b59c0e84c674c47765`, Railway env var configured |
 
@@ -238,11 +275,12 @@
 
 ## Known Issues
 
-- Google Places API 400 errors (blocks UGC photos) — needs investigation
+- ~~Google Places API 400 errors (blocks UGC photos)~~ — **FIXED in R13.2** (APIs enabled, correct key deployed)
 - Quick Take length occasionally exceeds 120 word limit (minor)
 - Affiliate programs: migration 032 created but manual network signups pending
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
 - GSC daily quota hit — /resorts/japan needs indexing request tomorrow
+- Google Places API key is unrestricted (allows all 32 Maps APIs) — should restrict to Places only
 
 ## Pending Manual Work
 

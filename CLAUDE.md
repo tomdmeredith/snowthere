@@ -195,15 +195,7 @@ family-ski-directory/
 - Replicate URLs are temporary — always re-upload to Supabase Storage
 - Browser audit before design work reveals UX issues invisible in code review
 
-### Round 14: Homepage Redesign (Next)
-> Implement chosen design from concepts
-
-- [ ] Finalize homepage design direction
-- [ ] Implement new homepage components
-- [ ] A/B test conversion
-
 ### Future Work
-> Moved from earlier rounds
 
 - [ ] Sign up for affiliate networks + run migration 032
 - [ ] Investigate Google Places API errors
