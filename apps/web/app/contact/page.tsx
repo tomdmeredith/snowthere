@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { ChevronRight, Mail, MessageSquare, Clock, Building2 } from 'lucide-react'
@@ -8,6 +9,12 @@ import { ContactForm } from '@/components/ContactForm'
 export const metadata: Metadata = {
   title: 'Contact Us | Snowthere',
   description: 'Get in touch with the Snowthere team. Questions about a resort, feedback on our guides, or partnership inquiries - we\'d love to hear from you.',
+  alternates: {
+    canonical: `${SITE_URL}/contact`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/contact`,
+  },
 }
 
 export default function ContactPage() {

@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import Image from 'next/image'
+import { SITE_URL } from '@/lib/constants'
 import { supabase } from '@/lib/supabase'
 import { Button, Badge, ScoreBadge } from '@/components/ui'
 import { Navbar } from '@/components/layout/Navbar'
@@ -18,6 +19,12 @@ export const metadata: Metadata = {
   title: 'Browse Family Ski Resorts | Snowthere',
   description:
     'Find the perfect family ski resort worldwide. Browse by country, family score, and more. Complete trip guides with honest parent reviews.',
+  alternates: {
+    canonical: `${SITE_URL}/resorts`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/resorts`,
+  },
 }
 
 // Age range types matching AgeSelector

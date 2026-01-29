@@ -1,3 +1,5 @@
+import { Metadata } from 'next'
+import { SITE_URL } from '@/lib/constants'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/layout/Navbar'
 import { FloatingShapes } from '@/components/home/FloatingShapes'
@@ -63,6 +65,15 @@ async function getFeaturedResorts(): Promise<FeaturedResort[]> {
   })
 
   return sorted.slice(0, 4)
+}
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: `${SITE_URL}/`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/`,
+  },
 }
 
 // ISR: Revalidate every hour to show updated featured resorts

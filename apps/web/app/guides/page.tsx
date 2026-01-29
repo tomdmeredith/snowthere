@@ -1,6 +1,7 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { BookOpen, Map, CheckSquare, CreditCard, Snowflake, Calendar } from 'lucide-react'
+import { SITE_URL } from '@/lib/constants'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
@@ -9,6 +10,12 @@ export const metadata: Metadata = {
   title: 'Family Ski Guides | Snowthere',
   description:
     'Comprehensive guides for family ski trips - from packing lists to resort comparisons. Everything you need to plan the perfect family ski vacation.',
+  alternates: {
+    canonical: `${SITE_URL}/guides`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/guides`,
+  },
 }
 
 // Guide type emojis for placeholder cards

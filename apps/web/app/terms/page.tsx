@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { ChevronRight, FileText, AlertTriangle, Scale } from 'lucide-react'
@@ -7,6 +8,12 @@ import { ChevronRight, FileText, AlertTriangle, Scale } from 'lucide-react'
 export const metadata: Metadata = {
   title: 'Terms of Service',
   description: 'Terms and conditions for using Snowthere. Read about our disclaimers and user responsibilities.',
+  alternates: {
+    canonical: `${SITE_URL}/terms`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/terms`,
+  },
 }
 
 export default function TermsPage() {

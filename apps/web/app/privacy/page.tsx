@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { ChevronRight, Shield, Cookie, Database, UserCheck, Mail } from 'lucide-react'
@@ -7,6 +8,12 @@ import { ChevronRight, Shield, Cookie, Database, UserCheck, Mail } from 'lucide-
 export const metadata: Metadata = {
   title: 'Privacy Policy',
   description: 'Learn how Snowthere collects, uses, and protects your personal information. GDPR and CCPA compliant.',
+  alternates: {
+    canonical: `${SITE_URL}/privacy`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/privacy`,
+  },
 }
 
 export default function PrivacyPage() {

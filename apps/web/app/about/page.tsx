@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { ChevronRight, Mountain, Heart, Sparkles, Search, Users } from 'lucide-react'
@@ -7,6 +8,12 @@ import { ChevronRight, Mountain, Heart, Sparkles, Search, Users } from 'lucide-r
 export const metadata: Metadata = {
   title: 'About Snowthere | Family Ski Trip Guides',
   description: 'Learn about Snowthere - helping families plan unforgettable ski vacations with honest, detailed resort guides. Our mission is to make family ski trips accessible to everyone.',
+  alternates: {
+    canonical: `${SITE_URL}/about`,
+  },
+  openGraph: {
+    url: `${SITE_URL}/about`,
+  },
 }
 
 export default function AboutPage() {

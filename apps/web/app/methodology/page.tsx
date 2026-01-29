@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import {
@@ -19,9 +20,13 @@ export const metadata: Metadata = {
   title: 'Family Score Methodology | How We Rate Ski Resorts',
   description:
     'Learn how Snowthere calculates Family Scores for ski resorts. Our transparent, deterministic methodology considers childcare, ski school, terrain, value, and convenience.',
+  alternates: {
+    canonical: `${SITE_URL}/methodology`,
+  },
   openGraph: {
     title: 'Family Score Methodology | Snowthere',
     description: 'How we calculate Family Scores for ski resorts - transparent and deterministic.',
+    url: `${SITE_URL}/methodology`,
   },
 }
 
