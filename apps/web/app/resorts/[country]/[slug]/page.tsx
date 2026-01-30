@@ -47,6 +47,10 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase())
 
+  // Normalize slug: decode URI encoding and normalize Unicode (NFC)
+  // This fixes mismatches between browser NFD encoding (e.g. macOS) and database NFC storage
+  const normalizedSlug = decodeURIComponent(slug).normalize('NFC')
+
   const { data: resort, error } = await supabase
     .from('resorts')
     .select(`
@@ -62,7 +66,7 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
       images:resort_images(*),
       links:resort_links(*)
     `)
-    .eq('slug', slug)
+    .eq('slug', normalizedSlug)
     .eq('country', countryName)
     .eq('status', 'published')
     .single()
