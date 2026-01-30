@@ -1,13 +1,13 @@
 # Snowthere Context
 
-> Last synced: 2026-01-29 (Round 13.2)
+> Last synced: 2026-01-30 (Round 14)
 > Agent: compound-beads v2.0
 
 ## Current State
 
-**All rounds through Data Quality Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**R15 active: GEO & Rich Results Enhancement.** Site is live, pipeline is autonomous, data quality gates active.
 
-- **Resorts:** 35+ published, pipeline adds ~6/day
+- **Resorts:** 38 published, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
 - **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
@@ -16,6 +16,36 @@
 - **Scores:** Deterministic decimal (5.4-7.8 range), completeness multiplier applied
 - **Data Quality:** `data_completeness` column added, conditional table rendering (>= 0.3), tiered publication gates
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway
+
+---
+
+## Round 14: SEO & Schema Critical Fixes + Bug Fixes (2026-01-30) ✅
+
+**Goal:** Fix everything broken or hurting search/social presence
+
+### Fixes Applied — DEPLOYED
+1. **Duplicate title suffix** — Removed `| Snowthere` from page-level titles on /resorts, /guides, /resorts/[country] (layout.tsx template already appends it)
+2. **Quiz page** — Created layout.tsx with proper metadata + Footer component
+3. **Unified footer** — All pages now use shared Footer component (replaced inline footer on resorts/country pages)
+4. **Newsletter link** — CTA now points to `/#newsletter` (was `/`)
+5. **Kitzbühel 404** — Unicode slug normalization fix: added `decodeURIComponent(slug).normalize('NFC')` to getResort()
+6. **Kitzbühel duplicate** — Deleted archived record (4ce9f3b3), updated published slug to ASCII `kitzbuhel`
+
+### Already Clean (no changes needed)
+- AggregateRating: Not present in current code
+- FAQ schema: Already server-rendered in page.tsx
+- BreadcrumbList: Already present in page.tsx
+- OG images: Using hero images (no broken /og/ route)
+
+### Migration 035
+- Applied via Supabase SQL Editor: Delete archived Kitzbühel + update published slug to ASCII
+
+**Key commits:** cf167cd, a6a6b37, 3ef05c9, 71d7369
+
+**Arc:**
+- Started believing: The audit would find many broken things to fix
+- Ended believing: Most schema items were already correct; the real bugs were Unicode normalization and template duplication
+- Transformation: From expecting widespread schema gaps to discovering the codebase was healthier than the audit suggested
 
 ---
 
@@ -325,6 +355,7 @@
 - ~~Duplicate title suffix on index pages~~ — Fixed in R14
 - ~~Quiz page missing footer~~ — Fixed in R14
 - ~~Inconsistent footers~~ — Unified in R14
+- ~~Kitzbühel 404~~ — Fixed in R14 (Unicode normalization + ASCII slug)
 - **MCP parity at ~40%** — 58 of ~340 primitive functions exposed; 22 modules missing → R17
 - **Runner monolith** — `run_resort_pipeline()` is 1,627 lines, no partial re-run → R18
 - Quick Take length occasionally exceeds 120 word limit (minor)
@@ -338,20 +369,9 @@
 
 Rounds 14-16 are user/SEO/GEO-facing. Rounds 17-18 are agent infrastructure.
 
-### Round 14: SEO & Schema Critical Fixes + Bug Fixes
+### ~~Round 14: SEO & Schema Critical Fixes + Bug Fixes~~ ✅
 
-**Goal:** Fix everything broken or actively hurting search/social presence
-
-- [x] Fix duplicate title suffix — "| Snowthere | Snowthere" on index pages
-- [x] Fix quiz page — add footer, set proper title
-- [x] Unify footer — all pages use shared Footer component
-- [x] Fix "Join the Newsletter" link — point to `/#newsletter`
-- [x] Remove AggregateRating — editorial scores ≠ user reviews
-- [x] Verify FAQ schema server-side — already in page.tsx
-- [x] Verify BreadcrumbList JSON-LD — already in page.tsx
-- [x] Verify OG images — resort pages use hero images (no /og/ route needed)
-
-**Files:** `apps/web/app/resorts/page.tsx`, `apps/web/app/guides/page.tsx`, `apps/web/app/resorts/[country]/page.tsx`, `apps/web/app/quiz/page.tsx`, `apps/web/app/resorts/[country]/[slug]/page.tsx`
+Completed 2026-01-30. See R14 section above.
 
 ### Round 15: GEO & Rich Results Enhancement + Data Quality Backfill
 
@@ -411,7 +431,7 @@ Rounds 14-16 are user/SEO/GEO-facing. Rounds 17-18 are agent infrastructure.
 - Run migration 032_comprehensive_affiliate_programs.sql on production
 - Request indexing for remaining GSC pages (daily quota, ~10/day)
 - Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
-- Homepage redesign (moved to after R15)
+- Homepage redesign (moved to after R16)
 
 ## Key Files
 
@@ -427,10 +447,10 @@ Rounds 14-16 are user/SEO/GEO-facing. Rounds 17-18 are agent infrastructure.
 ## Recent Commits
 
 ```
+71d7369 fix: Update migration 035 to match applied SQL (delete archived Kitzbühel + ASCII slug)
+3ef05c9 fix: Resolve Kitzbühel 404 — normalize Unicode slugs + ASCII migration
+a6a6b37 fix: R14 SEO & bug fixes — duplicate titles, unified footer, quiz page, newsletter link
+cf167cd feat: Data Quality & Scoring Overhaul — completeness tracking, conditional tables, publication gates
 36fc555 fix: Add canonical tags to all pages + IndexNow verification key
 26db039 fix: Add /resorts revalidation on publish + Jan 28 failure remediation
-087acd4 docs: Close Round 13 — Compound Beads update + session handoff
-900f0f4 feat: Nano Banana Pro as primary image model (4-tier fallback)
-b34fc48 feat: Guides & non-resort content workflow overhaul (3 tracks)
-a1ac49b fix: Centralize SITE_URL, fix canonical URLs, www domain, homepage caching
 ```

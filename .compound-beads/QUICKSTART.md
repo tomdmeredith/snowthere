@@ -1,6 +1,6 @@
 # Snowthere Quick Start
 
-**All rounds through Data Quality Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**R15 active: GEO & Rich Results Enhancement.** Site is live, pipeline is autonomous, data quality gates active.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -11,6 +11,10 @@
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
 **Recent**:
+- **R14: SEO & Schema Critical Fixes + Bug Fixes** (Completed 2026-01-30)
+  - Fixed duplicate title suffix, quiz page footer/title, unified footer, newsletter link
+  - Kitzbühel 404: Unicode slug normalization + ASCII migration (035)
+  - Already clean: AggregateRating, FAQ schema, BreadcrumbList, OG images
 - **Data Quality & Scoring Overhaul** (Completed 2026-01-29)
   - Scoring: 3 false defaults fixed, completeness multiplier added
   - New primitives: `calculate_data_completeness()`, `KEY_COMPLETENESS_FIELDS`
@@ -32,7 +36,7 @@
   - Nano Banana Pro on Replicate as primary image model (4-tier fallback)
   - Guide page Spielplatz design overhaul, exit intent popup redesigned
 
-**Stats**: 35+ resorts published, 10 guides published, scores 5.4-7.8
+**Stats**: 38 resorts published, 10 guides published, scores 5.4-7.8
 
 **Pipeline**: Active on Railway (snowthere-agents / creative-spontaneity)
 - Resorts: ~6/day, 70% discovery, deterministic scoring
@@ -55,8 +59,8 @@
 
 **Planned Rounds** (from ultimate audit 2026-01-29):
 
-- **R14: SEO & Schema Critical Fixes + Bug Fixes** — Fix duplicate titles, OG images, quiz footer, AggregateRating, server-side FAQ schema, BreadcrumbList, unify footer, newsletter link
-- **R15: GEO & Rich Results Enhancement + Data Backfill** — WebSite/Organization schema, ItemList schema, data quality backfill, image sitemap, legal pages in sitemap
+- ~~R14: SEO & Schema Critical Fixes + Bug Fixes~~ ✅
+- **R15: GEO & Rich Results Enhancement + Data Backfill** — WebSite/Organization schema, ItemList schema, data quality backfill, image sitemap, legal pages in sitemap (ACTIVE)
 - **R16: Error Handling & Polish** — Custom error boundaries, loading states, CSP tightening, GDPR data deletion
 - **R17: Agent-Native Parity** — Expose remaining primitive modules as MCP tools
 - **R18: Pipeline Architecture** — Decompose runner monolith, wire AgentTracer

@@ -126,6 +126,9 @@ function GuideCard({ guide }: { guide: Guide }) {
   )
 }
 
+// ISR: Revalidate every hour
+export const revalidate = 3600
+
 export default async function GuidesPage() {
   const guides = await getPublishedGuides()
 
@@ -137,8 +140,28 @@ export default async function GuidesPage() {
     return acc
   }, {} as Record<string, Guide[]>)
 
+  // Build ItemList JSON-LD from published guides
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Family Ski Guides',
+    description: 'Trip planning guides for family ski vacations.',
+    numberOfItems: guides.length,
+    itemListElement: guides.map((guide, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: guide.title,
+      url: `${SITE_URL}/guides/${guide.slug}`,
+      ...(guide.excerpt ? { description: guide.excerpt } : {}),
+    })),
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">
         {/* Hero Section */}

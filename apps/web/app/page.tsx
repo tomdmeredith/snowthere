@@ -84,6 +84,44 @@ export default async function HomePage() {
 
   return (
     <main id="main-content" className="min-h-screen bg-white relative">
+      {/* Schema.org JSON-LD */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: 'Snowthere',
+            alternateName: 'Snowthere Family Ski Guides',
+            url: 'https://www.snowthere.com',
+            description: 'Family ski resort guides with honest reviews, cost breakdowns, and trip planning for parents.',
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: {
+                '@type': 'EntryPoint',
+                urlTemplate: 'https://www.snowthere.com/resorts?q={search_term_string}',
+              },
+              'query-input': 'required name=search_term_string',
+            },
+          }),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'Organization',
+            name: 'Snowthere',
+            url: 'https://www.snowthere.com',
+            logo: 'https://www.snowthere.com/logo.png',
+            description: 'Family ski resort guides with honest reviews, cost breakdowns, and detailed trip planning.',
+            foundingDate: '2026',
+            sameAs: [],
+          }),
+        }}
+      />
+
       {/* Floating geometric shapes with parallax */}
       <FloatingShapes />
 

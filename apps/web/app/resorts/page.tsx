@@ -192,8 +192,28 @@ export default async function ResortsPage({
   const grouped = groupByCountry(filteredResorts)
   const countries = Object.keys(grouped).sort()
 
+  // Build ItemList JSON-LD from filtered resorts
+  const itemListJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Family Ski Resorts',
+    description: 'Family-friendly ski resorts worldwide with trip guides and family scores.',
+    numberOfItems: filteredResorts.length,
+    itemListElement: filteredResorts.map((resort, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: resort.name,
+      url: `${SITE_URL}/resorts/${resort.country.toLowerCase().replace(/\s+/g, '-')}/${resort.slug}`,
+      ...(resort.content?.tagline ? { description: resort.content.tagline } : {}),
+    })),
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+      />
       <Navbar />
       <main id="main-content" className="min-h-screen bg-white">
         {/* Breadcrumb */}
