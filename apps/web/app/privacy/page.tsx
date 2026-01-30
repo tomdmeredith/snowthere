@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { SITE_URL } from '@/lib/constants'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
+import { DataRequestForm } from '@/components/DataRequestForm'
 import { ChevronRight, Shield, Cookie, Database, UserCheck, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
@@ -178,6 +179,17 @@ export default function PrivacyPage() {
               information we collect, the right to delete, and the right to opt-out of the sale of
               personal information. We do not sell personal information.
             </p>
+
+            {/* Data Request Form */}
+            <div className="mt-8 bg-dark-50 rounded-2xl p-6">
+              <h3 className="font-display text-xl font-semibold text-dark-700 mb-4">
+                Exercise Your Rights
+              </h3>
+              <p className="text-dark-600 text-sm mb-4">
+                Request a copy of your data or ask us to delete it.
+              </p>
+              <DataRequestForm />
+            </div>
           </section>
 
           {/* Data Retention */}

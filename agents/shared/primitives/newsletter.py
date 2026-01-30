@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 # Newsletter configuration
 NEWSLETTER_TIMEZONE = ZoneInfo("America/Los_Angeles")
-NEWSLETTER_SEND_DAY = 4  # Thursday (0=Monday, 4=Thursday, 6=Sunday)
+NEWSLETTER_SEND_DAY = 3  # Thursday (0=Monday, 3=Thursday, 6=Sunday)
 NEWSLETTER_SEND_HOUR = 6  # 6 AM PT
 
 
@@ -102,7 +102,7 @@ def check_newsletter_due(
     - No newsletter has been sent for this week yet
 
     Args:
-        day_of_week: Day to send (0=Monday, 4=Thursday)
+        day_of_week: Day to send (0=Monday, 3=Thursday)
         hour: Hour to send (0-23)
 
     Returns:

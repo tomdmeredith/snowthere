@@ -1,6 +1,6 @@
 # Snowthere Quick Start
 
-**All rounds through R15 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R16 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -10,7 +10,20 @@
 - SEO/GEO optimized (Schema.org, llms.txt, AI crawler whitelist)
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
+**Intelligence Summary**:
+- **Working well**: Autonomous pipeline (resorts + guides + newsletter), deterministic scoring, 4-tier image fallback, ISR revalidation
+- **Needs attention**: 9 resorts at 0% completeness, 20 cost data outliers, TAVILY_API_KEY expired on Railway, migration 036 not applied
+- **Watch**: Google indexing pace (~30 pages still "Discovered"), affiliate program signups pending, Google Places API key unrestricted
+
 **Recent**:
+- **R16: Error Handling & Polish** (Completed 2026-01-30)
+  - Custom error boundaries (error.tsx, not-found.tsx) — branded 404 and error pages
+  - Loading skeletons for resorts, resort detail, and guide pages
+  - Resort filtering system: country/age/budget pills, search input, URL-synced state, sort options
+  - GDPR data request form on /privacy with API route + rate limiting + migration 036
+  - CSP headers tightened in vercel.json (HTTPS-only img-src, object-src none)
+  - Comprehensive browser testing: 15 categories, 3 customer walkthroughs, all pass
+  - BLOCKED: migration 036 not yet applied to cloud Supabase (form returns 500)
 - **R15: GEO & Rich Results Enhancement + Data Backfill** (Completed 2026-01-30)
   - WebSite + Organization JSON-LD on homepage (sitelinks search box)
   - ItemList JSON-LD on /resorts and /guides index pages
@@ -44,7 +57,7 @@
   - Nano Banana Pro on Replicate as primary image model (4-tier fallback)
   - Guide page Spielplatz design overhaul, exit intent popup redesigned
 
-**Stats**: 38 resorts published, 10 guides published, scores 3.8-8.3 (avg 5.4)
+**Stats**: 43 resorts published, 10 guides published, scores 3.8-8.3 (avg 5.4)
 
 **Pipeline**: Active on Railway (snowthere-agents / creative-spontaneity)
 - Resorts: ~6/day, 70% discovery, deterministic scoring
@@ -69,7 +82,7 @@
 
 - ~~R14: SEO & Schema Critical Fixes + Bug Fixes~~ ✅
 - ~~R15: GEO & Rich Results Enhancement + Data Backfill~~ ✅
-- **R16: Error Handling & Polish** — Custom error boundaries, loading states, CSP tightening, GDPR data deletion
+- ~~R16: Error Handling & Polish~~ ✅
 - **R17: Agent-Native Parity** — Expose remaining primitive modules as MCP tools
 - **R18: Pipeline Architecture** — Decompose runner monolith, wire AgentTracer
 

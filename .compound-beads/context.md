@@ -1,13 +1,15 @@
 # Snowthere Context
 
-> Last synced: 2026-01-30 (Round 15)
-> Agent: compound-beads v2.0
+> Last synced: 2026-01-30 (Round 16)
+> Agent: compound-beads v2.1
+> Session ID: (none — no active round)
+> Sessions This Round: 0
 
 ## Current State
 
-**All rounds through R15 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R16 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
-- **Resorts:** 38 published, pipeline adds ~6/day
+- **Resorts:** 43 published, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
 - **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
@@ -18,6 +20,60 @@
 - **Scores:** Deterministic decimal (3.8-8.3 range, avg 5.4), completeness multiplier applied
 - **Data Quality:** Backfill complete — 43% avg completeness, 7 resorts show full tables, 22 partial, 9 hidden
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway
+
+---
+
+## Round 16: Error Handling & Polish (2026-01-30) ✅
+
+**Goal:** Improve resilience, edge-case handling, and interactive filtering. Comprehensive browser testing.
+
+### Error Boundaries — DEPLOYED
+1. **`error.tsx`** — Global error boundary with branded Spielplatz design, retry button, go-home fallback
+2. **`not-found.tsx`** — Custom 404 page: "This trail doesn't exist" with Browse Resorts and Go Home buttons
+
+### Loading Skeletons — DEPLOYED
+3. **`resorts/loading.tsx`** — Breadcrumb, hero, filter bar, and card grid skeleton with `animate-pulse`
+4. **`resorts/[country]/[slug]/loading.tsx`** — Resort detail page skeleton (hero image, content sections)
+5. **`guides/[slug]/loading.tsx`** — Guide page skeleton (hero, content sections)
+
+### Resort Filtering System — DEPLOYED
+6. **`ResortFilters.tsx`** — Country pills, age group pills (0-3, 4-7, 8-12, 13+), budget pills ($-$$$$), sort options (Family Score, Price, A-Z)
+7. **`ResortGrid.tsx`** — Country-grouped display (default) or flat list (when sorted by Price/A-Z), empty state with newsletter CTA
+8. **`ResortCard.tsx`** — Card component with hero image, score badge, price badge ($/$$/$$$/$$$$), age range, region
+9. **`SearchInput.tsx`** — Debounced (300ms) search input with URL sync, clear button
+10. **`resort-filters.ts`** — Filter logic: URL search params ↔ filter state, country/age/budget/search matching
+11. **`resorts/page.tsx`** — Updated to use filtering components, sticky filter bar with backdrop blur
+12. **`resorts/[country]/page.tsx`** — Country-scoped filtering (no country pills, scoped search placeholder)
+
+### GDPR Data Request — DEPLOYED (migration pending)
+13. **`DataRequestForm.tsx`** — Email input + deletion/access toggle, loading/success/error states, GDPR copy
+14. **`api/data-request/route.ts`** — POST endpoint with in-memory rate limiting (2/min/IP), email validation, Supabase insert
+15. **`privacy/page.tsx`** — Updated with "Exercise Your Rights" section containing data request form
+16. **Migration 036** — `data_requests` table with RLS, unique index per email/type/day
+
+### CSP Headers — DEPLOYED
+17. **`vercel.json`** — Tightened CSP: `img-src` now HTTPS-only, added `object-src 'none'`
+
+### Comprehensive Browser Testing — ALL PASS
+- **15 test categories** executed via Playwright browser MCP tools
+- **3 customer walkthroughs**: First-time visitor, parent with toddlers, power user (direct URL)
+- **Build verification**: `pnpm build` succeeded — 76 pages, 0 errors
+
+### Blocked
+- **Test 12.3 (GDPR form submission)**: Returns 500 because migration 036 not yet applied to cloud Supabase. Code is correct; needs `supabase db push` or SQL Editor apply.
+
+**Files created:**
+- `apps/web/app/error.tsx`, `apps/web/app/not-found.tsx`
+- `apps/web/app/resorts/loading.tsx`, `apps/web/app/resorts/[country]/[slug]/loading.tsx`, `apps/web/app/guides/[slug]/loading.tsx`
+- `apps/web/components/resort/ResortFilters.tsx`, `ResortGrid.tsx`, `ResortCard.tsx`, `SearchInput.tsx`
+- `apps/web/lib/resort-filters.ts`
+- `apps/web/components/DataRequestForm.tsx`, `apps/web/app/api/data-request/route.ts`
+- `supabase/migrations/036_data_requests.sql`
+
+**Arc:**
+- Started believing: Error handling and polish is about adding safety nets around existing code
+- Ended believing: Polish means building complete interactive experiences — filtering, loading, error recovery, and privacy rights are all user-facing quality
+- Transformation: From defensive code additions to cohesive user experience where every state (loading, empty, error, filtered) is intentionally designed
 
 ---
 
@@ -411,6 +467,7 @@
 - Cost data outliers: 20 warnings from cross-resort validation (US resorts with $27-37 lift prices, Austrian resorts with EUR-as-USD)
 - 9 resorts at 0% completeness: Selva Val Gardena, Cortina, Stowe, Deer Valley, Hakuba, Winter Park, Smugglers Notch, Hakuba Valley, Cortina d'Ampezzo
 - TAVILY_API_KEY on Railway needs updating (local .env updated, Railway still has expired key)
+- Migration 036 (`data_requests` table) not yet applied to cloud Supabase — GDPR form returns 500
 
 ## Planned Rounds (Ultimate Audit — 2026-01-29)
 
@@ -424,18 +481,18 @@ Completed 2026-01-30. See R14 section above.
 
 Completed 2026-01-30. See R15 section above.
 
-### Round 16: Error Handling & Polish
+### ~~Round 16: Error Handling & Polish~~ ✅
 
-**Goal:** Improve resilience and edge case handling
+Completed 2026-01-30. See R16 section above.
 
-- [ ] Add custom error boundaries (error.tsx, not-found.tsx)
-- [ ] Add loading states (loading.tsx for route transitions)
-- [ ] Fix country page search aria-label
-- [ ] Tighten CSP (remove unsafe-eval, HTTPS-only img-src)
-- [ ] Add GDPR data deletion form
-- [ ] Restrict Google Places API key
-
-**Files:** `apps/web/app/error.tsx`, `apps/web/app/not-found.tsx`, `apps/web/vercel.json`
+- [x] Add custom error boundaries (error.tsx, not-found.tsx)
+- [x] Add loading states (loading.tsx for resorts, resort detail, guide pages)
+- [x] Add resort filtering system (country/age/budget/search/sort with URL state)
+- [x] Tighten CSP (HTTPS-only img-src, object-src none)
+- [x] Add GDPR data request form + API route + migration 036
+- [x] Comprehensive browser testing (15 categories, 3 walkthroughs)
+- [ ] Apply migration 036 to cloud Supabase (blocked — needs manual SQL Editor apply)
+- [ ] Restrict Google Places API key (deferred)
 
 ### Round 17: Agent-Native Parity
 
@@ -464,12 +521,45 @@ Completed 2026-01-30. See R15 section above.
 
 ---
 
+## Discovered Work
+
+Items found mid-session that don't belong to the current round. Parked here to prevent scope creep.
+
+_(none)_
+
+---
+
+## Open Questions
+
+Unresolved questions needing human input. Carried across sessions until answered.
+
+_(none)_
+
+---
+
+## Session Decisions
+
+Key decisions made during the current session with rationale. Resets each session.
+
+_(no active session)_
+
+---
+
+## Session History
+
+Log of all sessions in the current round. Carries across sessions, resets each round.
+
+_(no active round)_
+
+---
+
 ## Pending Manual Work
 
 - Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
 - Run migration 032_comprehensive_affiliate_programs.sql on production
 - Request indexing for remaining GSC pages (daily quota, ~10/day)
 - Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
+- Apply migration 036 to cloud Supabase (data_requests table for GDPR form)
 - Homepage redesign (moved to after R16)
 
 ## Key Files

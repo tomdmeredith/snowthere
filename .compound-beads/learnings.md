@@ -4,6 +4,39 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Round 16: Error Handling & Polish
+
+**Arc:**
+- **Started believing**: Error handling and polish is about adding safety nets around existing code
+- **Ended believing**: Polish means building complete interactive experiences — filtering, loading, error recovery, and privacy rights are all user-facing quality
+- **Transformation**: From defensive code additions to cohesive user experience where every state (loading, empty, error, filtered) is intentionally designed
+
+**Technical:**
+- URL search params as single source of truth for filter state — `useSearchParams()` + `router.push()` makes every filter combination shareable and bookmarkable
+- Debounced search input (300ms) prevents excessive URL updates while typing — `setTimeout` + cleanup in `useEffect`
+- Country-grouped display (default sort) vs flat list (price/A-Z sort) gives users two mental models for browsing
+- Active filter chips with `×` removal + "Clear all" provides clear escape hatch from deep filtering
+- Sticky filter bar with `backdrop-blur-lg` keeps controls accessible without obscuring content
+- Loading skeletons should match page structure (breadcrumb, hero, filter bar, card grid) — not generic spinners
+- `animate-pulse` on skeleton blocks provides implicit loading feedback without JavaScript
+- Custom 404 page with actionable CTAs ("Browse resorts", "Go home") recovers lost users
+- GDPR data request form: toggle between deletion/access with coral/teal active states matches Spielplatz design language
+- In-memory rate limiting (`Map<string, {count, resetAt}>`) works for single-instance deployments; use Redis for multi-instance
+- Migration 036 unique index `(email, request_type, created_at::date)` prevents duplicate same-day requests at DB level
+- CSP `img-src` should use `https:` not `http:` to prevent mixed content; `object-src 'none'` blocks Flash/Java embeds
+
+**Process:**
+- Browser testing with Playwright MCP tools catches issues invisible in dev: scroll behavior, sticky positioning, mobile layouts, filter chip overflow
+- Test from customer perspectives (first-time visitor, parent with toddlers, power user) reveals different UX paths through the same features
+- URL state testing: navigate directly to filtered URL in new tab — if filters don't restore, the URL isn't the source of truth
+- Empty state design matters: "No resorts match" with clear filters button + newsletter CTA turns dead ends into engagement
+- Build verification (`pnpm build`) after all changes catches SSR issues that dev mode misses
+
+**Key Insight:**
+A "polish" round isn't minor fixes — it's the difference between a site that works and a site that feels intentional. Loading skeletons, empty states, error recovery, and URL-synced filters make users trust the product. Every UI state (loading, empty, error, success, filtered) is a design decision.
+
+---
+
 ## Round 13: Delightful, On-Brand, Image-Rich Guide Pages
 
 **Arc:**
@@ -382,6 +415,10 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Rendering DB content as plain text | `dangerouslySetInnerHTML` + `sanitizeHtml()` for HTML content | 13 |
 | Text floating on gradient background | White card containers with `bg-white rounded-3xl` | 13 |
 | Single image provider with no fallback | 4-tier fallback chain ensures generation never blocks | 13 |
+| Generic loading spinner | Skeleton matching actual page structure (breadcrumb, hero, cards) | 16 |
+| Filter state in component state | URL search params as single source of truth (shareable, bookmarkable) | 16 |
+| Dead-end empty states | Actionable empty states with clear filters + newsletter CTA | 16 |
+| Default browser 404 | Branded 404 with actionable recovery CTAs | 16 |
 
 ---
 
@@ -411,3 +448,57 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Supabase Storage for permanent images | Re-upload from temporary provider URLs for permanent hosting | 13 |
 | Frontend design skill | Codifies brand standards for cross-session consistency | 13 |
 | Browser audit before design work | Reveals UX issues invisible in code review | 13 |
+| URL search params as filter state | Every filter combination is shareable and bookmarkable | 16 |
+| Skeleton loaders matching page structure | Users perceive faster loading when skeleton mirrors final layout | 16 |
+| Customer perspective test walkthroughs | Different user types reveal different UX paths through same features | 16 |
+| Actionable error/empty states | Recovery CTAs turn dead ends into engagement | 16 |
+| Sticky filter bar with backdrop blur | Controls stay accessible during scroll without obscuring content | 16 |
+
+---
+
+## Prevention Rules
+
+Concrete rules distilled from past failures. Never repeat these.
+
+| Rule | What Happened | Round |
+|------|---------------|-------|
+| Never use `force-dynamic` on cacheable pages | Homepage returned `private, no-cache, no-store`, telling crawlers the page was private | R12 |
+| Never define `BASE_URL` in multiple files | 6 of 7 files lacked `.trim()`, trailing newline broke all canonical URLs and sitemap | R12 |
+| Never default boolean family metrics to `true` | `has_childcare`, `has_magic_carpet`, `has_ski_school` defaulting true inflated scores for resorts with missing data | Data Quality |
+| Never put all resort names in an LLM prompt | 22,500 tokens at 3000 resorts; use atomic primitives instead | R5.1 |
+| Never trust LLM-generated scores as authoritative | LLMs cluster scores at 7-9 (safe, non-committal); use deterministic formulas from data | R9 |
+| Never use temporary image URLs for permanent storage | Replicate/Glif URLs expire; always re-upload to Supabase Storage | R13 |
+| Never render DB content as plain text if it may contain HTML | Use `dangerouslySetInnerHTML` + `sanitizeHtml()` for any stored content | R13 |
+| Never assume API keys work across Google Cloud projects | Keys from Tom Global don't work for Snowthere project APIs | R13.2 |
+
+---
+
+## Dead Ends Registry
+
+Approaches tried and abandoned. Don't revisit these.
+
+| What Was Tried | Why It Failed | What Worked Instead | Round |
+|----------------|---------------|---------------------|-------|
+| Complex orchestration frameworks (MCP) for autonomous execution | Protocol overhead unnecessary for cron jobs; MCP is for interactive sessions | Direct Python + Claude API | R2 |
+| LLM opinion scoring (ask Claude "rate this resort 1-10") | Scores clustered at 7-9, no differentiation, not explainable | Deterministic formula: base 5.0 + weighted components from data | R9 |
+| Emoji placeholders for guide images | Looked cheap, undermined perceived quality | AI-generated images at $0.15/ea via Nano Banana Pro | R13 |
+| Single image provider (no fallback) | Provider outages blocked content publication | 4-tier fallback: Nano Banana Pro → Glif → Gemini → Flux Schnell | R13 |
+| Generic "loading..." spinner | Users perceived slow loading, no structural context | Skeleton loaders matching actual page structure | R16 |
+| Shrinking extraction schema to match DB | Lost family-relevant budget data (lesson costs, rental prices) | Expanded DB schema to match what families actually need | R5.2 |
+| `robots.txt/route.ts` alongside `robots.ts` | Route handler silently overrode the comprehensive version | Single `robots.ts` file | R12 |
+
+---
+
+## Recognized Patterns
+
+Recurring situations and the best response. When you see X, do Y.
+
+| When You See... | Do This | Because | Rounds |
+|-----------------|---------|---------|--------|
+| Pages not being indexed | Check infrastructure (env vars, headers, cache) before content | Trailing newlines, wrong domains, and cache headers block indexing silently | R12, R13.1 |
+| A new content type needed (newsletter, guides, etc.) | Compose from existing primitives, don't build new system | All content types share the same generate/store/publish primitives | R10, R11 |
+| Schema mismatch crash in pipeline | Add column whitelist to sanitization layer, then expand schema | Sanitize first (prevent crash), then design schema for user needs | R5.2, R9 |
+| LLM output is generic/bland | Add structural constraints: forbidden phrases, editorial models, specificity scoring | Instructions alone don't force specificity; structure does | R8 |
+| Data from multiple providers/APIs | Implement fallback chain with graceful degradation | Single-provider dependency blocks entire pipeline on outage | R13 |
+| Environment variable used in multiple files | Centralize in one constants file with `.trim()` | Scattered definitions guarantee inconsistency | R12 |
+| New feature touches user-facing states | Design all states: loading, empty, error, success, filtered | Every undesigned state is a UX gap users will find | R16 |

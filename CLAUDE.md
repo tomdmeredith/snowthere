@@ -141,7 +141,7 @@ family-ski-directory/
 
 - [x] Supabase project in cloud (Snowthere, 23 tables)
 - [x] Environment variables configured (Railway, Vercel)
-- [x] Deploy agents to Railway with cron schedule (creative-spontaneity)
+- [x] Deploy agents to Railway with cron schedule (snowthere-agents)
 - [x] Vercel deployment with ISR (www.snowthere.com)
 - [x] Google Search Console setup + sitemap
 - [x] Google Analytics setup + link to GSC
@@ -526,17 +526,15 @@ The pipeline approach is simpler for autonomous operation.
 |---------|---------|-------------|
 | **Vercel** | snowthere | www.snowthere.com |
 | **Supabase** | Snowthere | Tomme Inc org, AWS us-east-2, 23 tables |
-| **Railway** | creative-spontaneity | Active cron job (daily pipeline) |
+| **Railway** | snowthere-agents | Active cron job (daily pipeline) |
 
 ### Railway Projects
 
 | Project | Status | Purpose |
 |---------|--------|---------|
-| `creative-spontaneity` | **Active** | Daily cron job running autonomous pipeline |
-| `snowthere-agents` | Standby | Correctly named, needs cron schedule configured |
+| `snowthere-agents` | **Active** | Daily cron job running autonomous pipeline (8am UTC) |
+| `creative-spontaneity` | Retired | Previously active, replaced by snowthere-agents |
 | `soothing-delight` | Separate | Different project (not snowthere) |
-
-**Note:** `creative-spontaneity` currently has the active cron schedule. Consider migrating to `snowthere-agents` for clearer naming, or continue using `creative-spontaneity` as the production runner.
 
 ### Environment Variables (Railway)
 
@@ -654,7 +652,7 @@ The transformation: [One-sentence shift in thinking]
 # Test pipeline
 cd agents && python cron.py --dry-run --max-resorts 2
 
-# Railway auto-deploys from main branch (creative-spontaneity)
+# Railway auto-deploys from main branch (snowthere-agents)
 ```
 
 **Immediate Next Steps:**
