@@ -41,7 +41,7 @@ export function FamilyMetricsTable({ metrics }: FamilyMetricsTableProps) {
     {
       icon: Baby,
       label: 'Childcare Available',
-      value: metrics.has_childcare === true ? 'Yes' : metrics.has_childcare === false ? 'No' : '—',
+      value: metrics.has_childcare === true ? 'Yes' : metrics.has_childcare === false ? 'No' : 'Not confirmed',
       subvalue: metrics.childcare_min_age ? `From ${metrics.childcare_min_age} months` : undefined,
     },
     {
@@ -61,12 +61,12 @@ export function FamilyMetricsTable({ metrics }: FamilyMetricsTableProps) {
     {
       icon: Sparkles,
       label: 'Magic Carpet',
-      value: metrics.has_magic_carpet === true ? 'Yes' : metrics.has_magic_carpet === false ? 'No' : '—',
+      value: metrics.has_magic_carpet === true ? 'Yes' : metrics.has_magic_carpet === false ? 'No' : 'Not confirmed',
     },
     {
       icon: TreePine,
       label: 'Kids Terrain Park',
-      value: metrics.has_terrain_park_kids === true ? 'Yes' : metrics.has_terrain_park_kids === false ? 'No' : '—',
+      value: metrics.has_terrain_park_kids === true ? 'Yes' : metrics.has_terrain_park_kids === false ? 'No' : 'Not confirmed',
     },
   ]
 

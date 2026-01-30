@@ -5,7 +5,7 @@ interface CostTableProps {
   costs: ResortCosts
 }
 
-const formatCurrency = (amount: number | null, currency: string) => {
+const formatCurrency = (amount: number | null, currency: string): string => {
   // Use 'is null' check to allow 0 values (e.g., free child tickets)
   if (amount === null || amount === undefined) return '—'
   // Handle 0 specially (free)
@@ -16,6 +16,19 @@ const formatCurrency = (amount: number | null, currency: string) => {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount)
+}
+
+/** Renders a price cell, with a tooltip when data is unavailable */
+function PriceCell({ amount, currency }: { amount: number | null; currency: string }) {
+  const formatted = formatCurrency(amount, currency)
+  if (amount === null || amount === undefined) {
+    return (
+      <span className="text-dark-400" title="Data not yet available">
+        {formatted}
+      </span>
+    )
+  }
+  return <>{formatted}</>
 }
 
 function getPriceTier(dailyEstimate: number | null): { tier: string; label: string } {
@@ -70,13 +83,13 @@ export function CostTable({ costs }: CostTableProps) {
             <tr className="hover:bg-dark-50 transition-colors">
               <td className="py-3 px-4 text-dark-700">Adult (daily)</td>
               <td className="py-3 px-4 text-right font-semibold text-dark-800">
-                {formatCurrency(costs.lift_adult_daily, currency)}
+                <PriceCell amount={costs.lift_adult_daily} currency={currency} />
               </td>
             </tr>
             <tr className="hover:bg-dark-50 transition-colors">
               <td className="py-3 px-4 text-dark-700">Child (daily)</td>
               <td className="py-3 px-4 text-right font-semibold text-dark-800">
-                {formatCurrency(costs.lift_child_daily, currency)}
+                <PriceCell amount={costs.lift_child_daily} currency={currency} />
               </td>
             </tr>
             {costs.lift_family_daily && (
@@ -97,7 +110,7 @@ export function CostTable({ costs }: CostTableProps) {
             <tr className="hover:bg-dark-50 transition-colors">
               <td className="py-3 px-4 text-dark-700">Budget</td>
               <td className="py-3 px-4 text-right font-semibold text-dark-800">
-                {formatCurrency(costs.lodging_budget_nightly, currency)}
+                <PriceCell amount={costs.lodging_budget_nightly} currency={currency} />
               </td>
             </tr>
             <tr className="hover:bg-dark-50 transition-colors bg-gold-50/30">
@@ -106,13 +119,13 @@ export function CostTable({ costs }: CostTableProps) {
                 <span className="ml-2 text-xs bg-gold-200 text-gold-700 px-2 py-0.5 rounded-full">Popular</span>
               </td>
               <td className="py-3 px-4 text-right font-semibold text-dark-800">
-                {formatCurrency(costs.lodging_mid_nightly, currency)}
+                <PriceCell amount={costs.lodging_mid_nightly} currency={currency} />
               </td>
             </tr>
             <tr className="hover:bg-dark-50 transition-colors">
               <td className="py-3 px-4 text-dark-700">Luxury</td>
               <td className="py-3 px-4 text-right font-semibold text-dark-800">
-                {formatCurrency(costs.lodging_luxury_nightly, currency)}
+                <PriceCell amount={costs.lodging_luxury_nightly} currency={currency} />
               </td>
             </tr>
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ChevronDown, MessageCircleQuestion } from 'lucide-react'
-import { createSanitizedHTML, sanitizeJSON } from '@/lib/sanitize'
+import { createSanitizedHTML } from '@/lib/sanitize'
 
 interface FAQ {
   question: string
@@ -15,20 +15,6 @@ interface FAQSectionProps {
 
 export function FAQSection({ faqs }: FAQSectionProps) {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
-
-  // Generate FAQ Schema.org markup
-  const faqSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'FAQPage',
-    mainEntity: faqs.map((faq) => ({
-      '@type': 'Question',
-      name: faq.question,
-      acceptedAnswer: {
-        '@type': 'Answer',
-        text: faq.answer,
-      },
-    })),
-  }
 
   return (
     <section id="faq" className="space-y-8">
@@ -47,12 +33,6 @@ export function FAQSection({ faqs }: FAQSectionProps) {
           <p className="text-dark-500 mt-1 font-medium">Everything families ask about this resort</p>
         </div>
       </div>
-
-      {/* Schema.org structured data */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: sanitizeJSON(faqSchema) }}
-      />
 
       {/* Design-5: Playful accordion cards */}
       <div className="space-y-4">

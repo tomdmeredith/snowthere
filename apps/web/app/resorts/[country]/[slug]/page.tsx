@@ -234,6 +234,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? quickTake.slice(0, 155) + (quickTake.length > 155 ? '...' : '')
       : `${ageRange}${terrainPct}${dailyCost}Complete family guide to skiing at ${resort.name}, ${resort.country}. Kid-friendly terrain, real costs, and honest parent reviews.`)
 
+  // Find best available OG image from resort images
+  const ogImage = resort.images?.find((img: any) => img.image_type === 'hero')?.image_url
+    || resort.images?.find((img: any) => img.image_type === 'atmosphere')?.image_url
+    || null
+
   // Build canonical URL
   const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
   const canonicalUrl = `${SITE_URL}/resorts/${countrySlug}/${resort.slug}`
@@ -271,20 +276,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: canonicalUrl,
       siteName: 'Snowthere',
       locale: 'en_US',
-      images: [
-        {
-          url: `${SITE_URL}/og/resort-${resort.slug}.png`,
+      ...(ogImage && {
+        images: [{
+          url: ogImage,
           width: 1200,
           height: 630,
           alt: `${resort.name} Family Ski Guide`,
-        },
-      ],
+        }],
+      }),
     },
     twitter: {
-      card: 'summary_large_image',
+      card: ogImage ? 'summary_large_image' : 'summary',
       title: `${resort.name} Family Ski Guide`,
       description,
-      images: [`${SITE_URL}/og/resort-${resort.slug}.png`],
+      ...(ogImage && { images: [ogImage] }),
     },
     other: {
       'article:published_time': resort.created_at,
@@ -365,13 +370,6 @@ export default async function ResortPage({ params }: Props) {
       latitude: resort.latitude,
       longitude: resort.longitude,
     } : undefined,
-    aggregateRating: metrics?.family_overall_score ? {
-      '@type': 'AggregateRating',
-      ratingValue: metrics.family_overall_score,
-      bestRating: 10,
-      worstRating: 1,
-      ratingCount: 1,
-    } : undefined,
     priceRange: costs?.estimated_family_daily
       ? costs.estimated_family_daily < 400 ? '$'
         : costs.estimated_family_daily < 600 ? '$$'
@@ -385,6 +383,17 @@ export default async function ResortPage({ params }: Props) {
     ].filter(Boolean),
   }
 
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: SITE_URL },
+      { '@type': 'ListItem', position: 2, name: 'Resorts', item: `${SITE_URL}/resorts` },
+      { '@type': 'ListItem', position: 3, name: resort.country, item: `${SITE_URL}/resorts/${countrySlug}` },
+      { '@type': 'ListItem', position: 4, name: resort.name, item: `${SITE_URL}/resorts/${countrySlug}/${resort.slug}` },
+    ],
+  }
+
   return (
     <main id="main-content" className="min-h-screen bg-white">
       {/* SkiResort Schema for SEO/GEO */}
@@ -392,6 +401,33 @@ export default async function ResortPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(skiResortSchema) }}
       />
+
+      {/* BreadcrumbList Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
+      {/* FAQ Schema - server-rendered for Googlebot */}
+      {faqs && faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faqs.map((faq) => ({
+                '@type': 'Question',
+                name: faq.question,
+                acceptedAnswer: {
+                  '@type': 'Answer',
+                  text: faq.answer.replace(/<[^>]+>/g, ''),
+                },
+              })),
+            }),
+          }}
+        />
+      )}
 
       {/* Navigation */}
       <Navbar />
@@ -559,13 +595,17 @@ export default async function ResortPage({ params }: Props) {
               </div>
             )}
 
-            {/* The Numbers Table - Hidden until data quality improves
-            {metrics && (
+            {/* The Numbers Table — shown when data completeness >= 0.3 */}
+            {metrics && (metrics as any).data_completeness >= 0.3 && (
               <div className="animate-in animate-in-3">
+                {(metrics as any).data_completeness < 0.6 && (
+                  <p className="text-sm text-dark-400 mb-2 italic">
+                    Some data is pending verification. We update as we confirm details.
+                  </p>
+                )}
                 <FamilyMetricsTable metrics={metrics} />
               </div>
             )}
-            */}
 
             {/* Terrain Breakdown Visual */}
             {metrics?.terrain_beginner_pct != null &&
@@ -700,8 +740,10 @@ export default async function ResortPage({ params }: Props) {
                 />
               )}
 
-              {/* Cost Summary Card - Hidden until data quality improves */}
-              {/* {costs && <CostTable costs={costs} />} */}
+              {/* Cost Summary Card — shown when metrics completeness >= 0.3 and costs exist */}
+              {costs && metrics && (metrics as any).data_completeness >= 0.3 && (
+                <CostTable costs={costs} />
+              )}
 
               {/* Ski Passes Section */}
               {resort.passes.length > 0 && (

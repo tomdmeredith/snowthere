@@ -77,6 +77,8 @@ from shared.primitives import (
     get_difficulty_breakdown,
     # Scoring (R9 - deterministic family score calculation)
     calculate_family_score,
+    # Data completeness (R14 - data quality overhaul)
+    calculate_data_completeness,
     # Official images (real photos from resort websites)
     fetch_resort_images_with_fallback,
     # UGC Photos (Google Places) - kept as fallback
@@ -233,6 +235,34 @@ def has_minimum_data(research_data: dict[str, Any]) -> tuple[bool, list[str]]:
     has_minimum = cost_present or metric_present
 
     return has_minimum, missing
+
+
+def get_publication_tier(research_data: dict[str, Any]) -> str:
+    """Determine publication tier based on data completeness. (R14 B3)
+
+    Tiered model:
+    - "full":    data_completeness >= 0.6 AND has lift_adult_daily AND family_overall_score
+                 → Show all tables (Family Metrics + Costs)
+    - "partial": data_completeness >= 0.3 AND has family_overall_score
+                 → Show tables with "pending verification" note
+    - "draft":   Below thresholds → Publish content only (tables hidden)
+
+    Returns:
+        Publication tier string: "full", "partial", or "draft"
+    """
+    metrics = research_data.get("family_metrics", {})
+    costs = research_data.get("costs", {})
+
+    completeness = calculate_data_completeness(metrics)
+    has_score = metrics.get("family_overall_score") is not None
+    has_lift = costs.get("lift_adult_daily") is not None
+
+    if completeness >= 0.6 and has_lift and has_score:
+        return "full"
+    elif completeness >= 0.3 and has_score:
+        return "partial"
+    else:
+        return "draft"
 
 
 async def run_resort_pipeline(
@@ -962,6 +992,11 @@ async def run_resort_pipeline(
             if old_score != calculated_score:
                 print(f"  Score recalculated: {old_score} → {calculated_score}")
 
+            # R14 (B2): Compute and store data completeness
+            completeness = calculate_data_completeness(research_data["family_metrics"])
+            research_data["family_metrics"]["data_completeness"] = round(completeness, 2)
+            print(f"  Data completeness: {completeness:.0%}")
+
             metrics_result = update_resort_family_metrics(resort_id, research_data["family_metrics"])
             if not metrics_result:
                 print(f"⚠️  Warning: Failed to save family metrics for {resort_name}", file=sys.stderr)
@@ -1374,10 +1409,12 @@ async def run_resort_pipeline(
     # A thin page is better than no page - it can be discovered and improved.
     # =========================================================================
 
-    # Check data completeness (for improvement queue priority, not gating)
+    # Check data completeness and publication tier (R14 B3)
     has_data, missing_fields = has_minimum_data(research_data)
+    pub_tier = get_publication_tier(research_data)
     confidence = result.get("confidence", 0)
     QUALITY_THRESHOLD = 0.60  # Below this = high priority for improvement
+    print(f"  Publication tier: {pub_tier}")
 
     # Track quality issues for improvement queue
     quality_issues = []

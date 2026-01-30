@@ -22,16 +22,18 @@ export function sanitizeHTML(dirty: string): string {
       'th': ['colspan', 'rowspan', 'scope'],
       'td': ['colspan', 'rowspan'],
     },
-    // Force all links to open in new tab with security attributes
+    // Internal links navigate in-place; external links open in new tab
     transformTags: {
-      'a': (tagName, attribs) => ({
-        tagName,
-        attribs: {
-          ...attribs,
-          target: '_blank',
-          rel: 'noopener noreferrer',
-        },
-      }),
+      'a': (tagName, attribs) => {
+        const href = attribs.href || ''
+        const isInternal = href.startsWith('/') || href.startsWith('#') || href.includes('snowthere.com')
+        return {
+          tagName,
+          attribs: isInternal
+            ? { href: attribs.href, ...(attribs.class && { class: attribs.class }) }
+            : { ...attribs, target: '_blank', rel: 'noopener noreferrer' },
+        }
+      },
     },
     // Don't allow any protocols except http, https, mailto
     allowedSchemes: ['http', 'https', 'mailto'],

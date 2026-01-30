@@ -7,12 +7,22 @@ Key Benefits:
 - Deterministic: Same inputs = same score (reproducible)
 - Explainable: Each factor contributes a specific amount
 - Differentiating: Natural variance from data differences
+- Completeness-aware: NULL data reduces score (not inflates it)
 
 See /methodology page for public documentation of this scoring system.
 """
 
 from dataclasses import dataclass
 from typing import Any
+
+
+# Fields used to measure data completeness — these are the key family metrics
+# that should be populated for a resort to be considered "well-researched."
+KEY_COMPLETENESS_FIELDS = [
+    "has_childcare", "childcare_min_age", "ski_school_min_age",
+    "kid_friendly_terrain_pct", "has_magic_carpet", "has_terrain_park_kids",
+    "kids_ski_free_age", "best_age_min", "best_age_max",
+]
 
 
 @dataclass
@@ -26,7 +36,28 @@ class ScoreBreakdown:
     terrain: float
     value: float
     convenience: float
+    completeness: float  # 0.0-1.0 data completeness ratio
+    completeness_multiplier: float  # Applied multiplier (0.7-1.0)
     factors: list[str]  # Human-readable explanation of each factor
+
+
+def calculate_data_completeness(metrics: dict[str, Any]) -> float:
+    """
+    Calculate data completeness ratio for family metrics.
+
+    Returns the fraction of KEY_COMPLETENESS_FIELDS that have non-None values.
+    This is a pure, atomic primitive — no side effects, no business logic.
+
+    Args:
+        metrics: Dict containing resort family metrics
+
+    Returns:
+        Float between 0.0 (no data) and 1.0 (fully populated)
+    """
+    fields_present = sum(
+        1 for f in KEY_COMPLETENESS_FIELDS if metrics.get(f) is not None
+    )
+    return fields_present / len(KEY_COMPLETENESS_FIELDS)
 
 
 def calculate_family_score(metrics: dict[str, Any]) -> float:
@@ -34,6 +65,13 @@ def calculate_family_score(metrics: dict[str, Any]) -> float:
     Calculate deterministic family score from resort metrics.
 
     Produces scores like 7.3, 8.2, 6.8 instead of clustered integers 7, 8, 9.
+
+    NULL data = "unknown" = no points (not free points). A resort with ALL NULL
+    data scores ~3.5 instead of the old 5.7. This is intentional — we should
+    not reward missing data.
+
+    A completeness multiplier (0.7 + 0.3 * completeness) penalizes resorts
+    where we have little data: all NULL = 70% of raw score, all populated = 100%.
 
     Args:
         metrics: Dict containing resort family metrics from database
@@ -71,11 +109,12 @@ def calculate_family_score(metrics: dict[str, Any]) -> float:
 
     # =========================================================================
     # SKI SCHOOL QUALITY (+0.0 to +1.0)
+    # NULL has_ski_school = unknown = no points (was: default True = free 0.2)
     # =========================================================================
-    has_ski_school = metrics.get("has_ski_school", True)  # Assume yes if not set
+    has_ski_school = metrics.get("has_ski_school")  # None = unknown = no points
     ski_school_min_age = metrics.get("ski_school_min_age")  # in years
 
-    if has_ski_school or ski_school_min_age is not None:
+    if has_ski_school is True or ski_school_min_age is not None:
         score += 0.2  # Base for having ski school
 
         if ski_school_min_age is not None:
@@ -86,13 +125,15 @@ def calculate_family_score(metrics: dict[str, Any]) -> float:
 
     # =========================================================================
     # TERRAIN FOR FAMILIES (+0.0 to +1.2)
+    # NULL terrain = unknown = no terrain points (was: default 25 = free 0.0)
     # =========================================================================
-    beginner_pct = metrics.get("beginner_terrain_pct") or metrics.get("kid_friendly_terrain_pct") or 25
-
-    if beginner_pct >= 30:
-        score += 0.3
-    if beginner_pct >= 40:
-        score += 0.3
+    beginner_pct = metrics.get("beginner_terrain_pct") or metrics.get("kid_friendly_terrain_pct")
+    # Only score terrain if we have actual data
+    if beginner_pct is not None:
+        if beginner_pct >= 30:
+            score += 0.3
+        if beginner_pct >= 40:
+            score += 0.3
 
     if metrics.get("has_magic_carpet"):
         score += 0.3
@@ -113,15 +154,23 @@ def calculate_family_score(metrics: dict[str, Any]) -> float:
 
     # =========================================================================
     # VILLAGE CONVENIENCE (+0.0 to +0.5)
+    # NULL english_friendly = unknown = no points (was: default True = free 0.2)
     # =========================================================================
     if metrics.get("has_ski_in_out"):
         score += 0.3
 
-    if metrics.get("english_friendly", True):  # Default True for US resorts
+    if metrics.get("english_friendly") is True:  # Must be explicitly True
         score += 0.2
 
+    # =========================================================================
+    # COMPLETENESS MULTIPLIER
+    # Penalizes low-data resorts: all NULL = 70% of raw, all populated = 100%
+    # =========================================================================
+    completeness = calculate_data_completeness(metrics)
+    multiplier = 0.7 + 0.3 * completeness
+
     # Cap at 10.0 and round to 1 decimal
-    return min(10.0, round(score, 1))
+    return min(10.0, round(score * multiplier, 1))
 
 
 def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreakdown:
@@ -132,6 +181,7 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
     - Debugging why a resort got a particular score
     - Showing users methodology transparency
     - Generating llms.txt explanations
+    - Data quality audits (see completeness ratio)
 
     Args:
         metrics: Dict containing resort family metrics from database
@@ -161,11 +211,11 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
                 childcare += 0.3
                 factors.append("Infant care available (+0.3)")
 
-    # Ski school
-    has_ski_school = metrics.get("has_ski_school", True)
+    # Ski school — NULL = unknown = no points
+    has_ski_school = metrics.get("has_ski_school")
     ski_school_min_age = metrics.get("ski_school_min_age")
 
-    if has_ski_school or ski_school_min_age is not None:
+    if has_ski_school is True or ski_school_min_age is not None:
         ski_school += 0.2
         factors.append("Has ski school (+0.2)")
 
@@ -177,15 +227,16 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
                 ski_school += 0.3
                 factors.append(f"Ski school from age {ski_school_min_age} (+0.3)")
 
-    # Terrain
-    beginner_pct = metrics.get("beginner_terrain_pct") or metrics.get("kid_friendly_terrain_pct") or 25
+    # Terrain — only score if we have actual data
+    beginner_pct = metrics.get("beginner_terrain_pct") or metrics.get("kid_friendly_terrain_pct")
 
-    if beginner_pct >= 30:
-        terrain += 0.3
-        factors.append(f"{beginner_pct}% beginner terrain (+0.3)")
-    if beginner_pct >= 40:
-        terrain += 0.3
-        factors.append("40%+ beginner terrain (+0.3)")
+    if beginner_pct is not None:
+        if beginner_pct >= 30:
+            terrain += 0.3
+            factors.append(f"{beginner_pct}% beginner terrain (+0.3)")
+        if beginner_pct >= 40:
+            terrain += 0.3
+            factors.append("40%+ beginner terrain (+0.3)")
 
     if metrics.get("has_magic_carpet"):
         terrain += 0.3
@@ -206,16 +257,23 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
             value += 0.4
             factors.append("Exceptional kids-free-age policy (+0.4)")
 
-    # Convenience
+    # Convenience — NULL english_friendly = unknown = no points
     if metrics.get("has_ski_in_out"):
         convenience += 0.3
         factors.append("Ski-in/ski-out options (+0.3)")
 
-    if metrics.get("english_friendly", True):
+    if metrics.get("english_friendly") is True:
         convenience += 0.2
         factors.append("English friendly (+0.2)")
 
-    total = min(10.0, round(base + childcare + ski_school + terrain + value + convenience, 1))
+    # Completeness multiplier
+    completeness = calculate_data_completeness(metrics)
+    multiplier = 0.7 + 0.3 * completeness
+
+    raw_score = base + childcare + ski_school + terrain + value + convenience
+    total = min(10.0, round(raw_score * multiplier, 1))
+
+    factors.append(f"Data completeness: {completeness:.0%} (multiplier: {multiplier:.2f})")
 
     return ScoreBreakdown(
         total=total,
@@ -225,6 +283,8 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
         terrain=round(terrain, 1),
         value=round(value, 1),
         convenience=round(convenience, 1),
+        completeness=round(completeness, 2),
+        completeness_multiplier=round(multiplier, 2),
         factors=factors,
     )
 
@@ -251,6 +311,7 @@ def format_score_explanation(breakdown: ScoreBreakdown) -> str:
         f"  Terrain: +{breakdown.terrain}",
         f"  Value: +{breakdown.value}",
         f"  Convenience: +{breakdown.convenience}",
+        f"  Data completeness: {breakdown.completeness:.0%} (×{breakdown.completeness_multiplier:.2f})",
         "",
         "Factors:",
     ]

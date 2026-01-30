@@ -399,6 +399,10 @@ def get_work_items_mixed(
     - Stale content (needs refresh)
     - Manual queue (explicitly requested)
 
+    R14 (B4): Dynamic quality queue allocation. When quality queue has items,
+    allocate up to 50% of slots to quality to prevent quality debt accumulation.
+    When quality queue is empty, 100% flows to discovery.
+
     Args:
         max_items: Total items to return
         discovery_pct: Percentage from discovery candidates
@@ -409,6 +413,15 @@ def get_work_items_mixed(
     Returns:
         List of work items with source attribution
     """
+    # R14 (B4): Dynamic quality allocation
+    # Check if quality queue has pending items; if so, boost allocation
+    quality_preview = get_quality_improvement_items(limit=1)
+    if quality_preview:
+        # Quality queue has items — boost to 50% quality, reduce discovery
+        quality_pct = 0.50
+        discovery_pct = 0.30
+        stale_pct = 0.20
+
     # Calculate counts per source (minimum 1 if percentage > 0)
     discovery_count = max(1, int(max_items * discovery_pct)) if discovery_pct > 0 else 0
     quality_count = max(1, int(max_items * quality_pct)) if quality_pct > 0 else 0

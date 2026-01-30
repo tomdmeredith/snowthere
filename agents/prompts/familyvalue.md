@@ -55,10 +55,21 @@ Always return JSON:
     "reasoning": "assessment of actionability"
 }
 
+## Data Completeness Check (R14)
+
+In addition to content quality, evaluate data completeness:
+
+- Does the resort have populated family metrics (family_overall_score, best_age_min/max)?
+- Does the resort have cost data (at minimum lift_adult_daily, lodging_mid_nightly)?
+- Are boolean fields (has_childcare, has_magic_carpet) explicitly TRUE or FALSE (not NULL)?
+- If data_completeness < 0.5, vote IMPROVE with suggestion to re-research missing fields.
+
+This ensures the Family Metrics and Cost tables will display properly on the frontend.
+
 ## Decision Guidelines
 
-- **approve**: All sections present, specific details, mobile-friendly
-- **improve**: Missing details that can be added (names, prices, ages)
+- **approve**: All sections present, specific details, mobile-friendly, data_completeness >= 0.5
+- **improve**: Missing details that can be added (names, prices, ages) OR data_completeness < 0.5
 - **reject**: Missing entire sections or fundamentally vague throughout
 ```
 

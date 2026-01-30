@@ -72,6 +72,12 @@ from shared.primitives import (
     read_audit_log,
     get_task_audit_trail,
     get_recent_activity,
+    # Scoring (R14 - data quality)
+    calculate_data_completeness,
+    calculate_family_score,
+    calculate_family_score_with_breakdown,
+    format_score_explanation,
+    KEY_COMPLETENESS_FIELDS,
     # System - Queue
     queue_task,
     get_next_task,
@@ -727,6 +733,108 @@ def tool_clear_completed_tasks(older_than_days: int = 7) -> int:
     Returns count of deleted tasks.
     """
     return clear_completed_tasks(older_than_days)
+
+
+# =============================================================================
+# SCORING & DATA QUALITY TOOLS (R14 - Data Quality Overhaul)
+# =============================================================================
+
+
+@mcp.tool()
+def tool_calculate_data_completeness(resort_id: str) -> dict[str, Any]:
+    """Check a resort's data completeness ratio.
+
+    Returns the fraction (0.0-1.0) of key family metric fields that are populated.
+    Also returns which fields are present and which are missing.
+    """
+    metrics = get_resort_family_metrics(resort_id)
+    if not metrics:
+        return {"error": "No family metrics found", "completeness": 0.0}
+
+    completeness = calculate_data_completeness(metrics)
+    present = [f for f in KEY_COMPLETENESS_FIELDS if metrics.get(f) is not None]
+    missing = [f for f in KEY_COMPLETENESS_FIELDS if metrics.get(f) is None]
+
+    return {
+        "completeness": round(completeness, 2),
+        "present_fields": present,
+        "missing_fields": missing,
+        "present_count": len(present),
+        "total_fields": len(KEY_COMPLETENESS_FIELDS),
+    }
+
+
+@mcp.tool()
+def tool_calculate_family_score(resort_id: str) -> dict[str, Any]:
+    """Calculate the deterministic family score for a resort.
+
+    Returns the score and a detailed breakdown of contributing factors.
+    """
+    metrics = get_resort_family_metrics(resort_id)
+    if not metrics:
+        return {"error": "No family metrics found"}
+
+    breakdown = calculate_family_score_with_breakdown(metrics)
+    return {
+        "total": breakdown.total,
+        "breakdown": {
+            "base": breakdown.base,
+            "childcare": breakdown.childcare,
+            "ski_school": breakdown.ski_school,
+            "terrain": breakdown.terrain,
+            "value": breakdown.value,
+            "convenience": breakdown.convenience,
+        },
+        "completeness": breakdown.completeness,
+        "completeness_multiplier": breakdown.completeness_multiplier,
+        "factors": breakdown.factors,
+        "explanation": format_score_explanation(breakdown),
+    }
+
+
+@mcp.tool()
+def tool_audit_resort_data_quality(resort_id: str) -> dict[str, Any]:
+    """Run quality checks on a single resort's data.
+
+    Checks family metrics completeness, cost data presence, and score health.
+    """
+    metrics = get_resort_family_metrics(resort_id)
+    costs = get_resort_costs(resort_id)
+
+    result = {
+        "has_metrics": metrics is not None,
+        "has_costs": costs is not None,
+    }
+
+    if metrics:
+        completeness = calculate_data_completeness(metrics)
+        score = metrics.get("family_overall_score")
+        recalculated = calculate_family_score(metrics)
+
+        boolean_fields = ["has_childcare", "has_ski_school", "has_magic_carpet",
+                         "has_terrain_park_kids", "has_ski_in_out", "english_friendly"]
+        null_booleans = [f for f in boolean_fields if metrics.get(f) is None]
+
+        result.update({
+            "completeness": round(completeness, 2),
+            "current_score": score,
+            "recalculated_score": recalculated,
+            "score_matches": score == recalculated,
+            "null_boolean_fields": null_booleans,
+            "missing_key_fields": [f for f in KEY_COMPLETENESS_FIELDS if metrics.get(f) is None],
+        })
+
+    if costs:
+        cost_fields = ["lift_adult_daily", "lift_child_daily", "lodging_budget_nightly",
+                       "lodging_mid_nightly", "lodging_luxury_nightly"]
+        null_costs = [f for f in cost_fields if costs.get(f) is None]
+        result.update({
+            "null_cost_fields": null_costs,
+            "has_lift_prices": costs.get("lift_adult_daily") is not None,
+            "has_lodging_prices": costs.get("lodging_mid_nightly") is not None,
+        })
+
+    return result
 
 
 # =============================================================================

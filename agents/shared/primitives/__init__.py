@@ -413,6 +413,8 @@ from .scoring import (
     # Core calculation
     calculate_family_score,
     calculate_family_score_with_breakdown,
+    calculate_data_completeness,
+    KEY_COMPLETENESS_FIELDS,
     # Formatting
     format_score_explanation,
 )
@@ -752,6 +754,8 @@ __all__ = [
     "ScoreBreakdown",
     "calculate_family_score",
     "calculate_family_score_with_breakdown",
+    "calculate_data_completeness",
+    "KEY_COMPLETENESS_FIELDS",
     "format_score_explanation",
     # Expert Panel - Data classes
     "ExpertRole",

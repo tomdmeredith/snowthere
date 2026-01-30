@@ -1,0 +1,185 @@
+{
+  "_meta": {
+    "description": "Hand-verified calibration anchors for extraction prompt few-shot examples and regression testing.",
+    "version": "1.0",
+    "last_updated": "2026-01-29",
+    "fields_reference": "See agents/shared/primitives/scoring.py for KEY_COMPLETENESS_FIELDS and scoring formula."
+  },
+  "resorts": [
+    {
+      "name": "Serfaus-Fiss-Ladis",
+      "country": "Austria",
+      "role": "high_score_anchor",
+      "why": "Best-in-class family resort. Murmli childcare, Bertas Kinderland, dedicated kids areas. Should score ~9.0.",
+      "verified_metrics": {
+        "has_childcare": true,
+        "childcare_min_age": 3,
+        "has_ski_school": true,
+        "ski_school_min_age": 3,
+        "kid_friendly_terrain_pct": 40,
+        "has_magic_carpet": true,
+        "has_terrain_park_kids": true,
+        "kids_ski_free_age": 10,
+        "best_age_min": 2,
+        "best_age_max": 12,
+        "has_ski_in_out": false,
+        "english_friendly": true
+      },
+      "verified_costs": {
+        "currency": "EUR",
+        "lift_adult_daily": 72,
+        "lift_child_daily": 42,
+        "lodging_budget_nightly": 80,
+        "lodging_mid_nightly": 150,
+        "lodging_luxury_nightly": 350
+      },
+      "evidence": {
+        "childcare": "Murmli & Berta's Kindervilla: nursery from 3 months. Source: serfaus-fiss-ladis.at/en/winter/family",
+        "ski_school": "Skischule Serfaus starts at age 3 (Mini club). Source: skischule-serfaus.at",
+        "terrain": "40%+ beginner/family terrain, multiple magic carpets, Kinderschneealm kids park. Source: resort trail map",
+        "kids_free": "Children under 10 ski free with parent pass (Superski card). Source: serfaus-fiss-ladis.at/en/winter/ski-passes"
+      },
+      "expected_score_range": [8.5, 9.5]
+    },
+    {
+      "name": "Park City",
+      "country": "United States",
+      "role": "us_benchmark_mid_high",
+      "why": "Largest US resort, well-documented, good family facilities but expensive. US mid-high anchor.",
+      "verified_metrics": {
+        "has_childcare": true,
+        "childcare_min_age": 6,
+        "has_ski_school": true,
+        "ski_school_min_age": 3,
+        "kid_friendly_terrain_pct": 30,
+        "has_magic_carpet": true,
+        "has_terrain_park_kids": true,
+        "kids_ski_free_age": 5,
+        "best_age_min": 3,
+        "best_age_max": 14,
+        "has_ski_in_out": true,
+        "english_friendly": true
+      },
+      "verified_costs": {
+        "currency": "USD",
+        "lift_adult_daily": 250,
+        "lift_child_daily": 155,
+        "lodging_budget_nightly": 150,
+        "lodging_mid_nightly": 350,
+        "lodging_luxury_nightly": 800
+      },
+      "evidence": {
+        "childcare": "Signature 5 childcare program, minimum age 6 weeks (converted to months: 1.5, rounded to 6 weeks = ~2 months; using 6 months conservatively). Source: parkcitymountain.com",
+        "ski_school": "Mountain Adventure Ski School from age 3. Source: parkcitymountain.com/lessons",
+        "terrain": "30% beginner terrain across 7,300 acres. Magic carpets at First Time area. Source: parkcitymountain.com/the-mountain",
+        "kids_free": "Kids 5 and under ski free. Source: parkcitymountain.com/tickets"
+      },
+      "expected_score_range": [7.5, 8.5]
+    },
+    {
+      "name": "Zermatt",
+      "country": "Switzerland",
+      "role": "swiss_premium_mid",
+      "why": "Premium Swiss resort, CHF pricing, good but not family-first. Tests mid-range scoring.",
+      "verified_metrics": {
+        "has_childcare": true,
+        "childcare_min_age": 6,
+        "has_ski_school": true,
+        "ski_school_min_age": 4,
+        "kid_friendly_terrain_pct": 25,
+        "has_magic_carpet": true,
+        "has_terrain_park_kids": false,
+        "kids_ski_free_age": 9,
+        "best_age_min": 5,
+        "best_age_max": 14,
+        "has_ski_in_out": false,
+        "english_friendly": true
+      },
+      "verified_costs": {
+        "currency": "CHF",
+        "lift_adult_daily": 92,
+        "lift_child_daily": 46,
+        "lodging_budget_nightly": 120,
+        "lodging_mid_nightly": 280,
+        "lodging_luxury_nightly": 700
+      },
+      "evidence": {
+        "childcare": "Kinderparadies Zermatt: childcare from 6 months. Source: zermatt.ch/en/families",
+        "ski_school": "Stoked Swiss Ski School from age 4. Source: stoked.swiss",
+        "terrain": "~25% beginner terrain; Wolli's Park for beginners with magic carpet. No dedicated kids terrain park. Source: zermatt.ch/en/skiing",
+        "kids_free": "Children under 9 ski free with adult pass. Source: matterhornparadise.ch"
+      },
+      "expected_score_range": [6.5, 7.5]
+    },
+    {
+      "name": "St. Anton am Arlberg",
+      "country": "Austria",
+      "role": "expert_low_family_anchor",
+      "why": "Expert-oriented resort, limited family infrastructure relative to terrain difficulty. Lower family score anchor.",
+      "verified_metrics": {
+        "has_childcare": true,
+        "childcare_min_age": 12,
+        "has_ski_school": true,
+        "ski_school_min_age": 4,
+        "kid_friendly_terrain_pct": 25,
+        "has_magic_carpet": true,
+        "has_terrain_park_kids": false,
+        "kids_ski_free_age": 8,
+        "best_age_min": 6,
+        "best_age_max": 16,
+        "has_ski_in_out": true,
+        "english_friendly": true
+      },
+      "verified_costs": {
+        "currency": "EUR",
+        "lift_adult_daily": 72,
+        "lift_child_daily": 43,
+        "lodging_budget_nightly": 70,
+        "lodging_mid_nightly": 180,
+        "lodging_luxury_nightly": 500
+      },
+      "evidence": {
+        "childcare": "Ski Arlberg kids club from 12 months. Source: stantonamarlberg.com/en/families",
+        "ski_school": "Arlberg Ski School accepts from age 4. Source: skischool-arlberg.com",
+        "terrain": "Only ~25% beginner terrain; resort known for expert skiing. Magic carpet at kids' area. Source: stantonamarlberg.com/en/skiing",
+        "kids_free": "Children born 2017 or later (under 8) ski free with parent. Source: skiarlberg.at"
+      },
+      "expected_score_range": [5.5, 6.8]
+    },
+    {
+      "name": "Mayrhofen",
+      "country": "Austria",
+      "role": "budget_family_floor",
+      "why": "Affordable Zillertal resort with basic family facilities. Tests the lower-mid scoring range and budget pricing.",
+      "verified_metrics": {
+        "has_childcare": true,
+        "childcare_min_age": 12,
+        "has_ski_school": true,
+        "ski_school_min_age": 4,
+        "kid_friendly_terrain_pct": 30,
+        "has_magic_carpet": true,
+        "has_terrain_park_kids": false,
+        "kids_ski_free_age": 5,
+        "best_age_min": 5,
+        "best_age_max": 14,
+        "has_ski_in_out": false,
+        "english_friendly": true
+      },
+      "verified_costs": {
+        "currency": "EUR",
+        "lift_adult_daily": 65,
+        "lift_child_daily": 33,
+        "lodging_budget_nightly": 55,
+        "lodging_mid_nightly": 120,
+        "lodging_luxury_nightly": 300
+      },
+      "evidence": {
+        "childcare": "Wuppis Kinderland daycare from 12 months. Source: mayrhofen.at/en/families",
+        "ski_school": "Mount Everest Ski School from age 4. Source: skischule-mayrhofen.com",
+        "terrain": "~30% beginner terrain; Ahorn mountain is family-friendly. Magic carpet at beginners' area. Source: mayrhofen.at/en/skiing",
+        "kids_free": "Children under 6 ski free. Source: zillertalarena.com"
+      },
+      "expected_score_range": [5.5, 6.8]
+    }
+  ]
+}

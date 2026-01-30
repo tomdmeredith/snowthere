@@ -788,6 +788,43 @@ RESEARCH DATA:
 TARGET SCHEMA:
 {json.dumps(target_schema, indent=2)}
 
+=== CALIBRATION EXAMPLES ===
+Use these verified resorts as reference points for extraction quality:
+
+Example 1 — Serfaus-Fiss-Ladis (Austria):
+Research mentions: "Murmli childcare from 3 months, Bertas Kinderland, magic carpet in kids area"
+Correct extraction:
+  has_childcare: true, childcare_min_age: 3, has_magic_carpet: true,
+  ski_school_min_age: 3, kids_ski_free_age: 10, has_terrain_park_kids: true
+
+Example 2 — St. Anton (Austria):
+Research mentions: "Kids ski school from age 4, no dedicated kids terrain park, ski-in/out hotels"
+Correct extraction:
+  has_childcare: true, childcare_min_age: 12, has_magic_carpet: true,
+  ski_school_min_age: 4, has_terrain_park_kids: false, has_ski_in_out: true
+
+Example 3 — Zermatt (Switzerland):
+Research mentions: "Kinderparadies from 6 months, Stoked Swiss Ski School from age 4, Wolli's Park"
+Correct extraction:
+  has_childcare: true, childcare_min_age: 6, has_magic_carpet: true,
+  ski_school_min_age: 4, has_terrain_park_kids: false, kids_ski_free_age: 9
+
+=== BOOLEAN RULES (STRICT) ===
+- TRUE: Clear evidence in research data (named facility, explicit statement)
+- FALSE: Research covers the topic area but confirms absence, OR official site
+  lists amenities and this is NOT among them
+- NULL: Topic not mentioned at all in any research source
+IMPORTANT: Ski school is NOT childcare. "Kids club at ski school" ≠ has_childcare.
+Only set has_childcare=true if there is actual daycare/nursery/babysitting.
+
+=== COST SANITY CHECK (flag if outside) ===
+- European lift tickets: EUR 30-85 adult daily
+- US lift tickets: USD 80-300 adult daily
+- Swiss lift tickets: CHF 50-100 adult daily
+- Budget lodging: 30-60% of mid-range
+- Luxury lodging: 150-400% of mid-range
+- If an extracted price falls outside these ranges, double-check the source.
+
 === CRITICAL: FAMILY METRICS DATA EXTRACTION ===
 
 You MUST actively search for and report on EACH of these family-critical fields:
