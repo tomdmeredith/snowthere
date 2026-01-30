@@ -5,7 +5,7 @@
 
 ## Current State
 
-**All rounds through 13.2 complete.** No active round. Site is live, pipeline is autonomous, Google Places API fixed. UGC photos and entity resolution will work on next pipeline run.
+**All rounds through Data Quality Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
 - **Resorts:** 35+ published, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
@@ -13,8 +13,49 @@
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
 - **SEO:** All pages have canonical tags, IndexNow verified, GSC API connected, 7 priority pages submitted for indexing
 - **Indexing:** 4 indexed by Google (of 54 discovered), 7 pages manually requested for priority crawl
-- **Scores:** Deterministic decimal (5.4-7.8 range)
+- **Scores:** Deterministic decimal (5.4-7.8 range), completeness multiplier applied
+- **Data Quality:** `data_completeness` column added, conditional table rendering (>= 0.3), tiered publication gates
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway
+
+---
+
+## Data Quality & Scoring Overhaul (2026-01-29) ✅
+
+**Goal:** Fix false scoring defaults, add data completeness tracking, conditional table rendering, and publication quality gates
+
+### Scoring Fixes
+- **3 false defaults fixed** in `scoring.py`: `has_childcare`, `has_magic_carpet`, `has_ski_school` no longer default to `true` when data is missing (were inflating scores)
+- **Completeness multiplier** added to formula: resorts with < 50% data completeness get penalized proportionally
+- New primitive: `calculate_data_completeness()` with `KEY_COMPLETENESS_FIELDS` checklist
+
+### Database
+- **Migration 033:** Added `data_completeness` DECIMAL(4,3) column to `resort_family_metrics` (default 0.0)
+
+### Frontend
+- **FamilyMetricsTable + CostTable unhidden** with conditional rendering — only shown when `data_completeness >= 0.3`
+- Data completeness < 0.6 shows disclaimer: "Some data is pending verification"
+
+### Pipeline
+- `data_completeness` stored after data extraction stage
+- **Tiered publication gate:** completeness < 0.3 → draft only, 0.3-0.6 → publish with caveat, >= 0.6 → full publish
+- **Dynamic quality queue:** low-completeness resorts re-queued for data enrichment
+
+### MCP Server
+- 3 new tools: `calculate_data_completeness`, `recalculate_family_score`, `audit_data_quality`
+
+### Agent
+- FamilyValue agent: data completeness check added to approval criteria
+
+### New Files
+- `agents/scripts/audit_data_quality.py` — audit current data quality across all resorts
+- `agents/scripts/backfill_data_quality.py` — backfill completeness scores and recalculate family scores
+- `agents/scripts/validate_cross_resort.py` — cross-resort consistency validation
+- `agents/shared/calibration/golden_resorts.json` — reference data for calibration
+
+**Arc:**
+- Started believing: Scores just need the right formula
+- Ended believing: Scores need the right formula AND awareness of how complete the underlying data is
+- Transformation: From trusting all data equally to gating outputs by data quality
 
 ---
 
@@ -276,11 +317,93 @@
 ## Known Issues
 
 - ~~Google Places API 400 errors (blocks UGC photos)~~ — **FIXED in R13.2** (APIs enabled, correct key deployed)
+- ~~OG images return 404~~ — Resort pages now use hero images for OG (verified in code)
+- ~~AggregateRating ratingCount: 1~~ — Removed in R14
+- ~~FAQ schema client-rendered~~ — Server-side FAQPage JSON-LD added in R14 (already present in page.tsx)
+- ~~BreadcrumbList missing on resort pages~~ — Added in R14 (already present in page.tsx)
+- ~~Internal links open new tabs~~ — **FIXED** in sanitize.ts (internal links distinguished from external)
+- ~~Duplicate title suffix on index pages~~ — Fixed in R14
+- ~~Quiz page missing footer~~ — Fixed in R14
+- ~~Inconsistent footers~~ — Unified in R14
+- **MCP parity at ~40%** — 58 of ~340 primitive functions exposed; 22 modules missing → R17
+- **Runner monolith** — `run_resort_pipeline()` is 1,627 lines, no partial re-run → R18
 - Quick Take length occasionally exceeds 120 word limit (minor)
+- Quick Take score discrepancy — LLM-generated prose score may not match deterministic formula score (E1)
 - Affiliate programs: migration 032 created but manual network signups pending
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
-- GSC daily quota hit — /resorts/japan needs indexing request tomorrow
 - Google Places API key is unrestricted (allows all 32 Maps APIs) — should restrict to Places only
+- Data quality backfill not yet run — scripts created but need execution (~$6 for 38 resorts)
+
+## Planned Rounds (Ultimate Audit — 2026-01-29)
+
+Rounds 14-16 are user/SEO/GEO-facing. Rounds 17-18 are agent infrastructure.
+
+### Round 14: SEO & Schema Critical Fixes + Bug Fixes
+
+**Goal:** Fix everything broken or actively hurting search/social presence
+
+- [x] Fix duplicate title suffix — "| Snowthere | Snowthere" on index pages
+- [x] Fix quiz page — add footer, set proper title
+- [x] Unify footer — all pages use shared Footer component
+- [x] Fix "Join the Newsletter" link — point to `/#newsletter`
+- [x] Remove AggregateRating — editorial scores ≠ user reviews
+- [x] Verify FAQ schema server-side — already in page.tsx
+- [x] Verify BreadcrumbList JSON-LD — already in page.tsx
+- [x] Verify OG images — resort pages use hero images (no /og/ route needed)
+
+**Files:** `apps/web/app/resorts/page.tsx`, `apps/web/app/guides/page.tsx`, `apps/web/app/resorts/[country]/page.tsx`, `apps/web/app/quiz/page.tsx`, `apps/web/app/resorts/[country]/[slug]/page.tsx`
+
+### Round 15: GEO & Rich Results Enhancement + Data Quality Backfill
+
+**Goal:** Maximize AI citability and search rich results. Run data quality backfill.
+
+- [ ] Add WebSite + Organization schema to homepage
+- [ ] Add ItemList schema to resorts/guides index pages
+- [ ] Run data quality backfill (audit → backfill → validate, ~$6 for 38 resorts)
+- [ ] Add image sitemap extension
+- [ ] Add legal pages to sitemap
+
+**Files:** `apps/web/app/page.tsx`, `apps/web/app/resorts/page.tsx`, `apps/web/app/guides/page.tsx`, `apps/web/app/sitemap.xml/route.ts`
+
+### Round 16: Error Handling & Polish
+
+**Goal:** Improve resilience and edge case handling
+
+- [ ] Add custom error boundaries (error.tsx, not-found.tsx)
+- [ ] Add loading states (loading.tsx for route transitions)
+- [ ] Fix country page search aria-label
+- [ ] Tighten CSP (remove unsafe-eval, HTTPS-only img-src)
+- [ ] Add GDPR data deletion form
+- [ ] Restrict Google Places API key
+
+**Files:** `apps/web/app/error.tsx`, `apps/web/app/not-found.tsx`, `apps/web/vercel.json`
+
+### Round 17: Agent-Native Parity
+
+**Goal:** Close the MCP parity gap (currently 58 tools from ~8 modules; 22 modules unexposed)
+
+- [ ] Expose intelligence/scoring/approval/quality/image/trail_map/quick_take/discovery/newsletter/guide/email/analytics/alerts/costs/links primitives as MCP tools
+- [ ] Add pipeline trigger MCP tool
+- [ ] Add agent memory access MCP tools
+- [ ] Update AGENT_NATIVE.md
+
+**Files:** `agents/mcp_server/server.py`, `AGENT_NATIVE.md`
+
+### Round 18: Pipeline Architecture
+
+**Goal:** Decompose runner monolith, improve resilience and observability
+
+- [ ] Decompose `run_resort_pipeline()` into individually-invocable stages
+- [ ] Wire AgentTracer into pipeline
+- [ ] Deterministic error dispatch for known error classes
+- [ ] Add max-retry depth counter
+- [ ] Remove dead code
+- [ ] Fix budget context mismatch
+- [ ] Wire HookRegistry into production pipeline
+
+**Files:** `agents/pipeline/runner.py`, `agents/pipeline/decision_maker.py`, `agents/agent_layer/tracer.py`, `agents/agent_layer/hooks.py`
+
+---
 
 ## Pending Manual Work
 
@@ -288,6 +411,7 @@
 - Run migration 032_comprehensive_affiliate_programs.sql on production
 - Request indexing for remaining GSC pages (daily quota, ~10/day)
 - Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
+- Homepage redesign (moved to after R15)
 
 ## Key Files
 

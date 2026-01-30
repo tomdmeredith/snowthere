@@ -195,11 +195,60 @@ family-ski-directory/
 - Replicate URLs are temporary — always re-upload to Supabase Storage
 - Browser audit before design work reveals UX issues invisible in code review
 
-### Future Work
+### Data Quality & Scoring Overhaul ✅ (Completed 2026-01-29)
+> Fix false scoring defaults, add data completeness tracking, conditional table rendering, publication quality gates
+
+- [x] Fixed 3 false defaults in scoring.py (has_childcare, has_magic_carpet, has_ski_school)
+- [x] Added completeness multiplier to scoring formula
+- [x] New primitive: `calculate_data_completeness()` with KEY_COMPLETENESS_FIELDS
+- [x] Migration 033: data_completeness column on resort_family_metrics
+- [x] FamilyMetricsTable + CostTable conditionally rendered (>= 0.3 completeness)
+- [x] Pipeline: data_completeness stored, tiered publication gate, dynamic quality queue
+- [x] MCP: 3 new tools (data completeness, family score, data quality audit)
+- [x] FamilyValue agent: data completeness in approval criteria
+- [x] New scripts: audit_data_quality.py, backfill_data_quality.py, validate_cross_resort.py
+
+### Round 14: SEO & Schema Critical Fixes + Bug Fixes ✅ (Completed 2026-01-29)
+> Fix duplicate titles, unify footer, quiz footer/title, newsletter link, verify OG/BreadcrumbList/FAQ schema
+
+- [x] Fix duplicate title suffix ("| Snowthere | Snowthere") on /resorts, /guides, /resorts/[country]
+- [x] Fix quiz page: add footer via layout.tsx, set proper title metadata
+- [x] Unify footer: replaced inline footers on resorts/country pages with shared Footer component
+- [x] Fix "Join the Newsletter" link: now points to /#newsletter (added id to Newsletter component)
+- [x] Verified: no AggregateRating in codebase (already clean)
+- [x] Verified: FAQ schema already server-rendered in page.tsx
+- [x] Verified: BreadcrumbList JSON-LD already present in resort pages
+- [x] Verified: OG images use resort hero images (no phantom /og/ references)
+- [x] Verified: sanitize.ts correctly distinguishes internal vs external links
+
+### Round 15: GEO & Rich Results Enhancement + Data Quality Backfill (Next)
+> WebSite/Organization schema, ItemList schema, data quality backfill, image sitemap
+
+- [ ] Add WebSite + Organization schema to homepage
+- [ ] Add ItemList schema to resorts/guides index pages
+- [ ] Run data quality backfill (~$6 for 38 resorts)
+- [ ] Add image sitemap extension
+- [ ] Add legal pages to sitemap
+
+### Round 16: Error Handling & Polish
+> Custom error boundaries, loading states, CSP tightening, GDPR data deletion
+
+- [ ] Add custom error boundaries (error.tsx, not-found.tsx)
+- [ ] Add loading states (loading.tsx for route transitions)
+- [ ] Tighten CSP (remove unsafe-eval, HTTPS-only img-src)
+- [ ] Add GDPR data deletion form
+
+### Future Rounds (Infrastructure)
+
+- **R17: Agent-Native Parity** — Expose remaining primitive modules as MCP tools (~40% → ~95% parity), pipeline trigger tool, agent memory access, update AGENT_NATIVE.md
+- **R18: Pipeline Architecture** — Decompose `run_resort_pipeline` (1,627-line monolith) into invocable stages, wire AgentTracer, deterministic error dispatch, remove dead code
+- **Homepage Redesign** — Moved to after R16
+
+### Ongoing
 
 - [ ] Sign up for affiliate networks + run migration 032
-- [ ] Investigate Google Places API errors
 - [ ] Monitor and iterate on pipeline quality
+- [ ] Request indexing for remaining GSC pages (daily quota)
 
 ---
 

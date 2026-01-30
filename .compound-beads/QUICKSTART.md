@@ -1,6 +1,6 @@
 # Snowthere Quick Start
 
-**All rounds through 13.2 complete.** No active round. Site is live, pipeline is autonomous, Google Places API fixed.
+**All rounds through Data Quality Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -11,11 +11,20 @@
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
 **Recent**:
+- **Data Quality & Scoring Overhaul** (Completed 2026-01-29)
+  - Scoring: 3 false defaults fixed, completeness multiplier added
+  - New primitives: `calculate_data_completeness()`, `KEY_COMPLETENESS_FIELDS`
+  - Migration 033: data_completeness column on resort_family_metrics
+  - Frontend: FamilyMetricsTable + CostTable unhidden with conditional rendering (>= 0.3 completeness)
+  - Pipeline: data_completeness stored after extraction, tiered publication gate, dynamic quality queue
+  - MCP: 3 new tools (data completeness, family score, data quality audit)
+  - FamilyValue agent: data completeness check in approval criteria
+  - New scripts: audit_data_quality.py, backfill_data_quality.py, validate_cross_resort.py
+  - New calibration file: agents/shared/calibration/golden_resorts.json
 - R13.2: **Google Places API Fix** (Completed 2026-01-29)
   - Root cause: Places API + Places API (New) not enabled on Google Cloud project, wrong API key on Railway
   - Enabled both APIs on Snowthere Google Cloud project
   - Updated `GOOGLE_PLACES_API_KEY` on Railway with correct key from Snowthere project
-  - UGC photos and entity resolution will work on next pipeline run
 - R13.1: **Technical SEO Audit & Indexing** (Completed 2026-01-29)
   - Canonical tags on 8 pages, IndexNow verified, ISR bug fix
   - GSC: 7 priority pages submitted for indexing
@@ -44,10 +53,18 @@
 - ~30 pages "Discovered - not indexed" (normal for 11-day-old site)
 - Affiliate programs: migration 032 created, manual signups pending
 
-**Next**:
-- Round 14: Homepage redesign
+**Planned Rounds** (from ultimate audit 2026-01-29):
+
+- **R14: SEO & Schema Critical Fixes + Bug Fixes** — Fix duplicate titles, OG images, quiz footer, AggregateRating, server-side FAQ schema, BreadcrumbList, unify footer, newsletter link
+- **R15: GEO & Rich Results Enhancement + Data Backfill** — WebSite/Organization schema, ItemList schema, data quality backfill, image sitemap, legal pages in sitemap
+- **R16: Error Handling & Polish** — Custom error boundaries, loading states, CSP tightening, GDPR data deletion
+- **R17: Agent-Native Parity** — Expose remaining primitive modules as MCP tools
+- **R18: Pipeline Architecture** — Decompose runner monolith, wire AgentTracer
+
+**Also pending**:
 - Request indexing for remaining GSC pages (daily quota)
 - Sign up for affiliate networks + run migration 032
 - Restrict Google Places API key (currently unrestricted)
+- Homepage redesign (moved to after R16)
 
 **Full context**: CLAUDE.md | .compound-beads/context.md

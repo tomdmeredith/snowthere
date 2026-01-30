@@ -3,8 +3,10 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { notFound } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
+import { SITE_URL } from '@/lib/constants'
 import { Button, ScoreBadge } from '@/components/ui'
 import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/home/Footer'
 import {
   ChevronRight,
   Mountain,
@@ -173,13 +175,27 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (resorts.length === 0) {
     return {
-      title: 'Country Not Found | Snowthere',
+      title: 'Country Not Found',
     }
   }
 
+  const countrySlug = countryToSlug(countryName)
+  const canonicalUrl = `${SITE_URL}/resorts/${countrySlug}`
+
   return {
-    title: `Family Ski Resorts in ${countryName} | Snowthere`,
+    title: `Family Ski Resorts in ${countryName}`,
     description: `${resorts.length} kid-friendly ski resorts in ${countryName}. Family scores, best ages, and honest parent reviews for every resort.`,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      type: 'website',
+      title: `Family Ski Resorts in ${countryName} | Snowthere`,
+      description: `${resorts.length} kid-friendly ski resorts in ${countryName}. Family scores, best ages, and honest parent reviews for every resort.`,
+      url: canonicalUrl,
+      siteName: 'Snowthere',
+      locale: 'en_US',
+    },
   }
 }
 
@@ -436,7 +452,7 @@ export default async function CountryResortsPage({ params, searchParams }: PageP
                   Sign up to get notified when we add more {countryName} resorts.
                 </p>
                 <Button size="lg" className="mt-8" asChild>
-                  <Link href="/">
+                  <Link href="/#newsletter">
                     Join the Newsletter
                   </Link>
                 </Button>
@@ -445,40 +461,8 @@ export default async function CountryResortsPage({ params, searchParams }: PageP
           </div>
         </section>
 
-        {/* Footer */}
-        <footer className="border-t border-dark-100 bg-dark-50 py-12">
-          <div className="container-page">
-            <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-              <div className="text-center sm:text-left">
-                <Link href="/" className="font-display text-xl font-bold text-dark-800">
-                  Snowthere
-                </Link>
-                <p className="mt-2 text-sm text-dark-500">
-                  Family ski guides made with love for ski families.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap justify-center gap-6">
-                <Link href="/" className="text-sm text-dark-600 hover:text-gold-600 transition-colors">
-                  Home
-                </Link>
-                <Link href="/resorts" className="text-sm text-dark-600 hover:text-gold-600 transition-colors">
-                  Resorts
-                </Link>
-                <Link href="/about" className="text-sm text-dark-600 hover:text-gold-600 transition-colors">
-                  About
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-8 pt-8 border-t border-dark-100 text-center">
-              <p className="text-xs text-dark-400">
-                © {new Date().getFullYear()} Snowthere. All rights reserved.
-              </p>
-            </div>
-          </div>
-        </footer>
       </main>
+      <Footer />
     </>
   )
 }

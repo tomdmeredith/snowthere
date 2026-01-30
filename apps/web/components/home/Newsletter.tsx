@@ -59,7 +59,7 @@ export function Newsletter() {
   }
 
   return (
-    <section className="py-20 sm:py-28">
+    <section id="newsletter" className="py-20 sm:py-28">
       <div className="container-page">
         <div className="max-w-2xl mx-auto">
           {/* Card with coral gradient */}

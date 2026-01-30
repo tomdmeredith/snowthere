@@ -5,6 +5,7 @@ import { SITE_URL } from '@/lib/constants'
 import { supabase } from '@/lib/supabase'
 import { Button, Badge, ScoreBadge } from '@/components/ui'
 import { Navbar } from '@/components/layout/Navbar'
+import { Footer } from '@/components/home/Footer'
 import {
   ChevronRight,
   Mountain,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Browse Family Ski Resorts | Snowthere',
+  title: 'Browse Family Ski Resorts',
   description:
     'Find the perfect family ski resort worldwide. Browse by country, family score, and more. Complete trip guides with honest parent reviews.',
   alternates: {
@@ -417,7 +418,7 @@ export default async function ResortsPage({
                 Sign up to get notified when we add resorts you care about.
               </p>
               <Button size="lg" className="mt-8" asChild>
-                <Link href="/">
+                <Link href="/#newsletter">
                   Join the Newsletter
                 </Link>
               </Button>
@@ -426,40 +427,8 @@ export default async function ResortsPage({
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-dark-100 bg-dark-50 py-12">
-        <div className="container-page">
-          <div className="flex flex-col items-center justify-between gap-6 sm:flex-row">
-            <div className="text-center sm:text-left">
-              <Link href="/" className="font-display text-xl font-bold text-dark-800">
-                Snowthere
-              </Link>
-              <p className="mt-2 text-sm text-dark-500">
-                Family ski guides made with love for ski families.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap justify-center gap-6">
-              <Link href="/" className="text-sm text-dark-600 hover:text-gold-600 transition-colors">
-                Home
-              </Link>
-              <Link href="/resorts" className="text-sm text-dark-600 hover:text-gold-600 transition-colors">
-                Resorts
-              </Link>
-              <Link href="/about" className="text-sm text-dark-600 hover:text-gold-600 transition-colors">
-                About
-              </Link>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-8 border-t border-dark-100 text-center">
-            <p className="text-xs text-dark-400">
-              © {new Date().getFullYear()} Snowthere. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
       </main>
+      <Footer />
     </>
   )
 }

@@ -7,7 +7,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 
 export const metadata: Metadata = {
-  title: 'Family Ski Guides | Snowthere',
+  title: 'Family Ski Guides',
   description:
     'Comprehensive guides for family ski trips - from packing lists to resort comparisons. Everything you need to plan the perfect family ski vacation.',
   alternates: {
