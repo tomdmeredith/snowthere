@@ -1,21 +1,65 @@
 # Snowthere Context
 
-> Last synced: 2026-01-30 (Round 14)
+> Last synced: 2026-01-30 (Round 15)
 > Agent: compound-beads v2.0
 
 ## Current State
 
-**R15 active: GEO & Rich Results Enhancement.** Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R15 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
 - **Resorts:** 38 published, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
 - **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
-- **SEO:** All pages have canonical tags, IndexNow verified, GSC API connected, 7 priority pages submitted for indexing
+- **SEO:** All pages have canonical tags, IndexNow verified, GSC API connected, JSON-LD on homepage + index pages
+- **Rich Results:** WebSite + Organization schema (homepage), ItemList schema (/resorts, /guides)
+- **Sitemap:** Image sitemap extension, 6 legal pages added
 - **Indexing:** 4 indexed by Google (of 54 discovered), 7 pages manually requested for priority crawl
-- **Scores:** Deterministic decimal (5.4-7.8 range), completeness multiplier applied
-- **Data Quality:** `data_completeness` column added, conditional table rendering (>= 0.3), tiered publication gates
+- **Scores:** Deterministic decimal (3.8-8.3 range, avg 5.4), completeness multiplier applied
+- **Data Quality:** Backfill complete — 43% avg completeness, 7 resorts show full tables, 22 partial, 9 hidden
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway
+
+---
+
+## Round 15: GEO & Rich Results Enhancement + Data Quality Backfill (2026-01-30) ✅
+
+**Goal:** Maximize AI citability and search rich results. Run data quality backfill.
+
+### Schema & Sitemap — DEPLOYED
+1. **WebSite JSON-LD** on homepage — includes SearchAction for sitelinks search box
+2. **Organization JSON-LD** on homepage — name, URL, logo, founding date
+3. **ItemList JSON-LD** on /resorts — dynamic list from published resorts with position, name, URL, tagline
+4. **ItemList JSON-LD** on /guides — dynamic list from published guides with position, name, URL, excerpt
+5. **Image sitemap extension** — `xmlns:image` namespace, `<image:image>` tags for all resort images
+6. **Legal pages in sitemap** — /about, /methodology, /contact, /privacy, /terms, /quiz (monthly, priority 0.3)
+7. **Guides revalidate** — Added `revalidate = 3600` (was missing)
+
+### Data Quality Backfill — APPLIED
+- **Migration 033 applied** via Supabase SQL Editor (`data_completeness` column + `NOTIFY pgrst, 'reload schema'`)
+- **38 resorts processed**, 33 updated, 5 unchanged, 0 errors
+- **Completeness: 30% → 43% average**
+- **Full tables: 3 → 7 resorts** (Lake Louise, Cerro Catedral, Aspen Snowmass, Serfaus-Fiss-Ladis, Niseko, Killington, Lech-Zürs)
+- **Hidden tables halved: 18 → 9 resorts**
+- **Score range widened: 5.4-7.8 → 3.8-8.3** (better differentiation)
+- **Tavily API key refreshed** (old key expired, new key in .env and ~/.api-keys)
+
+### Cross-Resort Validation
+- 20 cost outlier warnings (pre-existing data quality, not from backfill)
+- US resorts with implausibly low lift prices (Deer Valley $37, Copper $29, Smugglers $27)
+- Austrian resorts with high prices (likely EUR stored as USD without conversion)
+- Grade: D (43% completeness + 20 warnings) — will improve as pipeline enriches data
+
+### New Work Items Identified
+- Update TAVILY_API_KEY on Railway (local updated, Railway still has old expired key)
+- Fix cost data outliers (currency confusion, stale prices)
+- 9 resorts at 0% completeness need targeted research (Selva Val Gardena, Cortina, Stowe, Deer Valley, Hakuba, Winter Park, Smugglers Notch)
+
+**Key commit:** ee6b3ec
+
+**Arc:**
+- Started believing: Schema markup and data backfill are separate concerns
+- Ended believing: They're complementary — schema makes data discoverable, backfill makes the data worth discovering
+- Transformation: From adding metadata about content to ensuring the content behind the metadata is substantive
 
 ---
 
@@ -363,7 +407,10 @@
 - Affiliate programs: migration 032 created but manual network signups pending
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
 - Google Places API key is unrestricted (allows all 32 Maps APIs) — should restrict to Places only
-- Data quality backfill not yet run — scripts created but need execution (~$6 for 38 resorts)
+- ~~Data quality backfill not yet run~~ — **DONE in R15** (33/38 updated, 43% avg completeness)
+- Cost data outliers: 20 warnings from cross-resort validation (US resorts with $27-37 lift prices, Austrian resorts with EUR-as-USD)
+- 9 resorts at 0% completeness: Selva Val Gardena, Cortina, Stowe, Deer Valley, Hakuba, Winter Park, Smugglers Notch, Hakuba Valley, Cortina d'Ampezzo
+- TAVILY_API_KEY on Railway needs updating (local .env updated, Railway still has expired key)
 
 ## Planned Rounds (Ultimate Audit — 2026-01-29)
 
@@ -373,17 +420,9 @@ Rounds 14-16 are user/SEO/GEO-facing. Rounds 17-18 are agent infrastructure.
 
 Completed 2026-01-30. See R14 section above.
 
-### Round 15: GEO & Rich Results Enhancement + Data Quality Backfill
+### ~~Round 15: GEO & Rich Results Enhancement + Data Quality Backfill~~ ✅
 
-**Goal:** Maximize AI citability and search rich results. Run data quality backfill.
-
-- [ ] Add WebSite + Organization schema to homepage
-- [ ] Add ItemList schema to resorts/guides index pages
-- [ ] Run data quality backfill (audit → backfill → validate, ~$6 for 38 resorts)
-- [ ] Add image sitemap extension
-- [ ] Add legal pages to sitemap
-
-**Files:** `apps/web/app/page.tsx`, `apps/web/app/resorts/page.tsx`, `apps/web/app/guides/page.tsx`, `apps/web/app/sitemap.xml/route.ts`
+Completed 2026-01-30. See R15 section above.
 
 ### Round 16: Error Handling & Polish
 
@@ -447,10 +486,10 @@ Completed 2026-01-30. See R14 section above.
 ## Recent Commits
 
 ```
+ee6b3ec feat: R15 GEO & Rich Results — JSON-LD schemas, image sitemap, legal pages
 71d7369 fix: Update migration 035 to match applied SQL (delete archived Kitzbühel + ASCII slug)
 3ef05c9 fix: Resolve Kitzbühel 404 — normalize Unicode slugs + ASCII migration
 a6a6b37 fix: R14 SEO & bug fixes — duplicate titles, unified footer, quiz page, newsletter link
 cf167cd feat: Data Quality & Scoring Overhaul — completeness tracking, conditional tables, publication gates
 36fc555 fix: Add canonical tags to all pages + IndexNow verification key
-26db039 fix: Add /resorts revalidation on publish + Jan 28 failure remediation
 ```

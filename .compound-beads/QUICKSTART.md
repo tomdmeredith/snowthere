@@ -1,6 +1,6 @@
 # Snowthere Quick Start
 
-**R15 active: GEO & Rich Results Enhancement.** Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R15 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -11,6 +11,14 @@
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
 **Recent**:
+- **R15: GEO & Rich Results Enhancement + Data Backfill** (Completed 2026-01-30)
+  - WebSite + Organization JSON-LD on homepage (sitelinks search box)
+  - ItemList JSON-LD on /resorts and /guides index pages
+  - Image sitemap extension (xmlns:image) for all resort images
+  - 6 legal/static pages added to sitemap
+  - Migration 033 applied: data_completeness column
+  - Data backfill: 33/38 resorts updated, completeness 30%→43%, 7 resorts show full tables
+  - Tavily API key refreshed
 - **R14: SEO & Schema Critical Fixes + Bug Fixes** (Completed 2026-01-30)
   - Fixed duplicate title suffix, quiz page footer/title, unified footer, newsletter link
   - Kitzbühel 404: Unicode slug normalization + ASCII migration (035)
@@ -36,7 +44,7 @@
   - Nano Banana Pro on Replicate as primary image model (4-tier fallback)
   - Guide page Spielplatz design overhaul, exit intent popup redesigned
 
-**Stats**: 38 resorts published, 10 guides published, scores 5.4-7.8
+**Stats**: 38 resorts published, 10 guides published, scores 3.8-8.3 (avg 5.4)
 
 **Pipeline**: Active on Railway (snowthere-agents / creative-spontaneity)
 - Resorts: ~6/day, 70% discovery, deterministic scoring
@@ -60,7 +68,7 @@
 **Planned Rounds** (from ultimate audit 2026-01-29):
 
 - ~~R14: SEO & Schema Critical Fixes + Bug Fixes~~ ✅
-- **R15: GEO & Rich Results Enhancement + Data Backfill** — WebSite/Organization schema, ItemList schema, data quality backfill, image sitemap, legal pages in sitemap (ACTIVE)
+- ~~R15: GEO & Rich Results Enhancement + Data Backfill~~ ✅
 - **R16: Error Handling & Polish** — Custom error boundaries, loading states, CSP tightening, GDPR data deletion
 - **R17: Agent-Native Parity** — Expose remaining primitive modules as MCP tools
 - **R18: Pipeline Architecture** — Decompose runner monolith, wire AgentTracer
@@ -70,5 +78,8 @@
 - Sign up for affiliate networks + run migration 032
 - Restrict Google Places API key (currently unrestricted)
 - Homepage redesign (moved to after R16)
+- Update TAVILY_API_KEY on Railway (local .env updated, Railway still has old key)
+- Fix 20 cost outlier warnings (US resorts with implausibly low lift prices, Austrian resorts with EUR prices stored as USD)
+- 9 resorts still at 0% completeness (Selva Val Gardena, Cortina, Stowe, Hakuba, etc.) — need targeted research
 
 **Full context**: CLAUDE.md | .compound-beads/context.md
