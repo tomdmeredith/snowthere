@@ -1,7 +1,6 @@
 import Link from 'next/link'
 import { X } from 'lucide-react'
 import {
-  type AgeRange,
   type BudgetTier,
   type SortOption,
   type FilterParams,
@@ -16,6 +15,7 @@ import {
   buildFilterUrl,
   toggleParam,
 } from '@/lib/resort-filters'
+import { MobileFilterToggle } from './MobileFilterToggle'
 
 interface CountryInfo {
   name: string
@@ -51,8 +51,9 @@ export function ResortFilters({
     selectedBudgets.length > 0 ||
     selectedCountries.length > 0 ||
     !!searchParams.q
+  const activeFilterCount =
+    selectedAges.length + selectedBudgets.length + selectedCountries.length + (searchParams.q ? 1 : 0)
 
-  /** Build a URL preserving all current params except those being toggled */
   function urlToggling(key: string, value: string): string {
     const params: Record<string, string | undefined> = {
       q: searchParams.q,
@@ -65,7 +66,6 @@ export function ResortFilters({
     return buildFilterUrl(basePath, params)
   }
 
-  /** Build a URL replacing a specific param */
   function urlWith(key: string, value: string | undefined): string {
     const params: Record<string, string | undefined> = {
       q: searchParams.q,
@@ -78,7 +78,6 @@ export function ResortFilters({
     return buildFilterUrl(basePath, params)
   }
 
-  /** Remove a specific value from a param */
   function urlRemoving(key: string, value: string): string {
     const params: Record<string, string | undefined> = {
       q: searchParams.q,
@@ -95,111 +94,153 @@ export function ResortFilters({
     return buildFilterUrl(basePath, params)
   }
 
+  const hasCountries = countries && countries.length > 0
+
+  function renderCountryPills() {
+    if (!hasCountries) return null
+    return (
+      <>
+        <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Country</span>
+        {countries.map((c) => {
+          const isActive = selectedCountries.some(
+            (sc) => sc.toLowerCase() === c.name.toLowerCase()
+          )
+          return (
+            <Link
+              key={c.name}
+              href={urlToggling('country', c.name)}
+              className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? 'bg-teal-100 text-teal-700'
+                  : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
+              }`}
+            >
+              {c.name} ({c.count})
+            </Link>
+          )
+        })}
+      </>
+    )
+  }
+
+  function renderAgePills() {
+    return (
+      <>
+        <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Ages</span>
+        {VALID_AGE_RANGES.map((age) => {
+          const isActive = selectedAges.includes(age)
+          return (
+            <Link
+              key={age}
+              href={urlToggling('ages', age)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? 'bg-coral-100 text-coral-700'
+                  : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
+              }`}
+            >
+              {age === '13+' ? '13+' : age}
+            </Link>
+          )
+        })}
+      </>
+    )
+  }
+
+  function renderBudgetPills() {
+    return (
+      <>
+        <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Budget</span>
+        {(['$', '$$', '$$$', '$$$$'] as BudgetTier[]).map((tier) => {
+          const isActive = selectedBudgets.includes(tier)
+          return (
+            <Link
+              key={tier}
+              href={urlToggling('budget', tier)}
+              className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
+                isActive
+                  ? 'bg-gold-100 text-gold-700'
+                  : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
+              }`}
+              title={BUDGET_LABELS[tier]}
+            >
+              {tier}
+            </Link>
+          )
+        })}
+      </>
+    )
+  }
+
+  function renderSortPills() {
+    return (
+      <>
+        <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Sort</span>
+        {(['score', 'price', 'name'] as SortOption[]).map((opt) => {
+          const isActive = currentSort === opt
+          return (
+            <Link
+              key={opt}
+              href={urlWith('sort', opt === 'score' ? undefined : opt)}
+              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
+                isActive
+                  ? 'bg-dark-800 text-white'
+                  : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
+              }`}
+            >
+              {SORT_LABELS[opt]}
+            </Link>
+          )
+        })}
+      </>
+    )
+  }
+
   return (
     <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-dark-100">
       <div className="container-page py-4 space-y-3">
-        {/* Row 1: Filter pills */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Country pills (only on /resorts, not /resorts/[country]) */}
-          {countries && countries.length > 0 && (
-            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
-              <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Country</span>
-              {countries.map((c) => {
-                const isActive = selectedCountries.some(
-                  (sc) => sc.toLowerCase() === c.name.toLowerCase()
-                )
-                return (
-                  <Link
-                    key={c.name}
-                    href={urlToggling('country', c.name)}
-                    className={`shrink-0 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'bg-teal-100 text-teal-700'
-                        : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
-                    }`}
-                  >
-                    {c.name} ({c.count})
-                  </Link>
-                )
-              })}
+        {/* Mobile: collapsed behind toggle */}
+        <MobileFilterToggle activeCount={activeFilterCount}>
+          {hasCountries && (
+            <div className="flex flex-wrap items-center gap-2">
+              {renderCountryPills()}
             </div>
           )}
+          <div className="flex flex-wrap items-center gap-2">
+            {renderAgePills()}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {renderBudgetPills()}
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {renderSortPills()}
+          </div>
+        </MobileFilterToggle>
 
-          {/* Divider on desktop when country pills are shown */}
-          {countries && countries.length > 0 && (
-            <div className="hidden sm:block w-px h-6 bg-dark-200" />
+        {/* Desktop: inline horizontal layout */}
+        <div className="hidden md:flex flex-wrap items-center gap-3">
+          {hasCountries && (
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 -mb-1">
+              {renderCountryPills()}
+            </div>
           )}
-
-          {/* Age pills */}
+          {hasCountries && (
+            <div className="w-px h-6 bg-dark-200" />
+          )}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Ages</span>
-            {VALID_AGE_RANGES.map((age) => {
-              const isActive = selectedAges.includes(age)
-              return (
-                <Link
-                  key={age}
-                  href={urlToggling('ages', age)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-coral-100 text-coral-700'
-                      : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
-                  }`}
-                >
-                  {age === '13+' ? '13+' : age}
-                </Link>
-              )
-            })}
+            {renderAgePills()}
           </div>
-
-          <div className="hidden sm:block w-px h-6 bg-dark-200" />
-
-          {/* Budget pills */}
+          <div className="w-px h-6 bg-dark-200" />
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Budget</span>
-            {(['$', '$$', '$$$', '$$$$'] as BudgetTier[]).map((tier) => {
-              const isActive = selectedBudgets.includes(tier)
-              return (
-                <Link
-                  key={tier}
-                  href={urlToggling('budget', tier)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-bold transition-all duration-200 ${
-                    isActive
-                      ? 'bg-gold-100 text-gold-700'
-                      : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
-                  }`}
-                  title={BUDGET_LABELS[tier]}
-                >
-                  {tier}
-                </Link>
-              )
-            })}
+            {renderBudgetPills()}
           </div>
-
-          <div className="hidden sm:block w-px h-6 bg-dark-200" />
-
-          {/* Sort */}
+          <div className="w-px h-6 bg-dark-200" />
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-dark-400 uppercase tracking-wide shrink-0">Sort</span>
-            {(['score', 'price', 'name'] as SortOption[]).map((opt) => {
-              const isActive = currentSort === opt
-              return (
-                <Link
-                  key={opt}
-                  href={urlWith('sort', opt === 'score' ? undefined : opt)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-dark-800 text-white'
-                      : 'bg-dark-100 text-dark-600 hover:bg-dark-200'
-                  }`}
-                >
-                  {SORT_LABELS[opt]}
-                </Link>
-              )
-            })}
+            {renderSortPills()}
           </div>
         </div>
 
-        {/* Row 2: Active filters + result count */}
+        {/* Active filter chips (visible on both mobile and desktop) */}
         {hasActiveFilters && (
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-dark-500 font-semibold">Filtering by:</span>

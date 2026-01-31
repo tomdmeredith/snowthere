@@ -29,6 +29,19 @@ export default function QuizStepPage() {
       } catch (e) {
         console.error('Failed to parse stored answers:', e)
       }
+    } else {
+      // Pre-populate ages from homepage AgeSelector if user hasn't started quiz yet
+      const homepageAges = sessionStorage.getItem('snowthere_ages')
+      if (homepageAges) {
+        try {
+          const parsed = JSON.parse(homepageAges)
+          if (Array.isArray(parsed.selectedAges) && parsed.selectedAges.length > 0) {
+            setAnswers((prev) => ({ ...prev, ages: parsed.selectedAges[0] }))
+          }
+        } catch (e) {
+          // Ignore parsing errors
+        }
+      }
     }
     setIsLoaded(true)
   }, [])

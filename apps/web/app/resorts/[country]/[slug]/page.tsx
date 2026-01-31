@@ -744,8 +744,10 @@ export default async function ResortPage({ params }: Props) {
                 />
               )}
 
-              {/* Cost Summary Card — shown when metrics completeness >= 0.3 and costs exist */}
-              {costs && metrics && (metrics as any).data_completeness >= 0.3 && (
+              {/* Cost Summary Card — shown when metrics completeness >= 0.3 and at least one price exists */}
+              {costs && metrics && (metrics as any).data_completeness >= 0.3 &&
+                (costs.lift_adult_daily != null || costs.lodging_mid_nightly != null ||
+                 costs.meal_family_avg != null || costs.estimated_family_daily != null) && (
                 <CostTable costs={costs} />
               )}
 
