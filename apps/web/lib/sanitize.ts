@@ -35,13 +35,13 @@ export function sanitizeHTML(dirty: string): string {
             attribs: { href: attribs.href, ...(attribs.class && { class: attribs.class }) },
           }
         }
-        // For external links: preserve existing rel if present, otherwise default
-        // Default is "noopener" only (dofollow, sends referrer) — we want
-        // businesses to see snowthere.com as traffic source in their analytics
+        // For external links: validate and preserve existing rel tokens,
+        // filtering to only known-safe values to prevent injection
+        const ALLOWED_REL_TOKENS = new Set(['noopener', 'noreferrer', 'nofollow', 'sponsored', 'ugc'])
         const existingRel = attribs.rel || ''
-        const rel = existingRel
-          ? (existingRel.includes('noopener') ? existingRel : `${existingRel} noopener`)
-          : 'noopener'
+        const validTokens = existingRel.split(/\s+/).filter(t => ALLOWED_REL_TOKENS.has(t))
+        if (!validTokens.includes('noopener')) validTokens.push('noopener')
+        const rel = validTokens.join(' ') || 'noopener'
         return {
           tagName,
           attribs: { ...attribs, target: '_blank', rel },

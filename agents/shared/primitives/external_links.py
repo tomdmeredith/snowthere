@@ -14,7 +14,7 @@ Cache Strategy:
 - Maps URLs: Derived from place_id (no expiration)
 """
 
-import hashlib
+import html
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -219,6 +219,8 @@ async def resolve_google_place(
         "activity": "tourist_attraction",
         "grocery": "grocery_store",
         "transport": "transit_station",
+        "transportation": "transit_station",
+        "retail": "store",
     }
 
     included_type = type_mapping.get(entity_type)
@@ -456,112 +458,6 @@ async def resolve_entity_link(
 
 
 # ============================================================================
-# LINK CLICK TRACKING
-# ============================================================================
-
-
-def log_link_click(
-    resort_id: str | None,
-    link_url: str,
-    link_category: str | None = None,
-    is_affiliate: bool = False,
-    affiliate_program: str | None = None,
-    session_id: str | None = None,
-    referrer: str | None = None,
-    user_agent: str | None = None,
-) -> bool:
-    """Log a link click for analytics.
-
-    Args:
-        resort_id: Resort the click came from
-        link_url: The URL that was clicked
-        link_category: Category of link ('lodging', 'dining', etc.)
-        is_affiliate: Whether this was an affiliate link
-        affiliate_program: Which affiliate program if applicable
-        session_id: Session ID for deduplication
-        referrer: Referring URL
-        user_agent: Browser user agent
-
-    Returns:
-        True if logged successfully
-    """
-    try:
-        supabase = get_supabase_client()
-
-        data = {
-            "resort_id": resort_id,
-            "link_url": link_url,
-            "link_category": link_category,
-            "is_affiliate": is_affiliate,
-            "affiliate_program": affiliate_program,
-            "session_id": session_id,
-            "referrer": referrer,
-            "user_agent": user_agent,
-        }
-
-        supabase.table("link_click_log").insert(data).execute()
-        return True
-    except Exception as e:
-        print(f"Failed to log link click: {e}")
-        return False
-
-
-def get_click_stats(
-    resort_id: str | None = None,
-    days: int = 30,
-) -> dict[str, Any]:
-    """Get link click statistics.
-
-    Args:
-        resort_id: Filter by resort (optional)
-        days: Number of days to look back
-
-    Returns:
-        Statistics dict with total clicks, affiliate clicks, by category, etc.
-    """
-    try:
-        supabase = get_supabase_client()
-        cutoff = (datetime.utcnow() - timedelta(days=days)).isoformat()
-
-        query = (
-            supabase.table("link_click_log")
-            .select("*")
-            .gte("clicked_at", cutoff)
-        )
-
-        if resort_id:
-            query = query.eq("resort_id", resort_id)
-
-        result = query.execute()
-        clicks = result.data or []
-
-        # Calculate stats
-        total = len(clicks)
-        affiliate = sum(1 for c in clicks if c.get("is_affiliate"))
-        by_category: dict[str, int] = {}
-        by_program: dict[str, int] = {}
-
-        for click in clicks:
-            cat = click.get("link_category") or "unknown"
-            by_category[cat] = by_category.get(cat, 0) + 1
-
-            if click.get("affiliate_program"):
-                prog = click["affiliate_program"]
-                by_program[prog] = by_program.get(prog, 0) + 1
-
-        return {
-            "total_clicks": total,
-            "affiliate_clicks": affiliate,
-            "by_category": by_category,
-            "by_affiliate_program": by_program,
-            "period_days": days,
-        }
-    except Exception as e:
-        print(f"Failed to get click stats: {e}")
-        return {"error": str(e)}
-
-
-# ============================================================================
 # UTILITY FUNCTIONS
 # ============================================================================
 
@@ -631,14 +527,11 @@ def clear_expired_cache() -> int:
 def _choose_link_url(resolved: ResolvedEntity) -> tuple[str | None, bool, bool]:
     """Choose the best link URL based on entity type.
 
-    Context-aware destination logic:
-    - hotel: affiliate > direct > maps (parents want to book)
-    - restaurant: maps > direct (parents want directions + reviews)
-    - grocery: maps (parents need directions)
-    - ski_school: direct > maps (parents want to register)
-    - rental: affiliate > direct > maps (parents want prices)
-    - activity: direct > maps (booking or finding)
-    - transport: direct > maps (schedules/booking)
+    Context-aware destination logic using priority table:
+    - Booking types (hotel, rental): affiliate > direct > maps
+    - Location types (restaurant, grocery): maps > direct
+    - Info/registration types (ski_school, activity, transport): direct > maps
+    - Default: affiliate > direct > maps
 
     Args:
         resolved: The resolved entity with available URLs
@@ -646,49 +539,24 @@ def _choose_link_url(resolved: ResolvedEntity) -> tuple[str | None, bool, bool]:
     Returns:
         Tuple of (url, is_affiliate, is_ugc)
     """
-    entity_type = resolved.entity_type
+    # Priority table: ordered list of (url_attr, is_affiliate, is_ugc)
+    PRIORITY = {
+        "hotel":          [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)],
+        "rental":         [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)],
+        "restaurant":     [("maps_url", False, True), ("direct_url", False, False)],
+        "grocery":        [("maps_url", False, True), ("direct_url", False, False)],
+        "ski_school":     [("direct_url", False, False), ("maps_url", False, True)],
+        "activity":       [("direct_url", False, False), ("maps_url", False, True)],
+        "transport":      [("direct_url", False, False), ("maps_url", False, True)],
+        "transportation": [("direct_url", False, False), ("maps_url", False, True)],
+        "retail":         [("direct_url", False, False), ("maps_url", False, True)],
+    }
+    DEFAULT = [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)]
 
-    if entity_type in ("hotel", "rental"):
-        # Booking-oriented: affiliate takes priority
-        if resolved.affiliate_url:
-            return resolved.affiliate_url, True, False
-        if resolved.direct_url:
-            return resolved.direct_url, False, False
-        if resolved.maps_url:
-            return resolved.maps_url, False, True
-    elif entity_type in ("restaurant", "grocery"):
-        # Location-oriented: maps takes priority
-        if entity_type == "grocery":
-            if resolved.maps_url:
-                return resolved.maps_url, False, True
-            if resolved.direct_url:
-                return resolved.direct_url, False, False
-        else:
-            # Restaurants: maps first (directions + reviews), but direct is fine
-            if resolved.maps_url:
-                return resolved.maps_url, False, True
-            if resolved.direct_url:
-                return resolved.direct_url, False, False
-    elif entity_type == "ski_school":
-        # Registration-oriented: direct takes priority
-        if resolved.direct_url:
-            return resolved.direct_url, False, False
-        if resolved.maps_url:
-            return resolved.maps_url, False, True
-    elif entity_type in ("activity", "transport"):
-        # Info/booking-oriented: direct takes priority
-        if resolved.direct_url:
-            return resolved.direct_url, False, False
-        if resolved.maps_url:
-            return resolved.maps_url, False, True
-    else:
-        # Default fallback: affiliate > direct > maps
-        if resolved.affiliate_url:
-            return resolved.affiliate_url, True, False
-        if resolved.direct_url:
-            return resolved.direct_url, False, False
-        if resolved.maps_url:
-            return resolved.maps_url, False, True
+    for attr, is_affiliate, is_ugc in PRIORITY.get(resolved.entity_type, DEFAULT):
+        url = getattr(resolved, attr, None)
+        if url:
+            return url, is_affiliate, is_ugc
 
     return None, False, False
 
@@ -840,7 +708,8 @@ async def inject_external_links(
             if match:
                 # Replace first occurrence only
                 original_text = match.group(1)
-                link_html_with_original = f'<a href="{link_url}" rel="{rel_attr}" target="_blank">{original_text}</a>'
+                safe_url = html.escape(link_url, quote=True)
+                link_html_with_original = f'<a href="{safe_url}" rel="{rel_attr}" target="_blank">{original_text}</a>'
 
                 modified_content = (
                     modified_content[:match.start(1)]
@@ -914,15 +783,12 @@ async def inject_links_in_content_sections(
         "parent_reviews_summary",
     ]
 
-    # Skip sections not suitable for external links
-    skip_sections = {"quick_take", "faqs", "seo_meta", "tagline"}
-
     already_linked: set[str] = set()
     all_injected_links: list[InjectedLink] = []
     modified_content = dict(content)
 
     for section_name in section_order:
-        if section_name not in content or section_name in skip_sections:
+        if section_name not in content:
             continue
 
         html_content = content[section_name]
@@ -1072,45 +938,3 @@ async def validate_external_links(
     )
 
 
-def clear_broken_link(link_id: str) -> bool:
-    """
-    Clear a broken link from the cache.
-
-    Call this after identifying a broken link that should be removed.
-
-    Args:
-        link_id: UUID of the entity_link_cache row
-
-    Returns:
-        True if deleted, False otherwise
-    """
-    client = get_supabase_client()
-
-    try:
-        client.table("entity_link_cache").delete().eq("id", link_id).execute()
-        return True
-    except Exception:
-        return False
-
-
-def get_broken_link_count() -> int:
-    """
-    Get count of potentially broken links (for monitoring).
-
-    This is a quick check - actual validation happens in validate_external_links.
-
-    Returns:
-        Count of links that haven't been validated recently
-    """
-    # This is a placeholder - in production you might want to track
-    # validation dates and count links not validated in 7+ days
-    client = get_supabase_client()
-
-    response = (
-        client.table("entity_link_cache")
-        .select("id", count="exact")
-        .not_.is_("direct_url", "null")
-        .execute()
-    )
-
-    return response.count or 0

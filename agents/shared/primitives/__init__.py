@@ -344,9 +344,6 @@ from .external_links import (
     # Link injection (Round 7.3)
     inject_external_links,
     inject_links_in_content_sections,
-    # Click tracking
-    log_link_click,
-    get_click_stats,
     # Utilities
     get_rel_attribute,
 )
@@ -729,9 +726,6 @@ __all__ = [
     "lookup_affiliate_url",
     # External Links - Main resolution
     "resolve_entity_link",
-    # External Links - Click tracking
-    "log_link_click",
-    "get_click_stats",
     # External Links - Utilities
     "get_rel_attribute",
     # Entity Extraction
