@@ -209,18 +209,19 @@ async def resolve_google_place(
             from_cache=True,
         )
 
-    # Map entity types to Google Places types
+    # Map entity types to Google Places API (New) Table A types
+    # Only use types that are valid for Text Search includedType
     type_mapping = {
         "hotel": "lodging",
         "restaurant": "restaurant",
-        "ski_school": "point_of_interest",
-        "rental": "store",
-        "activity": "point_of_interest",
-        "grocery": "grocery_or_supermarket",
+        "ski_school": None,  # No good match — text query handles it
+        "rental": "sporting_goods_store",
+        "activity": "tourist_attraction",
+        "grocery": "grocery_store",
         "transport": "transit_station",
     }
 
-    included_type = type_mapping.get(entity_type, "point_of_interest")
+    included_type = type_mapping.get(entity_type)
 
     # Build search query with location context
     search_query = f"{name} {location_context}"
@@ -236,9 +237,10 @@ async def resolve_google_place(
             }
             body = {
                 "textQuery": search_query,
-                "includedType": included_type,
                 "maxResultCount": 1,
             }
+            if included_type:
+                body["includedType"] = included_type
 
             response = await client.post(url, headers=headers, json=body, timeout=10)
 
