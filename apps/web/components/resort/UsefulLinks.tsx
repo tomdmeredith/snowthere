@@ -20,13 +20,13 @@ interface UsefulLinksProps {
 
 const CATEGORY_CONFIG: Record<string, { label: string; emoji: string }> = {
   official: { label: 'Official', emoji: '🌐' },
-  lodging: { label: 'Stay', emoji: '🏨' },
-  dining: { label: 'Eat', emoji: '🍽️' },
-  activity: { label: 'Do', emoji: '🎿' },
-  transport: { label: 'Travel', emoji: '✈️' },
-  rental: { label: 'Rent', emoji: '🎿' },
-  ski_school: { label: 'Learn', emoji: '👨‍🏫' },
-  childcare: { label: 'Kids', emoji: '👶' },
+  lodging: { label: 'Where to Stay', emoji: '🏨' },
+  dining: { label: 'Where to Eat', emoji: '🍽️' },
+  activity: { label: 'Things to Do', emoji: '🎿' },
+  transport: { label: 'Getting There', emoji: '✈️' },
+  rental: { label: 'Rent Gear', emoji: '🎿' },
+  ski_school: { label: 'Ski Lessons', emoji: '👨‍🏫' },
+  childcare: { label: 'Kids Care', emoji: '👶' },
 }
 
 function addUtmParams(url: string, resortSlug: string, category: string): string {
@@ -95,7 +95,7 @@ export function UsefulLinks({ links, resortSlug }: UsefulLinksProps) {
                       key={link.id}
                       href={targetUrl}
                       target="_blank"
-                      rel={link.is_affiliate ? 'noopener sponsored' : 'noopener noreferrer'}
+                      rel={link.is_affiliate ? 'noopener sponsored' : category === 'official' ? 'noopener' : 'noopener noreferrer'}
                       className="flex items-center justify-between p-3 rounded-xl bg-white border border-dark-100 hover:border-coral-200 hover:bg-coral-50/30 transition-all group"
                       onClick={() => {
                         trackOutboundClick({

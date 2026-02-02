@@ -1059,19 +1059,21 @@ async def curate_resort_links(
 SOURCES:
 {json.dumps(sources_summary, indent=2)}
 
-CATEGORIES:
+CATEGORIES (match content section names parents see):
 - official: Resort's official website (exactly 1)
-- lodging: Family-friendly hotels, vacation rentals
-- dining: Restaurants good for kids
-- activity: Off-mountain activities (sledding, pool, etc.)
-- transport: Airport shuttles, transfers
-- rental: Ski/snowboard equipment rental
-- ski_school: Ski lessons for kids
-- childcare: Daycare, kids clubs
+- lodging: "Where to Stay" — Hotels, vacation rentals, lodges
+- dining: "Where to Eat" — Family-friendly restaurants
+- activity: "Things to Do" — Off-mountain activities (sledding, pool, etc.)
+- transport: "Getting There" — Airport shuttles, transfers, car rentals
+- rental: "Rent Gear" — Ski/snowboard equipment rental
+- ski_school: "Ski Lessons" — Ski school and lesson providers
+- childcare: "Kids Care" — Daycare, kids clubs, babysitting
 
 REQUIREMENTS:
 - Select 1 official link (required)
-- Select 3-8 other useful links for families
+- Select 8-15 other useful links for families (aim for comprehensive coverage)
+- MINIMUM per category: at least 2 lodging, 1 dining, 1 ski_school
+- Include a Google Maps link for the resort area as a transport link
 - Prefer URLs that are direct (not search results, aggregators)
 - Write brief, helpful descriptions (1 sentence max)
 

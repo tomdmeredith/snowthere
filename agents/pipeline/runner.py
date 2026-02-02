@@ -1304,6 +1304,7 @@ async def run_resort_pipeline(
             content=content,
             resort_name=resort_name,
             country=country,
+            resort_slug=slug,
         )
 
         if injected_links:

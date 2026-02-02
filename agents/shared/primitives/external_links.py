@@ -186,8 +186,9 @@ async def resolve_google_place(
     """
     settings = get_settings()
 
-    if not settings.google_places_api_key:
-        print("Google Places API key not configured")
+    api_key = settings.google_places_api_key or settings.google_api_key
+    if not api_key:
+        print("Google Places API key not configured (checked google_places_api_key and google_api_key)")
         return None
 
     name_normalized = _normalize_entity_name(name)
@@ -230,7 +231,7 @@ async def resolve_google_place(
             url = "https://places.googleapis.com/v1/places:searchText"
             headers = {
                 "Content-Type": "application/json",
-                "X-Goog-Api-Key": settings.google_places_api_key,
+                "X-Goog-Api-Key": api_key,
                 "X-Goog-FieldMask": "places.id,places.displayName,places.websiteUri,places.formattedAddress",
             }
             body = {
@@ -242,7 +243,7 @@ async def resolve_google_place(
             response = await client.post(url, headers=headers, json=body, timeout=10)
 
             if response.status_code != 200:
-                print(f"Google Places API error: {response.status_code}")
+                print(f"Google Places API error: {response.status_code} - {response.text[:500]}")
                 return None
 
             data = response.json()
@@ -566,10 +567,12 @@ def get_click_stats(
 def get_rel_attribute(
     is_affiliate: bool = False,
     is_ugc: bool = False,
+    is_official: bool = False,
 ) -> str:
     """Get the appropriate rel attribute for a link.
 
     SEO best practices:
+    - Official resort links: rel="noopener" (dofollow — authoritative sources)
     - Affiliate links: rel="sponsored noopener"
     - UGC (Google Maps): rel="nofollow noopener"
     - Regular external: rel="nofollow noopener noreferrer"
@@ -577,10 +580,13 @@ def get_rel_attribute(
     Args:
         is_affiliate: Whether this is an affiliate link
         is_ugc: Whether this is user-generated content (Maps, etc.)
+        is_official: Whether this is an official resort website link
 
     Returns:
         Appropriate rel attribute value
     """
+    if is_official:
+        return "noopener"
     if is_affiliate:
         return "sponsored noopener"
     if is_ugc:
@@ -615,6 +621,71 @@ def clear_expired_cache() -> int:
 # ============================================================================
 
 
+def _choose_link_url(resolved: ResolvedEntity) -> tuple[str | None, bool, bool]:
+    """Choose the best link URL based on entity type.
+
+    Context-aware destination logic:
+    - hotel: affiliate > direct > maps (parents want to book)
+    - restaurant: maps > direct (parents want directions + reviews)
+    - grocery: maps (parents need directions)
+    - ski_school: direct > maps (parents want to register)
+    - rental: affiliate > direct > maps (parents want prices)
+    - activity: direct > maps (booking or finding)
+    - transport: direct > maps (schedules/booking)
+
+    Args:
+        resolved: The resolved entity with available URLs
+
+    Returns:
+        Tuple of (url, is_affiliate, is_ugc)
+    """
+    entity_type = resolved.entity_type
+
+    if entity_type in ("hotel", "rental"):
+        # Booking-oriented: affiliate takes priority
+        if resolved.affiliate_url:
+            return resolved.affiliate_url, True, False
+        if resolved.direct_url:
+            return resolved.direct_url, False, False
+        if resolved.maps_url:
+            return resolved.maps_url, False, True
+    elif entity_type in ("restaurant", "grocery"):
+        # Location-oriented: maps takes priority
+        if entity_type == "grocery":
+            if resolved.maps_url:
+                return resolved.maps_url, False, True
+            if resolved.direct_url:
+                return resolved.direct_url, False, False
+        else:
+            # Restaurants: maps first (directions + reviews), but direct is fine
+            if resolved.maps_url:
+                return resolved.maps_url, False, True
+            if resolved.direct_url:
+                return resolved.direct_url, False, False
+    elif entity_type == "ski_school":
+        # Registration-oriented: direct takes priority
+        if resolved.direct_url:
+            return resolved.direct_url, False, False
+        if resolved.maps_url:
+            return resolved.maps_url, False, True
+    elif entity_type in ("activity", "transport"):
+        # Info/booking-oriented: direct takes priority
+        if resolved.direct_url:
+            return resolved.direct_url, False, False
+        if resolved.maps_url:
+            return resolved.maps_url, False, True
+    else:
+        # Default fallback: affiliate > direct > maps
+        if resolved.affiliate_url:
+            return resolved.affiliate_url, True, False
+        if resolved.direct_url:
+            return resolved.direct_url, False, False
+        if resolved.maps_url:
+            return resolved.maps_url, False, True
+
+    return None, False, False
+
+
 @dataclass
 class InjectedLink:
     """Record of a link injection."""
@@ -647,13 +718,15 @@ async def inject_external_links(
     section_name: str | None = None,
     already_linked: set[str] | None = None,
     max_links_per_section: int = 5,
+    resort_slug: str | None = None,
 ) -> LinkInjectionResult:
     """Inject external links into HTML content.
 
     Extracts linkable entities, resolves them via Google Places / affiliates,
     and injects links into the first mention of each entity.
 
-    Part of Round 7.3: Content Link Injection.
+    Uses context-aware destination logic: hotels → booking sites,
+    restaurants → Google Maps, grocery → Google Maps, etc.
 
     Args:
         html_content: HTML content to inject links into
@@ -662,6 +735,7 @@ async def inject_external_links(
         section_name: Optional section name for logging
         already_linked: Set of entity names already linked (to avoid duplicates)
         max_links_per_section: Maximum links to inject per section
+        resort_slug: Resort slug for UTM tracking (optional)
 
     Returns:
         LinkInjectionResult with modified content and injection details
@@ -673,6 +747,7 @@ async def inject_external_links(
     - Other external links use rel="nofollow noopener noreferrer"
     """
     from .intelligence import extract_linkable_entities
+    from .links import add_utm_params
 
     if already_linked is None:
         already_linked = set()
@@ -731,18 +806,24 @@ async def inject_external_links(
                 not_resolved.append(entity.name)
                 continue
 
-            # Determine which URL to use (affiliate > direct > maps)
-            link_url = resolved.affiliate_url or resolved.direct_url or resolved.maps_url
-            is_affiliate = bool(resolved.affiliate_url)
-            is_ugc = bool(not resolved.affiliate_url and not resolved.direct_url and resolved.maps_url)
+            # Context-aware destination logic
+            link_url, is_affiliate, is_ugc = _choose_link_url(resolved)
 
             if not link_url:
                 not_resolved.append(entity.name)
                 continue
 
+            # Add UTM params to non-affiliate links
+            if not is_affiliate and resort_slug:
+                link_url = add_utm_params(
+                    url=link_url,
+                    resort_slug=resort_slug,
+                    category=entity.entity_type,
+                    campaign="in_content",
+                )
+
             # Build the link HTML
             rel_attr = get_rel_attribute(is_affiliate=is_affiliate, is_ugc=is_ugc)
-            link_html = f'<a href="{link_url}" rel="{rel_attr}" target="_blank">{entity.name}</a>'
 
             # Inject link at first mention (case-insensitive, word boundary)
             # Use regex to find first mention not already in a link
@@ -798,16 +879,19 @@ async def inject_links_in_content_sections(
     content: dict[str, str],
     resort_name: str,
     country: str,
+    resort_slug: str | None = None,
 ) -> tuple[dict[str, str], list[InjectedLink]]:
     """Inject external links across multiple content sections.
 
     Processes sections in order, tracking already-linked entities to avoid
-    redundant links across sections.
+    redundant links across sections. Uses context-aware destination logic
+    and adds UTM params to non-affiliate links.
 
     Args:
         content: Dict of section_name -> HTML content
         resort_name: Resort name for context
         country: Country for context
+        resort_slug: Resort slug for UTM tracking (optional)
 
     Returns:
         Tuple of (modified_content_dict, all_injected_links)
@@ -845,6 +929,7 @@ async def inject_links_in_content_sections(
             section_name=section_name,
             already_linked=already_linked,
             max_links_per_section=3,  # Limit per section to avoid over-linking
+            resort_slug=resort_slug,
         )
 
         if result.success:

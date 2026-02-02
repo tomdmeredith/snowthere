@@ -47,18 +47,22 @@ Keep it concise but helpful. This is what parents read first to decide if they s
 Include:
 - Nearest major airports with typical drive times
 - Whether to rent a car or use shuttles
+- Name specific transfer companies or shuttle services if known (e.g., "Four Seasons Travel", "Resort Express")
 - Any tricky navigation tips (mountain roads, winter conditions)
 - Pro tips for making travel easier with kids
 
-Be practical and specific. Mention actual airport codes and drive times if available.""",
+Be practical and specific. Mention actual airport codes and drive times if available.
+Use <strong> tags around business/service names on first mention.""",
         "where_to_stay": """Write the "Where to Stay" section for {resort_name}.
 Include:
+- Name at least 3 specific hotels, lodges, or apartment complexes by their actual name
 - Ski-in/ski-out options (if available)
-- Budget-friendly picks
-- Mid-range family favorites
+- Budget-friendly picks (name the property)
+- Mid-range family favorites (name the property)
 - Best options for families with young kids (proximity to lifts, amenities)
 
-Focus on practical advice for families, not luxury seekers.""",
+Focus on practical advice for families, not luxury seekers.
+Use <strong> tags around hotel/property names on first mention.""",
         "lift_tickets": """Write the "Lift Tickets & Passes" section for {resort_name}.
 Include:
 - Current lift ticket prices (adult/child/family if available)
@@ -72,20 +76,23 @@ Use specific prices from the research where available.""",
 Include:
 - Overview of terrain for different skill levels
 - Best areas for beginners/kids
-- Ski school quality and options
-- Good spots for family lunch
+- Name specific ski schools by name (e.g., "Ski School Alpendorf", "Burton Learn to Ride")
+- Name specific rental shops if known (e.g., "Intersport Bründl", "Christy Sports")
+- Name specific on-mountain lunch spots or restaurants (e.g., "Panorama Alm", "Mid-Mountain Lodge")
 - Any must-know tips about the mountain
 
-Focus on family-relevant details, not expert terrain.""",
+Focus on family-relevant details, not expert terrain.
+Use <strong> tags around business names on first mention.""",
         "off_mountain": """Write the "Off the Mountain" section for {resort_name}.
 Include:
-- Non-ski activities for families
-- Restaurant recommendations (with kid-friendly options)
+- Non-ski activities for families (name specific providers if known)
+- Name specific restaurants with kid-friendly options (e.g., "Chez Vrony", "The Red Lion")
 - Evening entertainment
-- Grocery stores / cooking options
+- Name specific grocery stores (e.g., "SPAR", "Coop", "Billa") for self-catering families
 - Village walkability
 
-Help families plan their non-ski time.""",
+Help families plan their non-ski time.
+Use <strong> tags around business names on first mention.""",
         "parent_reviews_summary": """Write a "What Parents Say" summary for {resort_name}.
 Based on the review snippets provided, synthesize the key themes:
 - What parents consistently love

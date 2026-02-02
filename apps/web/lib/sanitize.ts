@@ -23,15 +23,26 @@ export function sanitizeHTML(dirty: string): string {
       'td': ['colspan', 'rowspan'],
     },
     // Internal links navigate in-place; external links open in new tab
+    // Preserves existing rel attributes (e.g., rel="sponsored", rel="nofollow noopener")
+    // injected during content generation by external_links.py
     transformTags: {
       'a': (tagName, attribs) => {
         const href = attribs.href || ''
         const isInternal = href.startsWith('/') || href.startsWith('#') || href.includes('snowthere.com')
+        if (isInternal) {
+          return {
+            tagName,
+            attribs: { href: attribs.href, ...(attribs.class && { class: attribs.class }) },
+          }
+        }
+        // For external links: preserve existing rel if present, otherwise default
+        const existingRel = attribs.rel || ''
+        const rel = existingRel
+          ? (existingRel.includes('noopener') ? existingRel : `${existingRel} noopener`)
+          : 'noopener noreferrer'
         return {
           tagName,
-          attribs: isInternal
-            ? { href: attribs.href, ...(attribs.class && { class: attribs.class }) }
-            : { ...attribs, target: '_blank', rel: 'noopener noreferrer' },
+          attribs: { ...attribs, target: '_blank', rel },
         }
       },
     },

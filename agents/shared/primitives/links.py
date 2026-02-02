@@ -14,14 +14,14 @@ def add_utm_params(url: str, resort_slug: str, category: str, campaign: str = "r
         url: The original URL
         resort_slug: Resort identifier for utm_campaign
         category: Link category for utm_content
-        campaign: Campaign name (default: resort_page)
+        campaign: UTM medium/campaign context (default: resort_page, use "in_content" for entity links)
 
     Returns:
         URL with UTM parameters appended
     """
     utm_params = {
         "utm_source": "snowthere",
-        "utm_medium": "resort_page",
+        "utm_medium": campaign,
         "utm_campaign": resort_slug,
         "utm_content": category,
     }
