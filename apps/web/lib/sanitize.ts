@@ -36,10 +36,12 @@ export function sanitizeHTML(dirty: string): string {
           }
         }
         // For external links: preserve existing rel if present, otherwise default
+        // Default is "noopener" only (dofollow, sends referrer) — we want
+        // businesses to see snowthere.com as traffic source in their analytics
         const existingRel = attribs.rel || ''
         const rel = existingRel
           ? (existingRel.includes('noopener') ? existingRel : `${existingRel} noopener`)
-          : 'noopener noreferrer'
+          : 'noopener'
         return {
           tagName,
           attribs: { ...attribs, target: '_blank', rel },

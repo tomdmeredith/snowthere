@@ -95,7 +95,7 @@ export function UsefulLinks({ links, resortSlug }: UsefulLinksProps) {
                       key={link.id}
                       href={targetUrl}
                       target="_blank"
-                      rel={link.is_affiliate ? 'noopener sponsored' : category === 'official' ? 'noopener' : 'noopener noreferrer'}
+                      rel={link.is_affiliate ? 'sponsored noopener' : 'noopener'}
                       className="flex items-center justify-between p-3 rounded-xl bg-white border border-dark-100 hover:border-coral-200 hover:bg-coral-50/30 transition-all group"
                       onClick={() => {
                         trackOutboundClick({

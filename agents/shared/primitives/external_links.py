@@ -573,11 +573,16 @@ def get_rel_attribute(
 ) -> str:
     """Get the appropriate rel attribute for a link.
 
-    SEO best practices:
+    SEO + referral tracking best practices:
     - Official resort links: rel="noopener" (dofollow — authoritative sources)
-    - Affiliate links: rel="sponsored noopener"
-    - UGC (Google Maps): rel="nofollow noopener"
-    - Regular external: rel="nofollow noopener noreferrer"
+    - Affiliate links: rel="sponsored noopener" (Google-compliant for paid links)
+    - Maps links: rel="nofollow noopener" (no equity to Maps, still sends referrer)
+    - Entity links (hotels, restaurants, etc.): rel="noopener" (dofollow, sends referrer)
+
+    Rationale: Entity links are genuine editorial recommendations. Dofollow
+    passes SEO equity (good for both parties). Sending the referrer lets
+    businesses see snowthere.com traffic in their analytics — enabling
+    future partnership conversations.
 
     Args:
         is_affiliate: Whether this is an affiliate link
@@ -593,7 +598,7 @@ def get_rel_attribute(
         return "sponsored noopener"
     if is_ugc:
         return "nofollow noopener"
-    return "nofollow noopener noreferrer"
+    return "noopener"
 
 
 def clear_expired_cache() -> int:
@@ -742,11 +747,11 @@ async def inject_external_links(
     Returns:
         LinkInjectionResult with modified content and injection details
 
-    SEO Rules:
+    Link Rules:
     - First mention only (no redundant links)
     - Affiliate links use rel="sponsored noopener"
     - Google Maps links use rel="nofollow noopener"
-    - Other external links use rel="nofollow noopener noreferrer"
+    - Entity links (hotels, restaurants, etc.) use rel="noopener" (dofollow, sends referrer)
     """
     from .intelligence import extract_linkable_entities
     from .links import add_utm_params
