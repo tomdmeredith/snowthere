@@ -1,6 +1,6 @@
 # Snowthere Quick Start
 
-**All rounds through R16 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R16 + Linking Strategy Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -11,11 +11,21 @@
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
 **Intelligence Summary**:
-- **Working well**: Autonomous pipeline (resorts + guides + newsletter), deterministic scoring, 4-tier image fallback, ISR revalidation
+- **Working well**: Autonomous pipeline (resorts + guides + newsletter), deterministic scoring, 4-tier image fallback, ISR revalidation, context-aware entity linking (371 links across 58 resorts)
 - **Needs attention**: 9 resorts at 0% completeness, 20 cost data outliers, TAVILY_API_KEY expired on Railway, migration 036 not applied
 - **Watch**: Google indexing pace (~30 pages still "Discovered"), affiliate program signups pending, Google Places API key unrestricted
 
 **Recent**:
+- **Linking Strategy Overhaul** (Completed 2026-02-02)
+  - Context-aware destinations: hotel→booking, restaurant→maps, ski_school→direct, grocery→maps
+  - UTMs on in-content entity links (utm_medium=in_content)
+  - rel attribute allowlist in sanitize.ts (noopener, noreferrer, nofollow, sponsored, ugc)
+  - html.escape defense-in-depth for link URL interpolation
+  - Entity link referrer attribution (dofollow for partner traffic visibility)
+  - ~182 lines dead code removed, _choose_link_url simplified to data-driven priority table
+  - Backfill: 371 entity links across 58 resorts, 1,262 cache entries
+  - Migrations 037+038: expanded entity_link_cache types (retail, transportation, bar, cafe, etc.)
+  - 5-agent expert review: 2 rounds, all PASS
 - **R16: Error Handling & Polish** (Completed 2026-01-30)
   - Custom error boundaries (error.tsx, not-found.tsx) — branded 404 and error pages
   - Loading skeletons for resorts, resort detail, and guide pages

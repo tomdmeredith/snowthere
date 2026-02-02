@@ -1,15 +1,16 @@
 # Snowthere Context
 
-> Last synced: 2026-01-30 (Round 16)
+> Last synced: 2026-02-02 (Linking Strategy Overhaul)
 > Agent: compound-beads v2.1
 > Session ID: (none — no active round)
 > Sessions This Round: 0
 
 ## Current State
 
-**All rounds through R16 complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R16 + Linking Strategy Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
 
-- **Resorts:** 43 published, pipeline adds ~6/day
+- **Resorts:** 58 with entity links, pipeline adds ~6/day
+- **Entity Links:** 371 in-content links across 58 resorts, 1,262 entity_link_cache entries
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
 - **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
@@ -19,7 +20,89 @@
 - **Indexing:** 4 indexed by Google (of 54 discovered), 7 pages manually requested for priority crawl
 - **Scores:** Deterministic decimal (3.8-8.3 range, avg 5.4), completeness multiplier applied
 - **Data Quality:** Backfill complete — 43% avg completeness, 7 resorts show full tables, 22 partial, 9 hidden
-- **Google Places:** Both APIs enabled, correct API key deployed to Railway
+- **Linking:** Context-aware destinations (hotel→booking, restaurant→maps, ski_school→direct), UTMs on in-content links, rel allowlist validation
+- **Google Places:** Both APIs enabled, correct API key deployed to Railway, type mapping fixed for API (New)
+
+---
+
+## Linking Strategy Overhaul (2026-02-02) ✅
+
+**Goal:** Fix broken 3-layer linking system — context-aware entity link destinations, UTMs on in-content links, rel attribute preservation, full backfill across all published resorts.
+
+### Phase 1: Fix Infrastructure — DEPLOYED
+1. **Google Places API types fixed** — `grocery_or_supermarket` → `grocery_store`, `point_of_interest` → omit (Table B only), added `sporting_goods_store`, `tourist_attraction`, `transit_station`
+2. **API key fallback** — Falls back to `settings.google_api_key` if `google_places_api_key` missing
+3. **Error logging** — Response body logged on error, not just status code
+4. **Entity type constraint expanded** — Migrations 037+038: added `airport`, `location`, `childcare`, `bar`, `cafe`, `spa`, `attraction`, `retail`, `transportation` to `entity_link_cache` CHECK constraint
+
+### Phase 2: Context-Aware Link Destinations — DEPLOYED
+5. **Data-driven priority table** — Replaced nested if/elif with `PRIORITY` dict per entity type:
+   - Hotels/rentals → affiliate > direct > maps (parents want to book)
+   - Restaurants/grocery → maps > direct (parents need directions)
+   - Ski schools → direct > maps (parents want to register)
+   - Activities/transport → direct > maps (booking or finding)
+6. **UTMs on in-content links** — `utm_medium=in_content` distinct from sidebar's `resort_page`
+7. **Dofollow for entity links** — `rel="noopener"` (sends referrer for partner attribution)
+8. **Affiliate links** — `rel="sponsored noopener"` (Google-compliant)
+9. **Maps links** — `rel="nofollow noopener"` (no equity, still sends referrer)
+
+### Phase 3: Content Generation Improvements — DEPLOYED
+10. **Enhanced section prompts** — Request named entities with `<strong>` tags for where_to_stay, on_mountain, off_mountain, getting_there
+11. **Sidebar link curation** — Increased target from 3-8 to 8-15 links, minimums per category
+
+### Phase 4: Frontend Polish — DEPLOYED
+12. **sanitize.ts rel preservation** — Allowlist validation: only `noopener`, `noreferrer`, `nofollow`, `sponsored`, `ugc` tokens pass through
+13. **html.escape defense-in-depth** — `html.escape(link_url, quote=True)` before href interpolation
+14. **Parent-friendly labels** — "Where to Stay", "Ski Lessons", "Rent Gear", etc.
+15. **Sidebar UsefulLinks** — Unified rel scheme matching entity links
+
+### Phase 5: Backfill — COMPLETE
+16. **New script** — `agents/scripts/backfill_links.py` with `--dry-run`, `--limit`, `--sidebar-only`, `--content-only`, `--resort` flags
+17. **Results** — 371 entity links injected across 58 resorts, 1,262 entity_link_cache entries
+
+### Phase 6: Expert Review — ALL PASS (2 rounds)
+18. **Round 1** — Security Sentinel, Architecture Strategist, Code Simplicity, Data Integrity Guardian, Performance Oracle identified 6 findings
+19. **Round 2** — All fixes applied, re-review: 5/5 PASS with no blocking findings
+
+### Dead Code Removed
+- `log_link_click()` (44 lines), `get_click_stats()` (53 lines), `clear_broken_link()` (19 lines), `get_broken_link_count()` (22 lines)
+- Unused `hashlib` import, dead `skip_sections` set
+- Dead exports removed from `__init__.py`
+- Net: ~182 lines removed
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `agents/shared/primitives/external_links.py` | Context-aware destinations, UTMs, html.escape, dead code removal, type mapping |
+| `agents/shared/primitives/__init__.py` | Removed dead exports |
+| `agents/shared/primitives/content.py` | Enhanced section prompts requesting named entities |
+| `agents/shared/primitives/intelligence.py` | Sidebar link curation 8-15 target |
+| `agents/shared/primitives/links.py` | UTM campaign param fix |
+| `agents/pipeline/runner.py` | Pass resort_slug to inject_links_in_content_sections |
+| `apps/web/lib/sanitize.ts` | Rel allowlist validation, preserve existing tokens |
+| `apps/web/components/resort/UsefulLinks.tsx` | Parent-friendly labels, unified rel |
+| `supabase/migrations/037_expand_entity_types.sql` | Expand CHECK constraint |
+| `supabase/migrations/038_add_retail_transportation_entity_types.sql` | Add retail + transportation |
+| `agents/scripts/backfill_links.py` | **NEW** — backfill script |
+
+### Key Commits
+```
+075f681 feat: Linking strategy overhaul — context-aware destinations, UTMs, rel preservation
+32a855d fix: Use valid Places API (New) types for includedType parameter
+18700fb fix: Expand entity_link_cache valid types + migration 037
+1412d97 fix: Send referrer on all entity links for partner traffic attribution
+ede019f refactor: Expert review fixes — html.escape, dead code removal, rel allowlist
+```
+
+### Verified on Live Site
+- Zermatt page: entity links for Hotel Sonne, Hotel Astoria, Wolli Park, Chez Vrony, Coop, Skiguide Zermatt, etc.
+- Sidebar links: UTM params visible in URLs
+- rel attributes: correct per entity type (dofollow for entities, sponsored for affiliates)
+
+**Arc:**
+- Started believing: External linking is a flat priority chain — affiliate beats direct beats maps for everything
+- Ended believing: Link destinations must match user intent by entity type — parents want to book hotels, get restaurant directions, register for ski school
+- Transformation: From generic link injection to context-aware destinations that match what parents actually do with each entity type
 
 ---
 
@@ -452,6 +535,9 @@
 - ~~FAQ schema client-rendered~~ — Server-side FAQPage JSON-LD added in R14 (already present in page.tsx)
 - ~~BreadcrumbList missing on resort pages~~ — Added in R14 (already present in page.tsx)
 - ~~Internal links open new tabs~~ — **FIXED** in sanitize.ts (internal links distinguished from external)
+- ~~Entity links missing/broken~~ — **FIXED** in Linking Strategy Overhaul (371 links across 58 resorts, context-aware destinations)
+- ~~sanitize.ts overwrites rel attributes~~ — **FIXED** with allowlist validation (noopener, noreferrer, nofollow, sponsored, ugc)
+- ~~No UTMs on in-content links~~ — **FIXED** with utm_medium=in_content on entity links
 - ~~Duplicate title suffix on index pages~~ — Fixed in R14
 - ~~Quiz page missing footer~~ — Fixed in R14
 - ~~Inconsistent footers~~ — Unified in R14
@@ -576,10 +662,12 @@ _(no active round)_
 ## Recent Commits
 
 ```
+ede019f refactor: Expert review fixes — html.escape, dead code removal, rel allowlist
+1412d97 fix: Send referrer on all entity links for partner traffic attribution
+18700fb fix: Expand entity_link_cache valid types + migration 037
+32a855d fix: Use valid Places API (New) types for includedType parameter
+075f681 feat: Linking strategy overhaul — context-aware destinations, UTMs, rel preservation
+7047959 feat: Mobile filter collapse + Manus audit bug fixes
+f55fb36 fix: Newsletter day-of-week bug + Railway project ref + R15/R16 catchup
 ee6b3ec feat: R15 GEO & Rich Results — JSON-LD schemas, image sitemap, legal pages
-71d7369 fix: Update migration 035 to match applied SQL (delete archived Kitzbühel + ASCII slug)
-3ef05c9 fix: Resolve Kitzbühel 404 — normalize Unicode slugs + ASCII migration
-a6a6b37 fix: R14 SEO & bug fixes — duplicate titles, unified footer, quiz page, newsletter link
-cf167cd feat: Data Quality & Scoring Overhaul — completeness tracking, conditional tables, publication gates
-36fc555 fix: Add canonical tags to all pages + IndexNow verification key
 ```

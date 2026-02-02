@@ -230,13 +230,29 @@ family-ski-directory/
 - [ ] Add image sitemap extension
 - [ ] Add legal pages to sitemap
 
-### Round 16: Error Handling & Polish
+### Round 16: Error Handling & Polish ✅
 > Custom error boundaries, loading states, CSP tightening, GDPR data deletion
 
-- [ ] Add custom error boundaries (error.tsx, not-found.tsx)
-- [ ] Add loading states (loading.tsx for route transitions)
-- [ ] Tighten CSP (remove unsafe-eval, HTTPS-only img-src)
-- [ ] Add GDPR data deletion form
+- [x] Add custom error boundaries (error.tsx, not-found.tsx)
+- [x] Add loading states (loading.tsx for route transitions)
+- [x] Tighten CSP (remove unsafe-eval, HTTPS-only img-src)
+- [x] Add GDPR data deletion form
+
+### Linking Strategy Overhaul ✅ (Completed 2026-02-02)
+> Context-aware entity links, UTMs, rel preservation, backfill 58 resorts
+
+- [x] Fix Google Places API type mapping for API (New)
+- [x] Context-aware link destinations (hotel→booking, restaurant→maps, ski_school→direct)
+- [x] UTMs on in-content entity links (utm_medium=in_content)
+- [x] Fix sanitize.ts rel attribute preservation (allowlist validation)
+- [x] html.escape defense-in-depth for link URL interpolation
+- [x] Entity link referrer attribution (dofollow for partner traffic)
+- [x] Enhanced content prompts (named entities, `<strong>` tags)
+- [x] Sidebar link curation increased to 8-15 links
+- [x] Backfill: 371 entity links across 58 resorts
+- [x] Migrations 037+038: expanded entity_link_cache types
+- [x] ~182 lines dead code removed
+- [x] 5-agent expert review panel: 2 rounds, all PASS
 
 ### Future Rounds (Infrastructure)
 

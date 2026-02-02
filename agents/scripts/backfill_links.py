@@ -2,7 +2,8 @@
 """Backfill external links for all published resorts.
 
 Re-curates sidebar links (if sparse) and injects in-content entity links
-(hotels, restaurants, ski schools → Google Places / Maps / affiliate URLs).
+(hotels, restaurants, ski schools -> Google Places / Maps / affiliate URLs).
+Stores extracted entities as first-class atoms in resort_entities table.
 
 Usage:
     python scripts/backfill_links.py                       # Full backfill
@@ -11,10 +12,12 @@ Usage:
     python scripts/backfill_links.py --sidebar-only         # Only re-curate sidebar links
     python scripts/backfill_links.py --content-only         # Only inject in-content links
     python scripts/backfill_links.py --resort "Zermatt"     # Single resort
+    python scripts/backfill_links.py --clear-cache          # Clear low-confidence cache before backfill
 """
 
 import argparse
 import asyncio
+import re
 import sys
 from pathlib import Path
 
@@ -22,10 +25,35 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from shared.supabase_client import get_supabase_client
-from shared.primitives.external_links import inject_links_in_content_sections
+from shared.primitives.external_links import (
+    WELL_KNOWN_BRANDS,
+    clear_low_confidence_cache,
+    inject_links_in_content_sections,
+    upsert_resort_entity,
+)
 from shared.primitives.intelligence import curate_resort_links
 from shared.primitives.links import get_resort_links
 from shared.primitives.system import log_cost
+
+
+def _strip_existing_links(html_content: str) -> str:
+    """Remove existing target="_blank" links from HTML content.
+
+    This is necessary before re-injection because:
+    1. Entity names inside <a> tags can't be matched by extraction regex
+    2. Re-backfill needs to see clean entity names to re-extract and re-link
+
+    Only strips external links (target="_blank"), preserves internal links.
+
+    Args:
+        html_content: HTML content with existing links
+
+    Returns:
+        HTML content with external links replaced by their text content
+    """
+    # Match <a> tags with target="_blank" and replace with their inner text
+    pattern = r'<a\s+[^>]*target="_blank"[^>]*>(.*?)</a>'
+    return re.sub(pattern, r'\1', html_content, flags=re.IGNORECASE | re.DOTALL)
 
 
 async def backfill_sidebar_links(
@@ -44,7 +72,7 @@ async def backfill_sidebar_links(
         return {"status": "skipped", "reason": f"Already has {len(existing_links)} links"}
 
     # Get research sources from audit log (most recent research for this resort)
-    # Fall back to empty sources if none found — Claude will use its knowledge
+    # Fall back to empty sources if none found -- Claude will use its knowledge
     sources_response = (
         client.table("agent_audit_log")
         .select("metadata")
@@ -117,8 +145,17 @@ async def backfill_content_links(
     country: str,
     resort_slug: str,
     dry_run: bool = False,
+    store_entities: bool = True,
 ) -> dict:
-    """Inject in-content entity links for a resort."""
+    """Inject in-content entity links for a resort.
+
+    Steps:
+    1. Strip existing external links from content
+    2. Extract entities from clean content
+    3. Resolve entities (brand registry -> Google Places -> Maps search)
+    4. Inject links into content
+    5. Store entities as atoms in resort_entities table
+    """
     client = get_supabase_client()
 
     # Get existing content
@@ -143,7 +180,8 @@ async def backfill_content_links(
     ]
     for col in section_columns:
         if content_data.get(col):
-            content_sections[col] = content_data[col]
+            # Strip existing external links before re-injection
+            content_sections[col] = _strip_existing_links(content_data[col])
 
     if not content_sections:
         return {"status": "skipped", "reason": "No content sections"}
@@ -160,25 +198,54 @@ async def backfill_content_links(
         return {"status": "no_entities", "reason": "No linkable entities found"}
 
     affiliate_count = sum(1 for link in injected_links if link.is_affiliate)
+    maps_fallback_count = sum(1 for link in injected_links if link.is_maps_search_fallback)
 
     if dry_run:
         for link in injected_links:
-            label = "[$]" if link.is_affiliate else "[>]"
-            print(f"    {label} {link.entity_name} ({link.entity_type}) → {link.url[:60]}...")
+            if link.is_affiliate:
+                label = "[$]"
+            elif link.is_maps_search_fallback:
+                label = "[~]"
+            else:
+                label = "[>]"
+            print(f"    {label} {link.entity_name} ({link.entity_type}) -> {link.url[:60]}...")
         return {
             "status": "dry_run",
             "links_count": len(injected_links),
             "affiliate_count": affiliate_count,
+            "maps_fallback_count": maps_fallback_count,
         }
 
     # Save modified content back to database
     update_data = {}
-    for section_name, html in modified_content.items():
+    for section_name, html_content in modified_content.items():
         if section_name in section_columns:
-            update_data[section_name] = html
+            update_data[section_name] = html_content
 
     if update_data:
         client.table("resort_content").update(update_data).eq("resort_id", resort_id).execute()
+
+    # Store entities as atoms in resort_entities table
+    entities_stored = 0
+    if store_entities:
+        for link in injected_links:
+            is_brand = link.entity_name.lower().strip() in WELL_KNOWN_BRANDS
+            resolution_status = "brand" if is_brand else "resolved"
+            if link.is_maps_search_fallback:
+                resolution_status = "resolved"  # Maps search is a valid resolution
+
+            stored = upsert_resort_entity(
+                resort_id=resort_id,
+                name=link.entity_name,
+                entity_type=link.entity_type,
+                source="extraction",
+                resolution_status=resolution_status,
+                resolved_url=link.url,
+                confidence=1.0 if not link.is_maps_search_fallback else 0.5,
+                maps_url=link.url if link.is_maps_search_fallback else None,
+            )
+            if stored:
+                entities_stored += 1
 
     log_cost("anthropic", 0.01, None, {"stage": "backfill_content_links", "resort": resort_name})
 
@@ -186,6 +253,8 @@ async def backfill_content_links(
         "status": "complete",
         "links_injected": len(injected_links),
         "affiliate_count": affiliate_count,
+        "maps_fallback_count": maps_fallback_count,
+        "entities_stored": entities_stored,
         "entities": [link.entity_name for link in injected_links],
     }
 
@@ -196,9 +265,16 @@ async def backfill_links(
     sidebar_only: bool = False,
     content_only: bool = False,
     resort_name_filter: str | None = None,
+    clear_cache: bool = False,
 ):
     """Run the link backfill across all published resorts."""
     client = get_supabase_client()
+
+    # Clear low-confidence cache entries if requested
+    if clear_cache:
+        print("Clearing low-confidence cache entries...")
+        cleared = clear_low_confidence_cache(min_confidence=0.65)
+        print(f"Cleared {cleared} entries\n")
 
     # Get published resorts
     query = (
@@ -227,6 +303,7 @@ async def backfill_links(
     print(f"Resorts: {len(resorts)}")
     print(f"Sidebar links: {'YES' if do_sidebar else 'SKIP'}")
     print(f"Content links: {'YES' if do_content else 'SKIP'}")
+    print(f"Clear cache: {'YES' if clear_cache else 'NO'}")
     print(f"{'='*60}\n")
 
     sidebar_updated = 0
@@ -236,6 +313,8 @@ async def backfill_links(
     failed = 0
     total_entity_links = 0
     total_affiliate_links = 0
+    total_maps_fallback = 0
+    total_entities_stored = 0
 
     for i, resort in enumerate(resorts, 1):
         resort_id = resort["id"]
@@ -280,9 +359,15 @@ async def backfill_links(
                     content_updated += 1
                     count = content_result.get("links_injected") or content_result.get("links_count", 0)
                     aff = content_result.get("affiliate_count", 0)
+                    maps_fb = content_result.get("maps_fallback_count", 0)
+                    ent_stored = content_result.get("entities_stored", 0)
                     total_entity_links += count
                     total_affiliate_links += aff
-                    print(f"    {count} entity links ({aff} affiliate)")
+                    total_maps_fallback += maps_fb
+                    total_entities_stored += ent_stored
+                    print(f"    {count} entity links ({aff} affiliate, {maps_fb} maps fallback)")
+                    if ent_stored:
+                        print(f"    {ent_stored} entities stored as atoms")
                 else:
                     content_skipped += 1
                     print(f"    Skipped: {content_result.get('reason', content_result.get('error', 'unknown'))}")
@@ -299,7 +384,8 @@ async def backfill_links(
         print(f"Sidebar: {sidebar_updated} updated, {sidebar_skipped} skipped")
     if do_content:
         print(f"Content: {content_updated} updated, {content_skipped} skipped")
-        print(f"Entity links injected: {total_entity_links} ({total_affiliate_links} affiliate)")
+        print(f"Entity links injected: {total_entity_links} ({total_affiliate_links} affiliate, {total_maps_fallback} maps fallback)")
+        print(f"Entity atoms stored: {total_entities_stored}")
     print(f"Failed: {failed}")
     print(f"{'='*60}\n")
 
@@ -311,6 +397,7 @@ def main():
     parser.add_argument("--sidebar-only", action="store_true", help="Only re-curate sidebar links")
     parser.add_argument("--content-only", action="store_true", help="Only inject in-content links")
     parser.add_argument("--resort", type=str, help="Process a single resort by name")
+    parser.add_argument("--clear-cache", action="store_true", help="Clear low-confidence cache entries before backfill")
     args = parser.parse_args()
 
     if args.sidebar_only and args.content_only:
@@ -323,6 +410,7 @@ def main():
         sidebar_only=args.sidebar_only,
         content_only=args.content_only,
         resort_name_filter=args.resort,
+        clear_cache=args.clear_cache,
     ))
 
 

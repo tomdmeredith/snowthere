@@ -1,25 +1,35 @@
 """External linking primitives for Google Places and affiliate URL resolution.
 
 Part of Round 7: External Linking & Affiliate System.
+Updated: Entity Link Coverage Overhaul — brand registry, type validation,
+Maps search fallback, per-entity-type confidence thresholds.
 
 Provides:
-- Google Places API integration for entity resolution
+- Well-known brand registry (resolves before Google Places)
+- Google Places API integration with type cross-validation
+- Maps search URL fallback for low-confidence entities
 - Entity link caching with appropriate TTLs
 - Affiliate URL lookup and transformation
-- Maps URL generation
+- Per-entity-type confidence thresholds
+- Variable per-section link caps
 
 Cache Strategy:
 - place_id: Cache indefinitely (stable identifier)
 - Website URLs: Cache 90 days (can change)
 - Maps URLs: Derived from place_id (no expiration)
+
+Resolution Tiers:
+1. Brand registry → canonical URL (confidence 1.0)
+2. Google Places (verified) → place-specific link (confidence 0.6-1.0)
+3. Maps search fallback → search URL (always safe, rel=nofollow)
 """
 
 import html
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-from typing import Any
-from urllib.parse import urlencode, urlparse
+from datetime import datetime, timedelta, timezone
+from typing import Any, NamedTuple
+from urllib.parse import quote_plus, urlparse
 
 import httpx
 
@@ -46,6 +56,7 @@ class ResolvedEntity:
     affiliate_program: str | None = None
     confidence: float = 0.0
     from_cache: bool = False
+    is_maps_search_fallback: bool = False
 
 
 @dataclass
@@ -59,6 +70,281 @@ class AffiliateConfig:
     tracking_param: str | None
     domains: list[str]
     is_active: bool = True
+
+
+# ============================================================================
+# WELL-KNOWN BRAND REGISTRY
+# ============================================================================
+# Checked BEFORE Google Places. Brands resolve with confidence 1.0.
+# No API call needed. Prevents mismatches like "Ikon" → random Maps place.
+
+WELL_KNOWN_BRANDS: dict[str, dict[str, str]] = {
+    # Ski passes
+    "ikon": {"url": "https://www.ikonpass.com/", "type": "ski_pass"},
+    "ikon pass": {"url": "https://www.ikonpass.com/", "type": "ski_pass"},
+    "epic": {"url": "https://www.epicpass.com/", "type": "ski_pass"},
+    "epic pass": {"url": "https://www.epicpass.com/", "type": "ski_pass"},
+    "mountain collective": {"url": "https://mountaincollective.com/", "type": "ski_pass"},
+    "indy pass": {"url": "https://www.indyskipass.com/", "type": "ski_pass"},
+    "magic pass": {"url": "https://www.magicpass.ch/", "type": "ski_pass"},
+    "ski amade": {"url": "https://www.skiamade.com/", "type": "ski_pass"},
+    "dolomiti superski": {"url": "https://www.dolomitisuperski.com/", "type": "ski_pass"},
+    "trois vallees": {"url": "https://www.les3vallees.com/", "type": "ski_pass"},
+    "les 3 vallees": {"url": "https://www.les3vallees.com/", "type": "ski_pass"},
+    "paradiski": {"url": "https://www.paradiski.com/", "type": "ski_pass"},
+    "portes du soleil": {"url": "https://www.portesdusoleil.com/", "type": "ski_pass"},
+    "tarentaise": {"url": "https://www.skipass-tarentaise.com/", "type": "ski_pass"},
+    "ski arlberg": {"url": "https://www.skiarlberg.at/", "type": "ski_pass"},
+    "zillertal superskipass": {"url": "https://www.zillertal.at/", "type": "ski_pass"},
+    "wilder kaiser": {"url": "https://www.wilderkaiser.info/", "type": "ski_pass"},
+    # European grocery chains
+    "coop": {"url": "https://www.coop.ch/", "type": "grocery"},
+    "spar": {"url": "https://www.spar.at/", "type": "grocery"},
+    "billa": {"url": "https://www.billa.at/", "type": "grocery"},
+    "migros": {"url": "https://www.migros.ch/", "type": "grocery"},
+    "aldi": {"url": "https://www.aldi.com/", "type": "grocery"},
+    "lidl": {"url": "https://www.lidl.com/", "type": "grocery"},
+    "mpreis": {"url": "https://www.mpreis.at/", "type": "grocery"},
+    "denner": {"url": "https://www.denner.ch/", "type": "grocery"},
+    "interspar": {"url": "https://www.interspar.at/", "type": "grocery"},
+    "volg": {"url": "https://www.volg.ch/", "type": "grocery"},
+    # Japanese convenience stores
+    "lawson": {"url": "https://www.lawson.co.jp/", "type": "grocery"},
+    "seicomart": {"url": "https://www.seicomart.co.jp/", "type": "grocery"},
+    "7-eleven": {"url": "https://www.7andi.com/", "type": "grocery"},
+    "familymart": {"url": "https://www.family.co.jp/", "type": "grocery"},
+    # Airlines (getting there sections)
+    "easyjet": {"url": "https://www.easyjet.com/", "type": "transport"},
+    "ryanair": {"url": "https://www.ryanair.com/", "type": "transport"},
+    "swiss": {"url": "https://www.swiss.com/", "type": "transport"},
+    "austrian airlines": {"url": "https://www.austrian.com/", "type": "transport"},
+    "lufthansa": {"url": "https://www.lufthansa.com/", "type": "transport"},
+    "air france": {"url": "https://www.airfrance.com/", "type": "transport"},
+    # Rental/equipment chains
+    "intersport": {"url": "https://www.intersport.com/", "type": "rental"},
+    "sport 2000": {"url": "https://www.sport2000rent.com/", "type": "rental"},
+    # Booking platforms (not entity links but prevent mismatches)
+    "booking.com": {"url": "https://www.booking.com/", "type": "hotel"},
+    "airbnb": {"url": "https://www.airbnb.com/", "type": "hotel"},
+}
+
+
+def _resolve_brand(name: str) -> ResolvedEntity | None:
+    """Check if entity name is a well-known brand.
+
+    Returns ResolvedEntity with confidence 1.0 if found, None otherwise.
+    """
+    normalized = name.lower().strip()
+    brand = WELL_KNOWN_BRANDS.get(normalized)
+    if brand:
+        return ResolvedEntity(
+            name=name,
+            entity_type=brand["type"],
+            direct_url=brand["url"],
+            confidence=1.0,
+            from_cache=False,
+            is_maps_search_fallback=False,
+        )
+    return None
+
+
+# ============================================================================
+# NAME CONFIDENCE VALIDATION
+# ============================================================================
+
+# Words to filter from Jaccard calculation (function words, prepositions)
+_FUNCTION_WORDS = frozenset({
+    "de", "del", "di", "da", "the", "la", "le", "les", "el", "los", "las",
+    "der", "die", "das", "den", "dem", "des", "van", "von", "zu", "zum",
+    "san", "saint", "st", "santa", "santo", "sainte",
+    "and", "und", "et", "e", "y", "i", "og",
+    "in", "im", "am", "an", "au", "en", "a", "of",
+})
+
+# Type-mismatch negative keywords — instant rejection
+TYPE_NEGATIVE_KEYWORDS: dict[str, frozenset[str]] = {
+    "airport": frozenset({
+        "church", "iglesia", "cathedral", "catedral", "basilica", "chapel",
+        "kapelle", "kirche", "mosque", "temple", "cemetery", "cementerio",
+        "museum", "restaurant", "hotel", "school", "escuela", "schule",
+    }),
+    "hotel": frozenset({
+        "airport", "aeropuerto", "flughafen", "church", "iglesia", "hospital",
+    }),
+    "restaurant": frozenset({
+        "airport", "aeropuerto", "flughafen", "hospital", "church",
+    }),
+    "ski_school": frozenset({
+        "airport", "church", "hospital", "restaurant",
+    }),
+    "childcare": frozenset({
+        "airport", "church", "bar", "nightclub", "pub",
+    }),
+}
+
+# Type-positive keywords — expected in resolved name
+TYPE_POSITIVE_KEYWORDS: dict[str, frozenset[str]] = {
+    "airport": frozenset({
+        "airport", "aeropuerto", "aeroport", "flughafen", "aeroporto",
+        "lufthavn", "lentokentta", "kuukou", "international",
+    }),
+    "hotel": frozenset({
+        "hotel", "lodge", "inn", "chalet", "residence", "pension",
+        "gasthof", "haus", "hof", "albergo", "auberge", "hostel",
+    }),
+    "grocery": frozenset({
+        "market", "grocery", "supermarket", "supermercado", "markt",
+        "coop", "spar", "billa", "migros", "convenience", "konbini",
+    }),
+}
+
+# Per-entity-type confidence thresholds for verified links
+ENTITY_TYPE_THRESHOLDS: dict[str, float] = {
+    # Low risk — common businesses, easy to verify
+    "hotel": 0.6,
+    "restaurant": 0.6,
+    "grocery": 0.6,
+    "bar": 0.6,
+    "cafe": 0.6,
+    # Medium risk — specialized services
+    "rental": 0.7,
+    "spa": 0.7,
+    "ski_school": 0.7,
+    # High risk — wrong link could mislead families
+    "airport": 0.75,
+    "transport": 0.75,
+    "activity": 0.75,
+    "childcare": 0.75,
+    # Bypass — brand/known URL resolution
+    "ski_pass": 0.0,  # Handled by brand registry
+    "official": 0.0,  # Handled by brand registry
+    # Maps-only types (always use Maps search)
+    "village": float("inf"),  # Never passes threshold → always Maps search
+    "location": float("inf"),
+}
+
+
+def _calculate_name_confidence(
+    query_name: str,
+    resolved_name: str | None,
+    entity_type: str = "",
+) -> float:
+    """Calculate confidence score based on name similarity + type validation.
+
+    Three layers:
+    A) Type-mismatch rejection: negative keywords → 0.0
+    B) Critical keyword check: positive keywords → penalty if absent
+    C) Structural similarity: filtered Jaccard on significant words
+    """
+    if not resolved_name:
+        return 0.0
+
+    query_normalized = _normalize_entity_name(query_name)
+    resolved_normalized = _normalize_entity_name(resolved_name)
+
+    # === Layer A: Type-mismatch rejection ===
+    negative_keywords = TYPE_NEGATIVE_KEYWORDS.get(entity_type, frozenset())
+    if negative_keywords:
+        resolved_lower = resolved_normalized
+        for neg_word in negative_keywords:
+            if neg_word in resolved_lower:
+                return 0.0
+
+    # === Layer B: Positive keyword check ===
+    positive_penalty = 0.0
+    positive_keywords = TYPE_POSITIVE_KEYWORDS.get(entity_type, frozenset())
+    if positive_keywords:
+        resolved_lower = resolved_normalized
+        has_positive = any(kw in resolved_lower for kw in positive_keywords)
+        if not has_positive:
+            positive_penalty = 0.15
+
+    # === Layer C: Structural similarity ===
+
+    # Exact match
+    if query_normalized == resolved_normalized:
+        return 1.0 - positive_penalty
+
+    # Containment
+    if query_normalized in resolved_normalized or resolved_normalized in query_normalized:
+        return max(0.0, 0.8 - positive_penalty)
+
+    # Filtered Jaccard on significant words
+    query_words = set(query_normalized.split()) - _FUNCTION_WORDS
+    resolved_words = set(resolved_normalized.split()) - _FUNCTION_WORDS
+
+    # If no significant words remain, fall back to full sets
+    if not query_words:
+        query_words = set(query_normalized.split())
+    if not resolved_words:
+        resolved_words = set(resolved_normalized.split())
+
+    overlap = len(query_words & resolved_words)
+    total = len(query_words | resolved_words)
+
+    if total == 0:
+        return 0.0
+
+    jaccard = overlap / total
+
+    # Zero word overlap → 0.0 (not 0.3 floor like before)
+    if overlap == 0:
+        return 0.0
+
+    # Require >= 30% Jaccard on significant words
+    if jaccard < 0.3:
+        return 0.0
+
+    confidence = 0.5 + (0.4 * jaccard)
+    return max(0.0, confidence - positive_penalty)
+
+
+# ============================================================================
+# GOOGLE PLACES TYPE CROSS-VALIDATION
+# ============================================================================
+
+# Maps entity_type → expected Google Places types
+_EXPECTED_PLACES_TYPES: dict[str, set[str]] = {
+    "airport": {"airport"},
+    "hotel": {"lodging", "hotel"},
+    "restaurant": {"restaurant", "food", "meal_delivery", "meal_takeaway", "cafe"},
+    "grocery": {"grocery_or_supermarket", "supermarket", "convenience_store"},
+    "bar": {"bar", "night_club"},
+    "cafe": {"cafe", "bakery", "coffee_shop"},
+}
+
+
+def _validate_places_types(entity_type: str, places_types: list[str]) -> float:
+    """Cross-validate Google Places returned types against expected types.
+
+    Returns confidence penalty (0.0 = no penalty, 0.3 = type mismatch).
+    """
+    expected = _EXPECTED_PLACES_TYPES.get(entity_type)
+    if not expected or not places_types:
+        return 0.0  # No validation possible, no penalty
+
+    # Check if ANY expected type is present
+    if expected & set(places_types):
+        return 0.0  # Match found, no penalty
+
+    return 0.3  # Type mismatch penalty
+
+
+# ============================================================================
+# MAPS SEARCH URL FALLBACK
+# ============================================================================
+
+
+def _build_maps_search_url(name: str, location_context: str) -> str:
+    """Build a Google Maps search URL (not a place-specific link).
+
+    This is qualitatively different from a place_id link:
+    - It's a search, never asserts a specific wrong place
+    - Always safe to use as fallback
+    - SEO: must use rel="nofollow noopener"
+    """
+    query = f"{name} {location_context}"
+    return f"https://www.google.com/maps/search/{quote_plus(query)}"
 
 
 # ============================================================================
@@ -130,7 +416,7 @@ def _cache_entity(
         # Set expiration for volatile data (not place_id)
         expires_at = None
         if direct_url or affiliate_url:
-            expires_at = (datetime.utcnow() + timedelta(days=expires_days)).isoformat()
+            expires_at = (datetime.now(timezone.utc) + timedelta(days=expires_days)).isoformat()
 
         data = {
             "name_normalized": name_normalized,
@@ -175,6 +461,7 @@ async def resolve_google_place(
     """Resolve an entity name to Google Places data.
 
     Uses Text Search (New) API for best results.
+    Includes type cross-validation via places.types FieldMask.
 
     Args:
         name: Entity name (e.g., "Hotel Schweizerhof")
@@ -221,6 +508,11 @@ async def resolve_google_place(
         "transport": "transit_station",
         "transportation": "transit_station",
         "retail": "store",
+        "airport": "airport",
+        "bar": "bar",
+        "cafe": "cafe",
+        "childcare": None,  # No good match
+        "village": None,  # No good match
     }
 
     included_type = type_mapping.get(entity_type)
@@ -231,11 +523,12 @@ async def resolve_google_place(
     try:
         async with httpx.AsyncClient() as client:
             # Use Text Search (New) API
+            # Include places.types in FieldMask for type cross-validation (zero extra API cost)
             url = "https://places.googleapis.com/v1/places:searchText"
             headers = {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": api_key,
-                "X-Goog-FieldMask": "places.id,places.displayName,places.websiteUri,places.formattedAddress",
+                "X-Goog-FieldMask": "places.id,places.displayName,places.websiteUri,places.formattedAddress,places.types",
             }
             body = {
                 "textQuery": search_query,
@@ -269,10 +562,18 @@ async def resolve_google_place(
             place_id = place.get("id")
             resolved_name = place.get("displayName", {}).get("text")
             website_url = place.get("websiteUri")
+            # Validate URL scheme — only accept http/https
+            if website_url:
+                parsed_url = urlparse(website_url)
+                if parsed_url.scheme not in ("http", "https"):
+                    website_url = None
+            places_types = place.get("types", [])
             maps_url = _build_maps_url(place_id) if place_id else None
 
-            # Calculate confidence based on name similarity
-            confidence = _calculate_name_confidence(name, resolved_name)
+            # Calculate confidence: name similarity + type cross-validation
+            name_confidence = _calculate_name_confidence(name, resolved_name, entity_type)
+            type_penalty = _validate_places_types(entity_type, places_types)
+            confidence = max(0.0, name_confidence - type_penalty)
 
             # Cache the result
             _cache_entity(
@@ -301,34 +602,6 @@ async def resolve_google_place(
     except Exception as e:
         print(f"Google Places lookup failed: {e}")
         return None
-
-
-def _calculate_name_confidence(query_name: str, resolved_name: str | None) -> float:
-    """Calculate confidence score based on name similarity."""
-    if not resolved_name:
-        return 0.0
-
-    query_normalized = _normalize_entity_name(query_name)
-    resolved_normalized = _normalize_entity_name(resolved_name)
-
-    # Exact match
-    if query_normalized == resolved_normalized:
-        return 1.0
-
-    # Containment
-    if query_normalized in resolved_normalized or resolved_normalized in query_normalized:
-        return 0.8
-
-    # Word overlap
-    query_words = set(query_normalized.split())
-    resolved_words = set(resolved_normalized.split())
-    overlap = len(query_words & resolved_words)
-    total = len(query_words | resolved_words)
-
-    if total > 0:
-        return 0.5 + (0.3 * overlap / total)
-
-    return 0.3
 
 
 # ============================================================================
@@ -414,47 +687,138 @@ async def resolve_entity_link(
 ) -> ResolvedEntity | None:
     """Resolve an entity name to all available links.
 
-    This is the main entry point for external link resolution.
+    Three-tier resolution:
+    1. Brand registry → canonical URL (confidence 1.0)
+    2. Google Places, high confidence → verified place link
+    3. Low confidence or no result → Maps search URL (always safe)
 
     Args:
         name: Entity name (e.g., "Hotel Schweizerhof")
-        entity_type: Type ('hotel', 'restaurant', 'ski_school', 'rental', 'activity', 'grocery')
+        entity_type: Type ('hotel', 'restaurant', 'ski_school', etc.)
         location_context: Location for disambiguation (e.g., "Zermatt, Switzerland")
         include_affiliate: Whether to look up affiliate URLs
 
     Returns:
-        ResolvedEntity with all available links, or None if resolution failed
+        ResolvedEntity with all available links, or None only if entity_type
+        should be skipped entirely
     """
-    # Resolve via Google Places
+    # === Tier 1: Brand registry ===
+    brand_result = _resolve_brand(name)
+    if brand_result:
+        return brand_result
+
+    # === Tier 2: Google Places resolution ===
     result = await resolve_google_place(name, entity_type, location_context)
 
-    if not result:
-        return None
+    # Get the confidence threshold for this entity type
+    threshold = ENTITY_TYPE_THRESHOLDS.get(entity_type, 0.65)
 
-    # Look up affiliate URL if direct URL exists
-    if include_affiliate and result.direct_url:
-        affiliate_url, program_name = lookup_affiliate_url(result.direct_url)
-        if affiliate_url:
-            result.affiliate_url = affiliate_url
-            result.affiliate_program = program_name
+    if result and result.confidence >= threshold:
+        # High confidence — use verified place link
+        if include_affiliate and result.direct_url:
+            affiliate_url, program_name = lookup_affiliate_url(result.direct_url)
+            if affiliate_url:
+                result.affiliate_url = affiliate_url
+                result.affiliate_program = program_name
 
-            # Update cache with affiliate data
-            name_normalized = _normalize_entity_name(name)
-            _cache_entity(
-                name_normalized,
-                entity_type,
-                location_context,
-                google_place_id=result.google_place_id,
-                resolved_name=result.resolved_name,
-                direct_url=result.direct_url,
-                maps_url=result.maps_url,
-                affiliate_url=affiliate_url,
-                affiliate_program=program_name,
-                resolution_source="google_places",
-                confidence=result.confidence,
-            )
+                # Update cache with affiliate data
+                name_normalized = _normalize_entity_name(name)
+                _cache_entity(
+                    name_normalized,
+                    entity_type,
+                    location_context,
+                    google_place_id=result.google_place_id,
+                    resolved_name=result.resolved_name,
+                    direct_url=result.direct_url,
+                    maps_url=result.maps_url,
+                    affiliate_url=affiliate_url,
+                    affiliate_program=program_name,
+                    resolution_source="google_places",
+                    confidence=result.confidence,
+                )
 
-    return result
+        return result
+
+    # === Tier 3: Maps search fallback ===
+    maps_search_url = _build_maps_search_url(name, location_context)
+    return ResolvedEntity(
+        name=name,
+        entity_type=entity_type,
+        maps_url=maps_search_url,
+        confidence=0.5,  # Neutral — safe but unverified
+        from_cache=False,
+        is_maps_search_fallback=True,
+    )
+
+
+# ============================================================================
+# ENTITY ATOM STORAGE
+# ============================================================================
+
+
+def upsert_resort_entity(
+    resort_id: str,
+    name: str,
+    entity_type: str,
+    source: str = "extraction",
+    source_url: str | None = None,
+    sections: list[str] | None = None,
+    editorial_role: str = "mentioned",
+    resolution_status: str = "pending",
+    resolved_url: str | None = None,
+    google_place_id: str | None = None,
+    maps_url: str | None = None,
+    confidence: float = 0.0,
+) -> bool:
+    """Store or update an entity atom in resort_entities table.
+
+    Args:
+        resort_id: UUID of the resort
+        name: Entity name as it appears in content
+        entity_type: Type classification
+        source: How discovered (extraction, research, generation, manual)
+        source_url: Pre-resolved URL from research/generation
+        sections: Which content sections reference this entity
+        editorial_role: mentioned, recommended, warned_about
+        resolution_status: pending, resolved, failed, brand
+        resolved_url: Final chosen URL
+        google_place_id: Google Places ID
+        maps_url: Google Maps URL
+        confidence: Resolution confidence score
+
+    Returns:
+        True if stored successfully
+    """
+    entity_type = _TYPE_ALIASES.get(entity_type, entity_type)
+
+    try:
+        supabase = get_supabase_client()
+        name_normalized = _normalize_entity_name(name)
+
+        data = {
+            "resort_id": resort_id,
+            "name": name,
+            "name_normalized": name_normalized,
+            "entity_type": entity_type,
+            "source": source,
+            "source_url": source_url,
+            "sections": sections or [],
+            "editorial_role": editorial_role,
+            "resolution_status": resolution_status,
+            "resolved_url": resolved_url,
+            "google_place_id": google_place_id,
+            "maps_url": maps_url,
+            "confidence": confidence,
+        }
+
+        supabase.table("resort_entities").upsert(
+            data, on_conflict="resort_id,name_normalized,entity_type"
+        ).execute()
+
+        return True
+    except Exception as e:
+        print(f"Entity atom storage failed for '{name}': {e}")
+        return False
 
 
 # ============================================================================
@@ -464,26 +828,24 @@ async def resolve_entity_link(
 
 def get_rel_attribute(
     is_affiliate: bool = False,
-    is_ugc: bool = False,
+    is_maps_place_link: bool = False,
     is_official: bool = False,
+    is_maps_search_fallback: bool = False,
 ) -> str:
     """Get the appropriate rel attribute for a link.
 
     SEO + referral tracking best practices:
     - Official resort links: rel="noopener" (dofollow — authoritative sources)
     - Affiliate links: rel="sponsored noopener" (Google-compliant for paid links)
-    - Maps links: rel="nofollow noopener" (no equity to Maps, still sends referrer)
+    - Maps place links: rel="nofollow noopener" (no equity to Maps, still sends referrer)
+    - Maps search fallback: rel="nofollow noopener" (navigational aid, NOT editorial endorsement)
     - Entity links (hotels, restaurants, etc.): rel="noopener" (dofollow, sends referrer)
-
-    Rationale: Entity links are genuine editorial recommendations. Dofollow
-    passes SEO equity (good for both parties). Sending the referrer lets
-    businesses see snowthere.com traffic in their analytics — enabling
-    future partnership conversations.
 
     Args:
         is_affiliate: Whether this is an affiliate link
-        is_ugc: Whether this is user-generated content (Maps, etc.)
+        is_maps_place_link: Whether this is a Google Maps place-specific link
         is_official: Whether this is an official resort website link
+        is_maps_search_fallback: Whether this is a Maps search URL (not a verified place)
 
     Returns:
         Appropriate rel attribute value
@@ -492,7 +854,7 @@ def get_rel_attribute(
         return "noopener"
     if is_affiliate:
         return "sponsored noopener"
-    if is_ugc:
+    if is_maps_place_link or is_maps_search_fallback:
         return "nofollow noopener"
     return "noopener"
 
@@ -509,7 +871,7 @@ def clear_expired_cache() -> int:
         result = (
             supabase.table("entity_link_cache")
             .delete()
-            .lt("expires_at", datetime.utcnow().isoformat())
+            .lt("expires_at", datetime.now(timezone.utc).isoformat())
             .execute()
         )
 
@@ -519,46 +881,109 @@ def clear_expired_cache() -> int:
         return 0
 
 
+def clear_low_confidence_cache(min_confidence: float = 0.65) -> int:
+    """Clear cache entries below confidence threshold.
+
+    Used before re-backfill to force re-resolution of low-quality matches.
+
+    Returns:
+        Number of entries cleared
+    """
+    try:
+        supabase = get_supabase_client()
+
+        result = (
+            supabase.table("entity_link_cache")
+            .delete()
+            .lt("confidence", min_confidence)
+            .execute()
+        )
+
+        count = len(result.data or [])
+        print(f"Cleared {count} cache entries with confidence < {min_confidence}")
+        return count
+    except Exception as e:
+        print(f"Failed to clear low confidence cache: {e}")
+        return 0
+
+
 # ============================================================================
 # LINK INJECTION
 # ============================================================================
 
+# Variable per-section link caps (SEO expert recommendation)
+SECTION_LINK_CAPS: dict[str, int] = {
+    "where_to_stay": 5,
+    "on_mountain": 5,
+    "off_mountain": 5,
+    "getting_there": 3,
+    "lift_tickets": 3,
+    "parent_reviews_summary": 3,
+    "quick_take": 2,
+}
 
-def _choose_link_url(resolved: ResolvedEntity) -> tuple[str | None, bool, bool]:
+
+class LinkChoice(NamedTuple):
+    """Result of choosing the best link URL for an entity."""
+
+    url: str | None
+    is_affiliate: bool
+    is_maps_place_link: bool
+    is_maps_search_fallback: bool
+
+
+# Context-aware link priority table: ordered list of (url_attr, is_affiliate, is_maps_place_link)
+# - Booking types (hotel, rental): affiliate > direct > maps
+# - Location types (restaurant, grocery): maps > direct
+# - Info/registration types (ski_school, activity, transport): direct > maps
+_ENTITY_LINK_PRIORITY: dict[str, list[tuple[str, bool, bool]]] = {
+    "hotel":          [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)],
+    "rental":         [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)],
+    "restaurant":     [("maps_url", False, True), ("direct_url", False, False)],
+    "grocery":        [("maps_url", False, True), ("direct_url", False, False)],
+    "bar":            [("maps_url", False, True), ("direct_url", False, False)],
+    "cafe":           [("maps_url", False, True), ("direct_url", False, False)],
+    "ski_school":     [("direct_url", False, False), ("maps_url", False, True)],
+    "activity":       [("direct_url", False, False), ("maps_url", False, True)],
+    "transport":      [("direct_url", False, False), ("maps_url", False, True)],
+    "transportation": [("direct_url", False, False), ("maps_url", False, True)],
+    "retail":         [("direct_url", False, False), ("maps_url", False, True)],
+    "childcare":      [("direct_url", False, False), ("maps_url", False, True)],
+    "airport":        [("direct_url", False, False), ("maps_url", False, True)],
+    "village":        [("maps_url", False, True)],
+}
+_ENTITY_LINK_PRIORITY_DEFAULT: list[tuple[str, bool, bool]] = [
+    ("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True),
+]
+
+# Normalize entity type aliases to match DB constraints
+_TYPE_ALIASES: dict[str, str] = {"transportation": "transport"}
+
+
+def _choose_link_url(resolved: ResolvedEntity) -> LinkChoice:
     """Choose the best link URL based on entity type.
 
-    Context-aware destination logic using priority table:
-    - Booking types (hotel, rental): affiliate > direct > maps
-    - Location types (restaurant, grocery): maps > direct
-    - Info/registration types (ski_school, activity, transport): direct > maps
-    - Default: affiliate > direct > maps
+    Uses the module-level _ENTITY_LINK_PRIORITY table for context-aware
+    destination logic.
 
     Args:
         resolved: The resolved entity with available URLs
 
     Returns:
-        Tuple of (url, is_affiliate, is_ugc)
+        LinkChoice with url, is_affiliate, is_maps_place_link, is_maps_search_fallback
     """
-    # Priority table: ordered list of (url_attr, is_affiliate, is_ugc)
-    PRIORITY = {
-        "hotel":          [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)],
-        "rental":         [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)],
-        "restaurant":     [("maps_url", False, True), ("direct_url", False, False)],
-        "grocery":        [("maps_url", False, True), ("direct_url", False, False)],
-        "ski_school":     [("direct_url", False, False), ("maps_url", False, True)],
-        "activity":       [("direct_url", False, False), ("maps_url", False, True)],
-        "transport":      [("direct_url", False, False), ("maps_url", False, True)],
-        "transportation": [("direct_url", False, False), ("maps_url", False, True)],
-        "retail":         [("direct_url", False, False), ("maps_url", False, True)],
-    }
-    DEFAULT = [("affiliate_url", True, False), ("direct_url", False, False), ("maps_url", False, True)]
+    # Maps search fallback entities only have maps_url
+    if resolved.is_maps_search_fallback:
+        return LinkChoice(resolved.maps_url, False, False, True)
 
-    for attr, is_affiliate, is_ugc in PRIORITY.get(resolved.entity_type, DEFAULT):
+    for attr, is_affiliate, is_maps_place_link in _ENTITY_LINK_PRIORITY.get(
+        resolved.entity_type, _ENTITY_LINK_PRIORITY_DEFAULT
+    ):
         url = getattr(resolved, attr, None)
         if url:
-            return url, is_affiliate, is_ugc
+            return LinkChoice(url, is_affiliate, is_maps_place_link, False)
 
-    return None, False, False
+    return LinkChoice(None, False, False, False)
 
 
 @dataclass
@@ -572,6 +997,7 @@ class InjectedLink:
     is_affiliate: bool
     affiliate_program: str | None = None
     rel_attribute: str = ""
+    is_maps_search_fallback: bool = False
 
 
 @dataclass
@@ -592,40 +1018,35 @@ async def inject_external_links(
     country: str,
     section_name: str | None = None,
     already_linked: set[str] | None = None,
-    max_links_per_section: int = 5,
+    max_links_per_section: int | None = None,
     resort_slug: str | None = None,
 ) -> LinkInjectionResult:
     """Inject external links into HTML content.
 
-    Extracts linkable entities, resolves them via Google Places / affiliates,
-    and injects links into the first mention of each entity.
-
-    Uses context-aware destination logic: hotels → booking sites,
-    restaurants → Google Maps, grocery → Google Maps, etc.
+    Extracts linkable entities, resolves them via brand registry / Google
+    Places / Maps search fallback, and injects links into the first mention.
 
     Args:
         html_content: HTML content to inject links into
         resort_name: Name of the resort for context
         country: Country for context/disambiguation
-        section_name: Optional section name for logging
+        section_name: Optional section name for logging and per-section caps
         already_linked: Set of entity names already linked (to avoid duplicates)
-        max_links_per_section: Maximum links to inject per section
+        max_links_per_section: Override for section link cap
         resort_slug: Resort slug for UTM tracking (optional)
 
     Returns:
         LinkInjectionResult with modified content and injection details
-
-    Link Rules:
-    - First mention only (no redundant links)
-    - Affiliate links use rel="sponsored noopener"
-    - Google Maps links use rel="nofollow noopener"
-    - Entity links (hotels, restaurants, etc.) use rel="noopener" (dofollow, sends referrer)
     """
     from .intelligence import extract_linkable_entities
     from .links import add_utm_params
 
     if already_linked is None:
         already_linked = set()
+
+    # Use per-section caps if no override provided
+    if max_links_per_section is None:
+        max_links_per_section = SECTION_LINK_CAPS.get(section_name or "", 5)
 
     injected_links: list[InjectedLink] = []
     not_resolved: list[str] = []
@@ -669,7 +1090,7 @@ async def inject_external_links(
             if entity.confidence < 0.6:
                 continue
 
-            # Resolve entity to links
+            # Resolve entity to links (3-tier: brand → Places → Maps search)
             resolved = await resolve_entity_link(
                 name=entity.name,
                 entity_type=entity.entity_type,
@@ -677,19 +1098,21 @@ async def inject_external_links(
                 include_affiliate=True,
             )
 
-            if not resolved or resolved.confidence < 0.5:
+            if not resolved:
                 not_resolved.append(entity.name)
                 continue
 
             # Context-aware destination logic
-            link_url, is_affiliate, is_ugc = _choose_link_url(resolved)
+            choice = _choose_link_url(resolved)
 
-            if not link_url:
+            if not choice.url:
                 not_resolved.append(entity.name)
                 continue
 
-            # Add UTM params to non-affiliate links
-            if not is_affiliate and resort_slug:
+            link_url = choice.url
+
+            # Add UTM params to non-affiliate, non-Maps-search links
+            if not choice.is_affiliate and not choice.is_maps_search_fallback and resort_slug:
                 link_url = add_utm_params(
                     url=link_url,
                     resort_slug=resort_slug,
@@ -698,7 +1121,11 @@ async def inject_external_links(
                 )
 
             # Build the link HTML
-            rel_attr = get_rel_attribute(is_affiliate=is_affiliate, is_ugc=is_ugc)
+            rel_attr = get_rel_attribute(
+                is_affiliate=choice.is_affiliate,
+                is_maps_place_link=choice.is_maps_place_link,
+                is_maps_search_fallback=choice.is_maps_search_fallback,
+            )
 
             # Inject link at first mention (case-insensitive, word boundary)
             # Use regex to find first mention not already in a link
@@ -723,9 +1150,10 @@ async def inject_external_links(
                         entity_type=entity.entity_type,
                         original_text=original_text,
                         url=link_url,
-                        is_affiliate=is_affiliate,
+                        is_affiliate=choice.is_affiliate,
                         affiliate_program=resolved.affiliate_program,
                         rel_attribute=rel_attr,
+                        is_maps_search_fallback=choice.is_maps_search_fallback,
                     )
                 )
 
@@ -760,8 +1188,8 @@ async def inject_links_in_content_sections(
     """Inject external links across multiple content sections.
 
     Processes sections in order, tracking already-linked entities to avoid
-    redundant links across sections. Uses context-aware destination logic
-    and adds UTM params to non-affiliate links.
+    redundant links across sections. Uses context-aware destination logic,
+    variable per-section caps, and adds UTM params to non-affiliate links.
 
     Args:
         content: Dict of section_name -> HTML content
@@ -775,6 +1203,7 @@ async def inject_links_in_content_sections(
     # Define which sections to process and in what order
     # (earlier sections get priority for first-mention links)
     section_order = [
+        "quick_take",
         "where_to_stay",
         "on_mountain",
         "off_mountain",
@@ -801,7 +1230,6 @@ async def inject_links_in_content_sections(
             country=country,
             section_name=section_name,
             already_linked=already_linked,
-            max_links_per_section=3,  # Limit per section to avoid over-linking
             resort_slug=resort_slug,
         )
 
@@ -925,7 +1353,7 @@ async def validate_external_links(
                     "location": link.get("location_context"),
                     "error": "Connection failed",
                 })
-            except Exception as e:
+            except Exception:
                 skipped += 1  # Count as skipped for unexpected errors
 
     return LinkValidationResult(
@@ -936,5 +1364,3 @@ async def validate_external_links(
         skipped_count=skipped,
         broken_links=broken,
     )
-
-

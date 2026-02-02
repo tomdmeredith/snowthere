@@ -8,6 +8,7 @@ costs low (~$0.002 per call) while maintaining intelligence.
 """
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -1190,7 +1191,6 @@ async def extract_linkable_entities(
     Cost: ~$0.005 per call with Sonnet
     """
     # Strip HTML tags for analysis but preserve structure hints
-    import re
     clean_content = re.sub(r'<[^>]+>', ' ', content)
     clean_content = re.sub(r'\s+', ' ', clean_content).strip()
 
@@ -1210,19 +1210,29 @@ CONTENT:
 {clean_content[:5000]}
 
 ENTITY TYPES TO FIND:
-- hotel: Specific hotels, lodges, chalets by name (e.g., "Hotel Schweizerhof", "The Lodge at Vail")
-- restaurant: Restaurants, cafes, mountain huts by name (e.g., "Chez Vrony", "Mid-Mountain Lodge")
-- ski_school: Named ski school programs (e.g., "Ski School Zermatt", "Burton Learn to Ride")
-- rental: Named rental shops (e.g., "Julen Sport", "Christy Sports")
+- hotel: Specific hotels, lodges, chalets, pensions by name (e.g., "Hotel Schweizerhof", "The Lodge at Vail")
+- restaurant: Restaurants, mountain huts by name (e.g., "Chez Vrony", "Mid-Mountain Lodge")
+- bar: Bars, pubs, apres-ski venues by name (e.g., "MooserWirt", "Krazy Kanguruh")
+- cafe: Cafes, bakeries, coffee shops by name (e.g., "Cafe Dorfplatz", "Boulangerie Alpine")
+- ski_school: Named ski school programs (e.g., "Ski School Zermatt", "NISS", "GoSnow")
+- rental: Named rental shops (e.g., "Julen Sport", "Christy Sports", "Intersport")
 - activity: Named activity providers (e.g., "Glacier Paradise", "Snowmass Tubing Hill")
-- grocery: Named grocery/convenience stores (e.g., "Coop", "SPAR")
+- grocery: Named grocery/convenience stores (e.g., "Coop", "SPAR", "Lawson", "Seicomart")
+- childcare: Named childcare/nursery/kids clubs (e.g., "Kinderland", "Niseko Kids Club", "Murmli")
+- airport: Airports by name (e.g., "Innsbruck Airport", "Zurich Airport", "Chitose Airport")
+- transport: Named transport services (e.g., "Swiss Federal Railways", "Niseko United Shuttle")
+- retail: Named retail shops (e.g., "Julen Sport", "Matterhorn Terminal Store")
+- village: Named villages/towns referenced (e.g., "Hirafu", "Lech", "St. Christoph")
 
 RULES:
-- Only extract SPECIFIC NAMED entities (not generic mentions like "ski school" or "restaurants")
+- Extract ALL specifically named businesses, services, and locations
+- Include convenience stores, childcare, villages, transport — anything a parent might want to look up
+- Generic mentions ("the ski school", "local restaurants") should NOT be extracted
+- Named ones ("NISS ski school", "Restaurant Walliserkanne") always SHOULD be extracted
+- Do NOT extract the resort name itself or ski pass brand names (Ikon, Epic, etc.)
 - Include the surrounding sentence as context_snippet
-- Set confidence based on how certain this is a real, linkable business
+- Set confidence based on how certain this is a real, linkable entity
 - Report the character position of first mention
-- Do NOT extract the resort name itself
 
 Return JSON:
 {{
@@ -1239,10 +1249,11 @@ Return JSON:
     "extraction_confidence": 0.8
 }}"""
 
-    system = """You are an entity extraction specialist for travel content.
-Find specific, named businesses and locations that could be linked to Google Maps or websites.
-Be conservative - only extract entities you're confident are real, named businesses.
-Generic mentions like "the ski school" or "local restaurants" should NOT be extracted."""
+    system = """You are an entity extraction specialist for family ski resort content.
+Extract ALL specifically named businesses, services, and locations that a parent might want to look up.
+Cast a wide net — it's better to extract something and let downstream validation filter it than to miss a real entity.
+Generic mentions like "the ski school" or "local restaurants" should NOT be extracted.
+Named mentions like "NISS ski school" or "Coop supermarket" SHOULD always be extracted."""
 
     try:
         response = _call_claude(
