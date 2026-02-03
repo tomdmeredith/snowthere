@@ -497,7 +497,7 @@ def main():
 
     # Exit with appropriate code
     status = result.get("status", "unknown")
-    success_statuses = ("completed", "published", "draft", "dry_run_complete")
+    success_statuses = ("completed", "published", "draft", "dry_run_complete", "refreshed")
     partial_statuses = ("partial_failure",)  # Some succeeded
     failure_statuses = ("all_failed", "failed", "error", "no_content")
 
