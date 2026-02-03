@@ -1222,11 +1222,13 @@ ENTITY TYPES TO FIND:
 - airport: Airports by name (e.g., "Innsbruck Airport", "Zurich Airport", "Chitose Airport")
 - transport: Named transport services (e.g., "Swiss Federal Railways", "Niseko United Shuttle")
 - retail: Named retail shops (e.g., "Julen Sport", "Matterhorn Terminal Store")
-- village: Named villages/towns referenced (e.g., "Hirafu", "Lech", "St. Christoph")
+- village: Small ski villages that are part of the resort experience (e.g., "Hirafu", "Lech", "St. Christoph")
 
 RULES:
 - Extract ALL specifically named businesses, services, and locations
-- Include convenience stores, childcare, villages, transport — anything a parent might want to look up
+- Include convenience stores, childcare, small ski villages, transport — anything a parent might want to look up
+- Do NOT extract major cities, metropolitan areas, or regions (e.g., "Salt Lake City", "Vancouver", "Denver", "Sandy", "Draper" are NOT linkable entities)
+- Do NOT extract states, provinces, or countries
 - Generic mentions ("the ski school", "local restaurants") should NOT be extracted
 - Named ones ("NISS ski school", "Restaurant Walliserkanne") always SHOULD be extracted
 - Do NOT extract the resort name itself or ski pass brand names (Ikon, Epic, etc.)
@@ -1276,7 +1278,9 @@ CRITICAL: Assign HIGH confidence (0.8+) to any named entity that appears to be a
 The downstream system validates entities via Google Places — your job is to FIND them, not filter them.
 Missing a real entity is worse than including an ambiguous one.
 Generic mentions like "the ski school" or "local restaurants" should NOT be extracted.
-Named mentions like "NISS ski school" or "Coop supermarket" SHOULD always be extracted."""
+Named mentions like "NISS ski school" or "Coop supermarket" SHOULD always be extracted.
+
+NEVER extract major cities, metro areas, or regions as entities. "Salt Lake City", "Vancouver", "Denver", "Kamloops", "Sandy", "Draper" are geographic references, NOT linkable businesses."""
 
     try:
         response = _call_claude(
