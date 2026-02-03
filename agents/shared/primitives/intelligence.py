@@ -1231,27 +1231,50 @@ RULES:
 - Named ones ("NISS ski school", "Restaurant Walliserkanne") always SHOULD be extracted
 - Do NOT extract the resort name itself or ski pass brand names (Ikon, Epic, etc.)
 - Include the surrounding sentence as context_snippet
-- Set confidence based on how certain this is a real, linkable entity
+- Set confidence HIGH (0.8-0.95) for any specifically named business, venue, or service
+- Only use LOW confidence (0.4-0.6) if the name is ambiguous or might be generic
+- When in doubt, use 0.8 — downstream validation handles false positives
 - Report the character position of first mention
 
 Return JSON:
 {{
     "entities": [
         {{
-            "name": "Hotel Schweizerhof",
+            "name": "Kandahar Lodge",
             "entity_type": "hotel",
-            "context_snippet": "Families love staying at the Hotel Schweizerhof for its central location.",
+            "context_snippet": "Kandahar Lodge is your only true ski-in option.",
             "confidence": 0.9,
-            "first_mention_offset": 45
+            "first_mention_offset": 120
         }},
-        ...
+        {{
+            "name": "Grouse Mountain Lodge",
+            "entity_type": "hotel",
+            "context_snippet": "Grouse Mountain Lodge is where most families land.",
+            "confidence": 0.85,
+            "first_mention_offset": 380
+        }},
+        {{
+            "name": "Logan's Bar & Grill",
+            "entity_type": "restaurant",
+            "context_snippet": "The lodge has an on-site restaurant, Logan's Bar & Grill.",
+            "confidence": 0.9,
+            "first_mention_offset": 520
+        }}
     ],
-    "extraction_confidence": 0.8
+    "extraction_confidence": 0.85
 }}"""
 
     system = """You are an entity extraction specialist for family ski resort content.
-Extract ALL specifically named businesses, services, and locations that a parent might want to look up.
-Cast a wide net — it's better to extract something and let downstream validation filter it than to miss a real entity.
+Your job is to find EVERY specifically named business, service, and location.
+
+CRITICAL: Assign HIGH confidence (0.8+) to any named entity that appears to be a real business.
+- "Kandahar Lodge" → confidence 0.9 (clear hotel name)
+- "Grouse Mountain Lodge" → confidence 0.85 (clear hotel name)
+- "Logan's Bar & Grill" → confidence 0.9 (clear restaurant name)
+- "Whitefish Mountain Resort Kids Center" → confidence 0.85 (clear ski school)
+
+The downstream system validates entities via Google Places — your job is to FIND them, not filter them.
+Missing a real entity is worse than including an ambiguous one.
 Generic mentions like "the ski school" or "local restaurants" should NOT be extracted.
 Named mentions like "NISS ski school" or "Coop supermarket" SHOULD always be extracted."""
 

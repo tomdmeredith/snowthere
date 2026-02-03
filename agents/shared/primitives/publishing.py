@@ -587,17 +587,20 @@ def get_stale_resorts(days_threshold: int = 30, limit: int = 20) -> list[dict]:
         limit: Maximum number of results
 
     Returns:
-        List of stale resort records
+        List of stale resort records (only those actually older than threshold)
     """
+    from datetime import timedelta
+
     client = get_supabase_client()
 
-    cutoff_date = datetime.utcnow()
-    # Calculate cutoff (simplistic - could use PostgreSQL date math)
+    # Calculate actual cutoff date
+    cutoff_date = (datetime.utcnow() - timedelta(days=days_threshold)).isoformat() + "+00:00"
 
     response = (
         client.table("resorts")
         .select("*")
         .eq("status", "published")
+        .or_(f"last_refreshed.lt.{cutoff_date},last_refreshed.is.null")
         .order("last_refreshed", desc=False, nullsfirst=True)
         .limit(limit)
         .execute()

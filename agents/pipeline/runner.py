@@ -66,6 +66,7 @@ from shared.primitives import (
     update_resort_calendar,
     # Publishing
     publish_resort,
+    mark_resort_refreshed,
     # System
     log_cost,
     log_reasoning,
@@ -89,6 +90,244 @@ from shared.primitives import (
 )
 
 from .decision_maker import handle_error
+
+
+async def _run_light_refresh(
+    resort_name: str,
+    country: str,
+    run_id: str,
+    result: dict[str, Any],
+    memory: "AgentMemory",
+    memory_insights: dict[str, Any],
+) -> dict[str, Any]:
+    """Run a light refresh for a stale resort.
+
+    Light refresh is ~80% cheaper than full pipeline. It:
+    - Skips: Research, trail map, content generation, approval panel
+    - Does: Cost update, external link injection, image refresh, quality check
+
+    Used for stale resorts (30+ days old) where content is still valid
+    but data may be outdated.
+
+    Args:
+        resort_name: Name of the resort
+        country: Country the resort is in
+        run_id: Run ID for tracking
+        result: Result dict to populate
+        memory: AgentMemory instance
+        memory_insights: Memory insights dict
+
+    Returns:
+        Pipeline result with status
+    """
+    from shared.primitives.external_links import inject_links_in_content_sections
+    from shared.primitives.costs import acquire_resort_costs
+
+    result["refresh_mode"] = "light"
+
+    # =========================================================================
+    # STAGE 1: Budget Check (light refresh is ~$0.50)
+    # =========================================================================
+    if not check_budget(1.0):  # ~$1 buffer for light refresh
+        result["status"] = "budget_exceeded"
+        result["error"] = "Daily budget exceeded"
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="budget_check_failed",
+            reasoning="Stopping light refresh: daily budget would be exceeded",
+        )
+        return result
+
+    result["stages"]["budget_check"] = "passed"
+
+    # =========================================================================
+    # STAGE 2: Load Existing Resort
+    # =========================================================================
+    try:
+        slug = slugify(resort_name)
+        existing = get_resort_by_slug(slug, country)
+
+        if not existing:
+            # Resort doesn't exist - fall back to full pipeline
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="light_refresh_fallback",
+                reasoning=f"Resort {resort_name} not found - light refresh not possible",
+            )
+            result["status"] = "skipped"
+            result["error"] = "Resort not found for light refresh"
+            return result
+
+        resort_id = existing["id"]
+        result["resort_id"] = resort_id
+        result["stages"]["load_existing"] = {"status": "complete", "resort_id": resort_id}
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="light_refresh_load",
+            reasoning=f"Loaded existing resort {resort_name} (ID: {resort_id}) for light refresh",
+        )
+
+    except Exception as e:
+        result["status"] = "failed"
+        result["error"] = f"Failed to load resort: {e}"
+        return result
+
+    # =========================================================================
+    # STAGE 3: Update Costs (if we can find current data)
+    # =========================================================================
+    try:
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="light_refresh_costs",
+            reasoning=f"Attempting cost update for {resort_name}",
+        )
+
+        cost_result = await acquire_resort_costs(
+            resort_name=resort_name,
+            country=country,
+            official_website=None,  # Will be discovered
+            research_snippets=[],  # No fresh research in light mode
+        )
+
+        if cost_result.success:
+            update_resort_costs(resort_id, cost_result.costs)
+            log_cost("research_apis", 0.05, None, {"run_id": run_id, "stage": "light_cost_update"})
+            result["stages"]["cost_update"] = {
+                "status": "complete",
+                "source": cost_result.source,
+                "confidence": cost_result.confidence,
+            }
+            print(f"✓ Light Refresh: Costs updated from {cost_result.source}")
+        else:
+            result["stages"]["cost_update"] = {"status": "skipped", "reason": cost_result.error}
+            print(f"⚠️  Light Refresh: Cost update skipped - {cost_result.error}")
+
+    except Exception as e:
+        result["stages"]["cost_update"] = {"status": "failed", "error": str(e)}
+        print(f"⚠️  Light Refresh: Cost update failed - {e}")
+
+    # =========================================================================
+    # STAGE 4: Re-inject External Links
+    # =========================================================================
+    try:
+        # Get existing content
+        client = get_supabase_client()
+        content_result = client.table("resort_content")\
+            .select("*")\
+            .eq("resort_id", resort_id)\
+            .single()\
+            .execute()
+
+        if content_result.data:
+            content = content_result.data
+
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="light_refresh_links",
+                reasoning=f"Re-injecting external links for {resort_name}",
+            )
+
+            modified_content, injected_links = await inject_links_in_content_sections(
+                content=content,
+                resort_name=resort_name,
+                country=country,
+                resort_slug=slug,
+            )
+
+            if injected_links:
+                # Update content with new links
+                update_resort_content(resort_id, modified_content)
+                log_cost("anthropic", 0.02, None, {"run_id": run_id, "stage": "light_link_injection"})
+                result["stages"]["link_injection"] = {
+                    "status": "complete",
+                    "links_injected": len(injected_links),
+                }
+                print(f"✓ Light Refresh: {len(injected_links)} external links injected")
+            else:
+                result["stages"]["link_injection"] = {"status": "no_new_links"}
+                print(f"✓ Light Refresh: No new links to inject")
+        else:
+            result["stages"]["link_injection"] = {"status": "skipped", "reason": "No content found"}
+
+    except Exception as e:
+        result["stages"]["link_injection"] = {"status": "failed", "error": str(e)}
+        print(f"⚠️  Light Refresh: Link injection failed - {e}")
+
+    # =========================================================================
+    # STAGE 5: Refresh Images (if needed)
+    # =========================================================================
+    try:
+        # Check if resort has images
+        image_result = client.table("resort_images")\
+            .select("id")\
+            .eq("resort_id", resort_id)\
+            .limit(1)\
+            .execute()
+
+        if not image_result.data:
+            # No images - try to fetch
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="light_refresh_images",
+                reasoning=f"Fetching images for {resort_name} (none found)",
+            )
+
+            ugc_result = await fetch_and_store_ugc_photos(
+                resort_id=resort_id,
+                resort_name=resort_name,
+                country=country,
+                latitude=existing.get("latitude"),
+                longitude=existing.get("longitude"),
+                max_photos=5,
+                filter_with_vision=True,
+            )
+
+            if ugc_result.success:
+                log_cost("google_places", ugc_result.cost, None, {"run_id": run_id, "stage": "light_images"})
+                result["stages"]["images"] = {
+                    "status": "complete",
+                    "photos_count": len(ugc_result.photos),
+                }
+                print(f"✓ Light Refresh: {len(ugc_result.photos)} images fetched")
+            else:
+                result["stages"]["images"] = {"status": "failed", "error": ugc_result.error}
+        else:
+            result["stages"]["images"] = {"status": "skipped", "reason": "Images already exist"}
+
+    except Exception as e:
+        result["stages"]["images"] = {"status": "failed", "error": str(e)}
+        print(f"⚠️  Light Refresh: Image fetch failed - {e}")
+
+    # =========================================================================
+    # STAGE 6: Mark as Refreshed
+    # =========================================================================
+    try:
+        mark_resort_refreshed(resort_id)
+        result["status"] = "refreshed"
+        result["completed_at"] = datetime.utcnow().isoformat()
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="light_refresh_complete",
+            reasoning=f"Light refresh complete for {resort_name}",
+            metadata=result["stages"],
+        )
+
+        print(f"✓ Light Refresh complete for {resort_name}")
+
+    except Exception as e:
+        result["status"] = "failed"
+        result["error"] = f"Failed to mark as refreshed: {e}"
+
+    return result
 
 
 def slugify(name: str) -> str:
@@ -270,10 +509,15 @@ async def run_resort_pipeline(
     country: str,
     task_id: str | None = None,
     auto_publish: bool = True,
+    refresh_mode: str = "full",
 ) -> dict[str, Any]:
     """Run the full pipeline for a single resort.
 
-    Steps:
+    Supports two modes:
+    - "full": Complete pipeline (research, content, images, etc.)
+    - "light": Skip research/content, only refresh costs, links, and images
+
+    Steps (full mode):
     1. Check budget
     2. Research resort (Exa + SerpAPI + Tavily)
     3. Fetch trail map data (OpenStreetMap)
@@ -282,15 +526,21 @@ async def run_resort_pipeline(
     6. Generate images (Gemini → Glif → Replicate fallback)
     7. Fetch UGC photos (Google Places)
     8. Run three-agent approval panel (TrustGuard, FamilyValue, VoiceCoach)
-       - Requires 2/3 majority to approve
-       - Iterates up to 3 times, improving content based on feedback
-       - Publishes if approved, saves as draft otherwise
+
+    Steps (light mode):
+    1. Check budget
+    2. Load existing resort data
+    3. Update costs (if sources available)
+    4. Re-inject external links
+    5. Refresh images (if needed)
+    6. Mark as refreshed
 
     Args:
         resort_name: Name of the resort
         country: Country the resort is in
         task_id: Optional task ID for audit logging
         auto_publish: Whether to run approval panel and publish if approved
+        refresh_mode: "full" for complete pipeline, "light" for refresh only
 
     Returns:
         Pipeline result with status, approval panel history, and any errors
@@ -334,14 +584,28 @@ async def run_resort_pipeline(
         task_id=None,  # Not tied to a queue task
         agent_name="pipeline_runner",
         action="start_pipeline",
-        reasoning=f"Starting content generation for {resort_name}, {country}. Memory: {len(similar_episodes)} similar runs, {len(learned_patterns)} patterns.",
+        reasoning=f"Starting {'light refresh' if refresh_mode == 'light' else 'content generation'} for {resort_name}, {country}. Memory: {len(similar_episodes)} similar runs, {len(learned_patterns)} patterns.",
         metadata={
             "run_id": run_id,
             "resort": resort_name,
             "country": country,
             "memory_context": memory_insights,
+            "refresh_mode": refresh_mode,
         },
     )
+
+    # =========================================================================
+    # LIGHT REFRESH MODE: Skip research/content, only update costs/links/images
+    # =========================================================================
+    if refresh_mode == "light":
+        return await _run_light_refresh(
+            resort_name=resort_name,
+            country=country,
+            run_id=run_id,
+            result=result,
+            memory=memory,
+            memory_insights=memory_insights,
+        )
 
     # =========================================================================
     # STAGE 1: Budget Check

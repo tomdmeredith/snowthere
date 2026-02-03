@@ -13,8 +13,11 @@ Usage:
     # Dry run (see what would happen without doing it)
     python cron.py --dry-run
 
-    # Single resort (manual trigger)
+    # Single resort (manual trigger - full pipeline)
     python cron.py --resort "Zermatt" --country "Switzerland"
+
+    # Single resort - light refresh (skip research/content, only update costs/links/images)
+    python cron.py --resort "Zermatt" --country "Switzerland" --light-refresh
 
     # Use mixed selection (discovery + stale + queue) instead of Claude
     python cron.py --use-mixed-selection
@@ -27,6 +30,12 @@ Usage:
 
     # Full autonomous mode: discovery + mixed selection
     python cron.py --run-discovery --use-mixed-selection
+
+Refresh Modes:
+    - Full: Complete pipeline (research, content, images, approval panel)
+    - Light: Skip research/content, only update costs/links/images (~80% cheaper)
+
+    Stale resorts (30+ days old) automatically use light refresh in daily pipeline.
 
 Railway Configuration:
     In railway.toml or dashboard:
@@ -426,6 +435,12 @@ def main():
         help="Force discovery run even if it ran recently (requires --run-discovery)",
     )
 
+    parser.add_argument(
+        "--light-refresh",
+        action="store_true",
+        help="Run light refresh mode (skip research/content, only update costs/links/images). Use with --resort.",
+    )
+
     args = parser.parse_args()
 
     # Validate args
@@ -435,14 +450,17 @@ def main():
     # Run appropriate mode
     if args.resort:
         # Single resort mode
+        refresh_mode = "light" if args.light_refresh else "full"
+        mode_label = "LIGHT REFRESH" if args.light_refresh else "FULL PIPELINE"
         print(f"\n{'='*60}")
-        print(f"SINGLE RESORT MODE: {args.resort}, {args.country}")
+        print(f"SINGLE RESORT MODE ({mode_label}): {args.resort}, {args.country}")
         print(f"{'='*60}\n")
 
         result = asyncio.run(run_single_resort(
             resort_name=args.resort,
             country=args.country,
             auto_publish=not args.no_publish,
+            refresh_mode=refresh_mode,
         ))
 
     else:

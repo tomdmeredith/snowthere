@@ -1086,8 +1086,8 @@ async def inject_external_links(
             if links_added >= max_links_per_section:
                 break
 
-            # Skip low confidence extractions
-            if entity.confidence < 0.6:
+            # Skip low confidence extractions (lowered threshold for wider net)
+            if entity.confidence < 0.5:
                 continue
 
             # Resolve entity to links (3-tier: brand → Places → Maps search)

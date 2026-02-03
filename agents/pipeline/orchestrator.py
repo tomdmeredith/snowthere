@@ -111,7 +111,7 @@ def get_stale_work_items(limit: int = 5) -> list[dict[str, Any]]:
         limit: Maximum items to return
 
     Returns:
-        List of resort dicts needing refresh
+        List of resort dicts needing refresh (with refresh_mode=light for efficiency)
     """
     try:
         stale = get_stale_resorts(days_threshold=30, limit=limit)
@@ -123,9 +123,10 @@ def get_stale_work_items(limit: int = 5) -> list[dict[str, Any]]:
                 "name": resort.get("name") or "Unknown",
                 "country": resort.get("country") or "Unknown",
                 "region": resort.get("region") or "",
-                "reasoning": f"Content stale - last refreshed {resort.get('days_since_refresh', 30)}+ days ago",
+                "reasoning": f"Content stale - light refresh for costs/links/images",
                 "source": "stale_refresh",
                 "resort_id": resort.get("id"),
+                "refresh_mode": "light",  # Light refresh: skip research/content, do costs/links/images
             })
 
         return items
@@ -882,12 +883,13 @@ async def run_daily_pipeline(
         country = resort_info.get("country")
         source = resort_info.get("source", "claude_selection")
         candidate_id = resort_info.get("candidate_id")  # For discovery candidates
+        refresh_mode = resort_info.get("refresh_mode", "full")  # "full" or "light"
 
         log_reasoning(
             task_id=None,
             agent_name="orchestrator",
             action="processing_resort",
-            reasoning=f"Processing resort {i+1}/{len(resorts_to_process)}: {resort_name}, {country} (source: {source})",
+            reasoning=f"Processing resort {i+1}/{len(resorts_to_process)}: {resort_name}, {country} (source: {source}, mode: {refresh_mode})",
             metadata={
                 "run_id": run_id,
                 "resort": resort_name,
@@ -895,6 +897,7 @@ async def run_daily_pipeline(
                 "index": i,
                 "source": source,
                 "candidate_id": candidate_id,
+                "refresh_mode": refresh_mode,
             },
         )
 
@@ -917,6 +920,7 @@ async def run_daily_pipeline(
                 country=country,
                 task_id=None,  # No queue task - run_id tracked in metadata
                 auto_publish=True,
+                refresh_mode=refresh_mode,  # Pass refresh mode to runner
             )
 
             # Determine status for discovery candidate update
@@ -1069,6 +1073,7 @@ async def run_single_resort(
     resort_name: str,
     country: str,
     auto_publish: bool = True,
+    refresh_mode: str = "full",
 ) -> dict[str, Any]:
     """Run pipeline for a single resort (manual trigger).
 
@@ -1079,6 +1084,7 @@ async def run_single_resort(
         resort_name: Name of the resort
         country: Country the resort is in
         auto_publish: Whether to auto-publish if confidence is high
+        refresh_mode: "full" for complete pipeline, "light" for refresh only
 
     Returns:
         Pipeline result
@@ -1089,8 +1095,8 @@ async def run_single_resort(
         task_id=None,
         agent_name="orchestrator",
         action="manual_trigger",
-        reasoning=f"Manual pipeline trigger for {resort_name}, {country}",
-        metadata={"run_id": run_id},
+        reasoning=f"Manual pipeline trigger for {resort_name}, {country} (mode: {refresh_mode})",
+        metadata={"run_id": run_id, "refresh_mode": refresh_mode},
     )
 
     return await run_resort_pipeline(
@@ -1098,4 +1104,5 @@ async def run_single_resort(
         country=country,
         task_id=None,  # No queue task for manual triggers
         auto_publish=auto_publish,
+        refresh_mode=refresh_mode,
     )
