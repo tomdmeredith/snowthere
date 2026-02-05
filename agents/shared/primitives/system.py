@@ -1,5 +1,6 @@
 """System primitives for agent operations."""
 
+import json
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
@@ -62,6 +63,9 @@ def log_reasoning(
     """
     client = get_supabase_client()
 
+    # Serialize metadata to handle dataclasses and other non-JSON types
+    safe_metadata = json.loads(json.dumps(metadata or {}, default=str))
+
     data = {
         "id": str(uuid4()),
         # task_id can be None for orchestrator-level logging (not tied to a queue task)
@@ -71,7 +75,7 @@ def log_reasoning(
         "action": action,
         "reasoning": reasoning,
         # Use input_data for metadata since that's what the schema has
-        "input_data": metadata or {},
+        "input_data": safe_metadata,
     }
 
     response = client.table("agent_audit_log").insert(data).execute()
