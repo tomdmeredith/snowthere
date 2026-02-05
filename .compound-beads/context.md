@@ -1,16 +1,16 @@
 # Snowthere Context
 
-> Last synced: 2026-02-02 (Linking Strategy Overhaul)
-> Agent: compound-beads v2.1
+> Last synced: 2026-02-05 (Pipeline Improvements)
+> Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
 
 ## Current State
 
-**All rounds through R16 + Linking Strategy Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+**All rounds through R16 + Linking Strategy + Pipeline Improvements complete.** No active round. Site is live, pipeline is autonomous, entity linking significantly improved.
 
-- **Resorts:** 58 with entity links, pipeline adds ~6/day
-- **Entity Links:** 371 in-content links across 58 resorts, 1,262 entity_link_cache entries
+- **Resorts:** 58+ with entity links, pipeline adds ~6/day
+- **Entity Links:** Improved — resorts now get 10-20 links (was 3-5 before extraction prompt fix)
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
 - **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
@@ -22,6 +22,88 @@
 - **Data Quality:** Backfill complete — 43% avg completeness, 7 resorts show full tables, 22 partial, 9 hidden
 - **Linking:** Context-aware destinations (hotel→booking, restaurant→maps, ski_school→direct), UTMs on in-content links, rel allowlist validation
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway, type mapping fixed for API (New)
+
+---
+
+## Pipeline Improvements (2026-02-05) ✅
+
+**Goal:** Fix low entity link density, stale detection bug, add light refresh mode for efficiency
+
+### Issue 1: Low Entity Link Density — FIXED
+
+**Problem:** Whitefish only got 3 links when 20+ were possible. Claude's entity extraction was returning conservative confidence scores.
+
+**Fixes applied:**
+1. **Extraction prompt** — Added HIGH confidence (0.8+) guidance for named businesses
+2. **Multi-entity example** — JSON template now shows 3 entities (was 1)
+3. **System prompt strengthened** — Explicit confidence examples (Kandahar Lodge → 0.9)
+4. **Confidence threshold** — 0.6 → 0.5 in `external_links.py`
+5. **City exclusion** — Explicitly exclude major cities/metros from extraction (Sandy, Draper, Vancouver, etc.)
+
+### Issue 2: Stale Detection Bug — FIXED
+
+**Problem:** Deer Valley was refreshed after 10 days, not 30+. `get_stale_resorts()` calculated cutoff but never used it.
+
+**Fix:** Added `.or_(f"last_refreshed.lt.{cutoff_date},last_refreshed.is.null")` filter in `publishing.py`
+
+### Issue 3: Light Refresh Mode — IMPLEMENTED
+
+**Problem:** Full refresh costs ~$3/resort but resorts don't change much.
+
+**Fix:** New `_run_light_refresh()` function (~180 lines) in `runner.py`:
+- Skips research, content generation
+- Only updates costs, entity links, images
+- Cost: ~$0.50 vs ~$3 (85% reduction)
+- Added `--light-refresh` CLI flag to `cron.py`
+- Stale resorts automatically use light refresh
+
+### Issue 4: JSON Serialization Error — FIXED
+
+**Problem:** `TypeError: Object of type KeywordResearchConfig is not JSON serializable` in audit logs
+
+**Fix:** Added `json.loads(json.dumps(metadata or {}, default=str))` in `log_reasoning()` in `system.py`
+
+### Backfills Performed
+
+| Resort | Before | After |
+|--------|--------|-------|
+| Whitefish | 3 | 12 |
+| Obergurgl-Hochgurgl | 4 | 14 |
+| Okemo | 4 | 14 |
+| Snowbird | 10 | 29 |
+| Sun Peaks | 9 | 17 |
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `agents/shared/primitives/intelligence.py` | Extraction prompt improvements, city exclusion |
+| `agents/shared/primitives/external_links.py` | Confidence threshold 0.6 → 0.5 |
+| `agents/shared/primitives/publishing.py` | Stale detection fix |
+| `agents/shared/primitives/system.py` | JSON serialization for dataclasses |
+| `agents/pipeline/orchestrator.py` | refresh_mode parameter |
+| `agents/pipeline/runner.py` | `_run_light_refresh()` function |
+| `agents/cron.py` | `--light-refresh` flag, "refreshed" exit code |
+
+### Key Commits
+```
+1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
+82a3951 fix: Exclude major cities from entity extraction
+b182e33 fix: Treat 'refreshed' status as success in exit code
+98cbc6b feat: Pipeline improvements — entity extraction, stale detection fix, light refresh mode
+```
+
+### Railway Pipeline Investigation
+
+Used 3-agent expert panel to investigate today's Railway run:
+- **Published with issues (5 resorts):** By design — publish-first model, queued for improvement
+- **Tagline retries (48):** By design — strict dual-threshold (overall 0.7 AND structure_novelty 0.6)
+- **JSON serialization error:** Fixed with metadata serialization
+
+**Arc:**
+- Started believing: Entity extraction confidence scores were appropriate and stale detection worked correctly
+- Ended believing: Conservative extraction was missing valid entities; stale detection had a bug; full refresh is overkill for maintenance
+- Transformation: From accepting pipeline defaults to targeted improvements that increase link density 3x and reduce refresh costs 85%
 
 ---
 
@@ -639,6 +721,14 @@ _(no active round)_
 
 ---
 
+## Partial Completion Tracking
+
+If interrupted mid-task, track progress here:
+
+_(no active task)_
+
+---
+
 ## Pending Manual Work
 
 - Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
@@ -662,12 +752,11 @@ _(no active round)_
 ## Recent Commits
 
 ```
+1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
+82a3951 fix: Exclude major cities from entity extraction
+b182e33 fix: Treat 'refreshed' status as success in exit code
+98cbc6b feat: Pipeline improvements — entity extraction, stale detection fix, light refresh mode
+b2174dc feat: Entity link coverage overhaul — brand registry, quality gates, resort_entities atoms
 ede019f refactor: Expert review fixes — html.escape, dead code removal, rel allowlist
 1412d97 fix: Send referrer on all entity links for partner traffic attribution
-18700fb fix: Expand entity_link_cache valid types + migration 037
-32a855d fix: Use valid Places API (New) types for includedType parameter
-075f681 feat: Linking strategy overhaul — context-aware destinations, UTMs, rel preservation
-7047959 feat: Mobile filter collapse + Manus audit bug fixes
-f55fb36 fix: Newsletter day-of-week bug + Railway project ref + R15/R16 catchup
-ee6b3ec feat: R15 GEO & Rich Results — JSON-LD schemas, image sitemap, legal pages
 ```

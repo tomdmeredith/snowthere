@@ -1,6 +1,8 @@
 # Snowthere Quick Start
 
-**All rounds through R16 + Linking Strategy Overhaul complete.** No active round. Site is live, pipeline is autonomous, data quality gates active.
+> Compound Beads v3.0 | Last Updated: 2026-02-05
+
+**All rounds through R16 + Linking Strategy + Pipeline Improvements complete.** No active round. Site is live, pipeline is autonomous, entity linking improved.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -11,98 +13,42 @@
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
 **Intelligence Summary**:
-- **Working well**: Autonomous pipeline (resorts + guides + newsletter), deterministic scoring, 4-tier image fallback, ISR revalidation, context-aware entity linking (371 links across 58 resorts)
-- **Needs attention**: 9 resorts at 0% completeness, 20 cost data outliers, TAVILY_API_KEY expired on Railway, migration 036 not applied
-- **Watch**: Google indexing pace (~30 pages still "Discovered"), affiliate program signups pending, Google Places API key unrestricted
+- **Working well**: Autonomous pipeline, deterministic scoring, 4-tier image fallback, ISR revalidation, improved entity linking (HIGH confidence extraction, light refresh mode)
+- **Needs attention**: 9 resorts at 0% completeness, 20 cost data outliers, migration 036 not applied
+- **Watch**: Google indexing pace, affiliate program signups pending
 
-**Recent**:
-- **Linking Strategy Overhaul** (Completed 2026-02-02)
-  - Context-aware destinations: hotel→booking, restaurant→maps, ski_school→direct, grocery→maps
-  - UTMs on in-content entity links (utm_medium=in_content)
-  - rel attribute allowlist in sanitize.ts (noopener, noreferrer, nofollow, sponsored, ugc)
-  - html.escape defense-in-depth for link URL interpolation
-  - Entity link referrer attribution (dofollow for partner traffic visibility)
-  - ~182 lines dead code removed, _choose_link_url simplified to data-driven priority table
-  - Backfill: 371 entity links across 58 resorts, 1,262 cache entries
-  - Migrations 037+038: expanded entity_link_cache types (retail, transportation, bar, cafe, etc.)
-  - 5-agent expert review: 2 rounds, all PASS
-- **R16: Error Handling & Polish** (Completed 2026-01-30)
-  - Custom error boundaries (error.tsx, not-found.tsx) — branded 404 and error pages
-  - Loading skeletons for resorts, resort detail, and guide pages
-  - Resort filtering system: country/age/budget pills, search input, URL-synced state, sort options
-  - GDPR data request form on /privacy with API route + rate limiting + migration 036
-  - CSP headers tightened in vercel.json (HTTPS-only img-src, object-src none)
-  - Comprehensive browser testing: 15 categories, 3 customer walkthroughs, all pass
-  - BLOCKED: migration 036 not yet applied to cloud Supabase (form returns 500)
-- **R15: GEO & Rich Results Enhancement + Data Backfill** (Completed 2026-01-30)
-  - WebSite + Organization JSON-LD on homepage (sitelinks search box)
-  - ItemList JSON-LD on /resorts and /guides index pages
-  - Image sitemap extension (xmlns:image) for all resort images
-  - 6 legal/static pages added to sitemap
-  - Migration 033 applied: data_completeness column
-  - Data backfill: 33/38 resorts updated, completeness 30%→43%, 7 resorts show full tables
-  - Tavily API key refreshed
-- **R14: SEO & Schema Critical Fixes + Bug Fixes** (Completed 2026-01-30)
-  - Fixed duplicate title suffix, quiz page footer/title, unified footer, newsletter link
-  - Kitzbühel 404: Unicode slug normalization + ASCII migration (035)
-  - Already clean: AggregateRating, FAQ schema, BreadcrumbList, OG images
-- **Data Quality & Scoring Overhaul** (Completed 2026-01-29)
-  - Scoring: 3 false defaults fixed, completeness multiplier added
-  - New primitives: `calculate_data_completeness()`, `KEY_COMPLETENESS_FIELDS`
-  - Migration 033: data_completeness column on resort_family_metrics
-  - Frontend: FamilyMetricsTable + CostTable unhidden with conditional rendering (>= 0.3 completeness)
-  - Pipeline: data_completeness stored after extraction, tiered publication gate, dynamic quality queue
-  - MCP: 3 new tools (data completeness, family score, data quality audit)
-  - FamilyValue agent: data completeness check in approval criteria
-  - New scripts: audit_data_quality.py, backfill_data_quality.py, validate_cross_resort.py
-  - New calibration file: agents/shared/calibration/golden_resorts.json
-- R13.2: **Google Places API Fix** (Completed 2026-01-29)
-  - Root cause: Places API + Places API (New) not enabled on Google Cloud project, wrong API key on Railway
-  - Enabled both APIs on Snowthere Google Cloud project
-  - Updated `GOOGLE_PLACES_API_KEY` on Railway with correct key from Snowthere project
-- R13.1: **Technical SEO Audit & Indexing** (Completed 2026-01-29)
-  - Canonical tags on 8 pages, IndexNow verified, ISR bug fix
-  - GSC: 7 priority pages submitted for indexing
-- R13: **Delightful, On-Brand, Image-Rich Guide Pages** (Completed 2026-01-28)
-  - Nano Banana Pro on Replicate as primary image model (4-tier fallback)
-  - Guide page Spielplatz design overhaul, exit intent popup redesigned
+**Recent Session (2026-02-05) — Pipeline Improvements**:
+- **Entity extraction prompt**: HIGH confidence (0.8+) guidance, multi-entity example, explicit city exclusion
+- **Confidence threshold**: 0.6 → 0.5 (catches more valid entities)
+- **Stale detection fix**: `get_stale_resorts()` now actually filters by days_threshold (was returning N oldest regardless)
+- **Light refresh mode**: New `_run_light_refresh()` function (~$0.50 vs ~$3), skips research/content, updates costs/links/images
+- **CLI flag**: `--light-refresh` added to cron.py
+- **JSON serialization fix**: `log_reasoning()` now handles dataclasses (KeywordResearchConfig error fixed)
+- **Backfills**: Whitefish (3→12), Obergurgl (4→14), Okemo (4→14), Snowbird (10→29), Sun Peaks (9→17)
 
-**Stats**: 43 resorts published, 10 guides published, scores 3.8-8.3 (avg 5.4)
+**Key Commits (2026-02-05)**:
+```
+1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
+82a3951 fix: Exclude major cities from entity extraction
+b182e33 fix: Treat 'refreshed' status as success in exit code
+98cbc6b feat: Pipeline improvements — entity extraction, stale detection fix, light refresh mode
+```
 
-**Pipeline**: Active on Railway (snowthere-agents / creative-spontaneity)
-- Resorts: ~6/day, 70% discovery, deterministic scoring
-- Guides: Mon/Thu, 3-agent expert panel, auto-publish, Nano Banana Pro images
+**Stats**: 43+ resorts published, 10 guides published, pipeline adds ~6/day
+
+**Pipeline**: Active on Railway (snowthere-agents)
+- Resorts: ~6/day, improved entity linking (10-20 links/resort vs 3-5 before)
+- Light refresh for stale resorts (~$0.50 vs ~$3)
+- Guides: Mon/Thu, 3-agent expert panel
 - Newsletter: Thursday 6am PT
-- Email sequences: 5-email welcome series
 
 **Infrastructure**:
 - Vercel: www.snowthere.com (ISR)
 - Railway: snowthere-agents (daily cron)
 - Supabase: Snowthere, AWS us-east-2, 30+ tables
-- GSC: 54 pages discovered, 4 indexed, 7 priority requests submitted, GSC API active
-- Bing: sitemap submitted, IndexNow verified
-- Google Cloud: Project "Snowthere", Search Console API + Places API + Places API (New) enabled
-- Google Places: API key configured on Railway, UGC photos + entity links unblocked
 
-**Known Issues**:
-- ~30 pages "Discovered - not indexed" (normal for 11-day-old site)
-- Affiliate programs: migration 032 created, manual signups pending
+**Planned Rounds**:
+- **R17: Agent-Native Parity** — Expose remaining primitives as MCP tools
+- **R18: Pipeline Architecture** — Decompose runner monolith
 
-**Planned Rounds** (from ultimate audit 2026-01-29):
-
-- ~~R14: SEO & Schema Critical Fixes + Bug Fixes~~ ✅
-- ~~R15: GEO & Rich Results Enhancement + Data Backfill~~ ✅
-- ~~R16: Error Handling & Polish~~ ✅
-- **R17: Agent-Native Parity** — Expose remaining primitive modules as MCP tools
-- **R18: Pipeline Architecture** — Decompose runner monolith, wire AgentTracer
-
-**Also pending**:
-- Request indexing for remaining GSC pages (daily quota)
-- Sign up for affiliate networks + run migration 032
-- Restrict Google Places API key (currently unrestricted)
-- Homepage redesign (moved to after R16)
-- Update TAVILY_API_KEY on Railway (local .env updated, Railway still has old key)
-- Fix 20 cost outlier warnings (US resorts with implausibly low lift prices, Austrian resorts with EUR prices stored as USD)
-- 9 resorts still at 0% completeness (Selva Val Gardena, Cortina, Stowe, Hakuba, etc.) — need targeted research
-
-**Full context**: CLAUDE.md | .compound-beads/context.md
+**Full context**: CLAUDE.md | .compound-beads/context.md | AGENTS.md
