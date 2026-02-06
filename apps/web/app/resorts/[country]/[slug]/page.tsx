@@ -741,6 +741,7 @@ export default async function ResortPage({ params }: Props) {
                   perfectIf={metrics.perfect_if || []}
                   skipIf={metrics.skip_if || []}
                   lastUpdated={resort.last_refreshed || resort.updated_at}
+                  scoreConfidence={(metrics as any).score_confidence || null}
                 />
               )}
 

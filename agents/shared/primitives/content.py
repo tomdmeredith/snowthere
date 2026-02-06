@@ -35,24 +35,21 @@ async def write_section(
     client = get_claude_client()
 
     section_prompts = {
-        "quick_take": """Write a "Quick Take" for {resort_name} that gives families the BLUF (Bottom Line Up Front).
-Include:
-- Overall family verdict (reference the {family_score}/10 score)
-- Best age range for kids
-- 2-3 "Perfect if..." bullets
-- 2-3 "Skip it if..." bullets
-
-Keep it concise but helpful. This is what parents read first to decide if they should keep reading.""",
+        "quick_take": """Write a single flowing paragraph of 40-65 words about {resort_name} for families.
+Include: the resort's most distinctive feature, the ideal kid age range, one honest catch, and a memorable punchline.
+Reference the {family_score}/10 family score.
+No bullet points in the paragraph. Sound like a friend talking, not a travel brochure.
+Then provide 2-3 "Perfect if..." and 1-2 "Skip it if..." bullets separately.""",
         "getting_there": """Write the "Getting There" section for {resort_name} in {country}.
 Include:
-- Nearest major airports with typical drive times
+- Nearest major airports with typical drive times. ALWAYS include the 3-letter IATA code in parentheses after the airport name, e.g., <strong>Zurich Airport (ZRH)</strong>, <strong>Innsbruck Airport (INN)</strong>
 - Whether to rent a car or use shuttles
 - Name specific transfer companies or shuttle services if known (e.g., "Four Seasons Travel", "Resort Express")
 - Any tricky navigation tips (mountain roads, winter conditions)
 - Pro tips for making travel easier with kids
 
-Be practical and specific. Mention actual airport codes and drive times if available.
-Use <strong> tags around business/service names on first mention.""",
+Be practical and specific.
+Use <strong> tags around business/service names AND airport names on first mention.""",
         "where_to_stay": """Write the "Where to Stay" section for {resort_name}.
 Include:
 - Name at least 3 specific hotels, lodges, or apartment complexes by their actual name
@@ -123,9 +120,14 @@ AVOID:
 ALWAYS INCLUDE:
 {chr(10).join(f'- {i}' for i in profile.include)}
 
+CRITICAL BOLDING RULE:
+Every business, hotel, restaurant, ski school, rental shop, grocery store, and airport mentioned by name MUST be wrapped in <strong> tags on first mention.
+Do NOT bold generic terms like "the resort", "ski school" (generic), or "the village".
+Only bold SPECIFIC named businesses (e.g., <strong>Hotel Schweizerhof</strong>, <strong>Intersport Bründl</strong>).
+
 Format your response as HTML that will be rendered on the website. Use:
 - <p> for paragraphs
-- <strong> for emphasis
+- <strong> for named businesses/entities on first mention
 - <ul>/<li> for lists
 - <h3> for sub-sections if needed
 

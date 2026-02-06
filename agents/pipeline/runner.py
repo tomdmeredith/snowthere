@@ -76,8 +76,6 @@ from shared.primitives import (
     # Trail map
     get_trail_map,
     get_difficulty_breakdown,
-    # Scoring (R9 - deterministic family score calculation)
-    calculate_family_score,
     # Data completeness (R14 - data quality overhaul)
     calculate_data_completeness,
     # Official images (real photos from resort websites)
@@ -1248,13 +1246,69 @@ async def run_resort_pipeline(
 
         # Update family metrics if available - verify write succeeded
         if research_data.get("family_metrics"):
-            # R9.2 FIX: Recalculate score with deterministic formula
-            # Replaces LLM-extracted integer (8, 9) with precise decimal (6.8, 7.3)
-            old_score = research_data["family_metrics"].get("family_overall_score")
-            calculated_score = calculate_family_score(research_data["family_metrics"])
-            research_data["family_metrics"]["family_overall_score"] = calculated_score
-            if old_score != calculated_score:
-                print(f"  Score recalculated: {old_score} → {calculated_score}")
+            from shared.primitives.scoring import (
+                calculate_structural_score,
+                calculate_composite_family_score,
+            )
+            from shared.primitives.intelligence import (
+                assess_family_friendliness,
+                assess_review_sentiment,
+            )
+
+            # R20: Three-layer hybrid scoring
+            structural = calculate_structural_score(research_data["family_metrics"])
+            research_data["family_metrics"]["structural_score"] = structural
+            print(f"  Structural score: {structural}")
+
+            # Content assessment (LLM-based)
+            content_score_val = None
+            content_dimensions = {}
+            content_reasoning = ""
+            try:
+                assessment = await assess_family_friendliness(
+                    resort_name=resort_name,
+                    country=country,
+                    content_sections=content,
+                )
+                if assessment:
+                    content_score_val = assessment.overall_score
+                    content_dimensions = assessment.dimensions
+                    content_reasoning = assessment.reasoning
+                    research_data["family_metrics"]["content_score"] = content_score_val
+                    research_data["family_metrics"]["score_dimensions"] = content_dimensions
+                    print(f"  Content score: {content_score_val}")
+            except Exception as e:
+                print(f"  Content assessment skipped: {e}")
+
+            # Review sentiment (if reviews exist)
+            review_score_val = None
+            reviews_html = content.get("parent_reviews_summary", "")
+            if reviews_html and len(reviews_html) > 50:
+                try:
+                    review_score_val = await assess_review_sentiment(
+                        resort_name=resort_name,
+                        parent_reviews_content=reviews_html,
+                    )
+                    if review_score_val is not None:
+                        research_data["family_metrics"]["review_score"] = review_score_val
+                        print(f"  Review score: {review_score_val}")
+                except Exception as e:
+                    print(f"  Review assessment skipped: {e}")
+
+            # Composite score
+            composite = calculate_composite_family_score(
+                structural=structural,
+                content=content_score_val,
+                review=review_score_val,
+                content_dimensions=content_dimensions,
+                content_reasoning=content_reasoning,
+            )
+            research_data["family_metrics"]["family_overall_score"] = composite.family_score
+            research_data["family_metrics"]["score_confidence"] = composite.confidence
+            research_data["family_metrics"]["score_reasoning"] = composite.reasoning
+            from datetime import datetime, timezone
+            research_data["family_metrics"]["scored_at"] = datetime.now(timezone.utc).isoformat()
+            print(f"  Composite score: {composite.family_score} (confidence: {composite.confidence})")
 
             # R14 (B2): Compute and store data completeness
             completeness = calculate_data_completeness(research_data["family_metrics"])

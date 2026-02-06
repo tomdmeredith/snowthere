@@ -1165,6 +1165,163 @@ class EntityExtractionResult:
     extraction_confidence: float
 
 
+def extract_entities_from_strong_tags(
+    content: str,
+    resort_name: str,
+    country: str,
+    section_name: str | None = None,
+) -> EntityExtractionResult:
+    """
+    Extract linkable entities directly from <strong> tags in HTML content.
+
+    Strong-tag-first principle: The signal Claude already places (<strong>)
+    IS the linking signal. No redundant LLM extraction needed.
+
+    Args:
+        content: HTML content with <strong> tags
+        resort_name: Name of the resort (to exclude it)
+        country: Country for context
+        section_name: Optional section name for type hinting
+
+    Returns:
+        EntityExtractionResult with entities found in strong tags
+
+    Cost: FREE (no API calls)
+    """
+    # Blacklist: generic bold text that isn't a linkable entity
+    _GENERIC_BOLD_BLACKLIST = {
+        "pro tip", "real talk", "warning", "the resort", "the village",
+        "good news", "the catch", "bottom line", "perfect if", "skip if",
+        "the good", "the bad", "note", "important", "heads up",
+        "key takeaway", "quick tip", "fun fact", "insider tip",
+    }
+
+    # Find all <strong> tag contents
+    strong_pattern = re.compile(r'<strong>(.*?)</strong>', re.IGNORECASE | re.DOTALL)
+    matches = list(strong_pattern.finditer(content))
+
+    if not matches:
+        return EntityExtractionResult(
+            entities=[],
+            entity_count=0,
+            extraction_confidence=0.0,
+        )
+
+    entities = []
+    seen_names: set[str] = set()
+
+    for match in matches:
+        name = match.group(1).strip()
+        # Strip any nested HTML tags inside strong
+        name = re.sub(r'<[^>]+>', '', name).strip()
+
+        if not name or len(name) < 2 or len(name) > 100:
+            continue
+
+        name_lower = name.lower()
+
+        # Skip blacklisted generic bold text
+        if name_lower in _GENERIC_BOLD_BLACKLIST:
+            continue
+
+        # Skip resort name itself
+        if name_lower == resort_name.lower():
+            continue
+
+        # Skip pass brands (handled by brand registry)
+        if name_lower in {"ikon", "epic", "ikon pass", "epic pass"}:
+            continue
+
+        # Skip duplicates
+        if name_lower in seen_names:
+            continue
+        seen_names.add(name_lower)
+
+        # Classify entity type using heuristics
+        entity_type = _classify_entity_type(name, section_name)
+
+        # Extract surrounding sentence for context
+        start = max(0, match.start() - 100)
+        end = min(len(content), match.end() + 100)
+        context_snippet = re.sub(r'<[^>]+>', '', content[start:end]).strip()
+
+        entities.append(ExtractedEntity(
+            name=name,
+            entity_type=entity_type,
+            context_snippet=context_snippet[:200],
+            confidence=0.9,  # High confidence — Claude bolded it intentionally
+            first_mention_offset=match.start(),
+        ))
+
+    return EntityExtractionResult(
+        entities=entities,
+        entity_count=len(entities),
+        extraction_confidence=0.85 if entities else 0.0,
+    )
+
+
+def _classify_entity_type(name: str, section_name: str | None = None) -> str:
+    """Classify entity type from name and section context using heuristics."""
+    name_lower = name.lower()
+
+    # Airport detection (with IATA code pattern)
+    if re.search(r'\bairport\b', name_lower) or re.search(r'\([A-Z]{3}\)', name):
+        return "airport"
+
+    # Section-based hints
+    section_type_map = {
+        "getting_there": "transport",
+        "where_to_stay": "hotel",
+        "on_mountain": "ski_school",
+        "off_mountain": "activity",
+    }
+
+    # Keyword-based classification
+    hotel_kw = {"hotel", "lodge", "inn", "chalet", "residence", "pension", "gasthof", "haus", "hof", "auberge", "hostel"}
+    restaurant_kw = {"restaurant", "ristorante", "gasthaus", "bistro", "grill", "kitchen", "diner"}
+    bar_kw = {"bar", "pub", "tavern", "lounge"}
+    cafe_kw = {"cafe", "café", "bakery", "boulangerie", "coffee"}
+    grocery_kw = {"coop", "spar", "billa", "migros", "aldi", "lidl", "mpreis", "denner", "lawson", "seicomart", "7-eleven", "familymart", "supermarket", "grocery"}
+    ski_school_kw = {"ski school", "ski lesson", "skischule", "ski academy"}
+    rental_kw = {"rental", "sport", "intersport", "christy sports"}
+    childcare_kw = {"kinderland", "kids club", "childcare", "nursery", "crèche", "daycare", "murmli"}
+    transport_kw = {"railway", "shuttle", "bus", "transfer", "airlines", "train"}
+
+    for kw in hotel_kw:
+        if kw in name_lower:
+            return "hotel"
+    for kw in restaurant_kw:
+        if kw in name_lower:
+            return "restaurant"
+    for kw in bar_kw:
+        if kw in name_lower:
+            return "bar"
+    for kw in cafe_kw:
+        if kw in name_lower:
+            return "cafe"
+    for kw in grocery_kw:
+        if kw in name_lower:
+            return "grocery"
+    for kw in ski_school_kw:
+        if kw in name_lower:
+            return "ski_school"
+    for kw in rental_kw:
+        if kw in name_lower:
+            return "rental"
+    for kw in childcare_kw:
+        if kw in name_lower:
+            return "childcare"
+    for kw in transport_kw:
+        if kw in name_lower:
+            return "transport"
+
+    # Fall back to section-based hint
+    if section_name and section_name in section_type_map:
+        return section_type_map[section_name]
+
+    return "activity"  # Default
+
+
 async def extract_linkable_entities(
     content: str,
     resort_name: str,
@@ -1174,10 +1331,10 @@ async def extract_linkable_entities(
     """
     Extract linkable entities from resort content.
 
-    Identifies hotels, restaurants, ski schools, rental shops, and other
-    entities that could be linked to external sites or Google Maps.
-
-    Part of Round 7: External Linking & Affiliate System.
+    Strong-tag-first approach (Round 20):
+    1. Extract entities from <strong> tags (free, instant)
+    2. If < 2 entities in content > 200 words, fall back to Claude
+    3. Merge results (strong-tag entities take priority)
 
     Args:
         content: HTML or plain text content to analyze
@@ -1188,8 +1345,54 @@ async def extract_linkable_entities(
     Returns:
         EntityExtractionResult with list of extracted entities
 
-    Cost: ~$0.005 per call with Sonnet
+    Cost: FREE if strong tags found, ~$0.005 if Claude fallback needed
     """
+    # Phase 1: Try strong-tag extraction first (free)
+    strong_result = extract_entities_from_strong_tags(
+        content=content,
+        resort_name=resort_name,
+        country=country,
+        section_name=section_name,
+    )
+
+    # Check if we have enough entities from strong tags
+    clean_content = re.sub(r'<[^>]+>', ' ', content)
+    clean_content = re.sub(r'\s+', ' ', clean_content).strip()
+    word_count = len(clean_content.split())
+
+    # If strong tags gave us enough, skip Claude
+    if strong_result.entity_count >= 2 or word_count < 200:
+        return strong_result
+
+    # Phase 2: Fall back to Claude for content without strong tags
+    result = await _extract_entities_via_claude(
+        content=content,
+        resort_name=resort_name,
+        country=country,
+        section_name=section_name,
+    )
+
+    # Merge: strong-tag entities take priority (higher confidence)
+    if strong_result.entities:
+        seen_names = {e.name.lower() for e in strong_result.entities}
+        for entity in result.entities:
+            if entity.name.lower() not in seen_names:
+                entity.confidence = min(entity.confidence, 0.75)  # Cap Claude-only entities
+                strong_result.entities.append(entity)
+                seen_names.add(entity.name.lower())
+        strong_result.entity_count = len(strong_result.entities)
+        return strong_result
+
+    return result
+
+
+async def _extract_entities_via_claude(
+    content: str,
+    resort_name: str,
+    country: str,
+    section_name: str | None = None,
+) -> EntityExtractionResult:
+    """Claude-based entity extraction (fallback for content without strong tags)."""
     # Strip HTML tags for analysis but preserve structure hints
     clean_content = re.sub(r'<[^>]+>', ' ', content)
     clean_content = re.sub(r'\s+', ' ', clean_content).strip()
@@ -1547,50 +1750,54 @@ class TaglineQualityScore:
     passes_threshold: bool = False  # overall_score >= 0.7
 
 
-# Structural examples for diverse tagline generation
-# These are rotated (3 shown per call) to guide variety, not rules
+# Fact-based tagline calibration examples
+# These are rotated (3 shown per call) to guide variety
+# Rule: sound like a parent, not a billboard
 TAGLINE_STRUCTURAL_EXAMPLES: dict[str, list[str]] = {
+    "fact_list": [
+        "Car-free village, Matterhorn from the bunny slope, Swiss prices",
+        "187 trails, 35 minutes from Denver, ski school from age 3",
+        "Childcare from 3 months, underground funicular to the slopes",
+    ],
     "number_lead": [
-        "93% beginner terrain, 100% family focus",
-        "Three mountains, one car-free village, zero stress",
+        "93% beginner terrain, zero lift lines, under-6s ski free",
         "3 magic carpets, 2 terrain parks, 1 very tired kid",
+        "600km of linked skiing, one lift pass, half the Swiss price",
     ],
-    "contrast": [
-        "Big mountain thrills with a soft landing",
-        "Premium terrain, mid-range prices",
-        "Small village, huge confidence-builder",
+    "parent_talk": [
+        "Kids exhausted by 3pm. You're welcome.",
+        "The ski school your 3-year-old actually wants to return to",
+        "Ski school pickup on the slopes, not in a parking lot",
     ],
-    "question": [
-        "What if powder days came with babysitters?",
-        "Remember when ski trips were actually relaxing?",
-        "What if the bunny slope had Matterhorn views?",
-    ],
-    "sensory": [
-        "Fondue at 10,000 feet, hot chocolate by 3",
-        "Cobblestone streets, powder mornings, content kids",
+    "action": [
+        "Ski the Dolomites, lunch in Italy, nap by 2",
+        "A real French village that connects to 600km of skiing",
         "Ski through the village, stop for strudel, ski home",
     ],
     "comparative": [
         "Austria's answer to Colorado, at half the price",
-        "Like Verbier, if Verbier remembered families exist",
+        "All the terrain of Whistler, none of the crowds",
         "Half the cost of Vail, none of the altitude headaches",
     ],
-    "identity": [
-        "Europe's best-kept family secret",
-        "The gentle giant that makes skiing feel easy",
-        "Japan's most toddler-friendly powder paradise",
-    ],
-    "action": [
-        "Ski the Dolomites, lunch in Italy",
-        "Learn by morning, explore by afternoon",
-        "First tracks by 8am, cocoa by 10",
-    ],
-    "parent_benefit": [
-        "Kids exhausted by 3pm. You're welcome.",
-        "Ski school pickup on the slopes, not in a parking lot",
-        "The ski school your 3-year-old actually wants to return to",
-    ],
 }
+
+# Forbidden tagline patterns — regex blocklist for brochure-speak
+FORBIDDEN_TAGLINE_PATTERNS = [
+    r"where .* meets",
+    r"where .* come true",
+    r"your .* awaits",
+    r"\bparadise\b",
+    r"magic of",
+    r"hidden gem",
+    r"best-kept secret",
+    r"adventure awaits",
+    r"dream[s]? come true",
+    r"family .* magic",
+    r"alpine .* adventure",
+    r"\bmagical\b",
+    r"\bperfect\b",
+    r"\bunforgettable\b",
+]
 
 
 async def extract_tagline_atoms(
@@ -1787,21 +1994,23 @@ RECENT PORTFOLIO TAGLINES (for awareness - do NOT repeat these structures):
 TAGLINE ATOMS (use at least ONE of these specifics):
 {atoms_text}
 
-STRUCTURAL VARIETY (use ONE of these patterns, or invent a fresh one):
+CALIBRATION EXAMPLES (use ONE pattern, or invent a fresh one):
 {structural_examples}
 {recent_text}
 REQUIREMENTS:
 - 8-12 words maximum
+- State 2-3 concrete facts about this resort
+- Sound like a parent, not a billboard
+- No adjectives like "magical", "perfect", "unforgettable"
+- No "where X meets Y" constructions
 - Must include at least ONE specific from the atoms above
 - Must NOT use the same structure as recent taglines
-- Punchy, memorable, makes families want to visit
 
 Return ONLY the tagline, nothing else."""
 
-    system = """You are a travel copywriter who writes memorable taglines.
-Each tagline must be SPECIFIC to this resort - not generic.
-Use the atoms provided - don't make up facts.
-Vary your structure - don't repeat patterns."""
+    system = """You are a parent who's been to this resort and is describing it to another parent at the school pickup line.
+State facts. Be specific. No brochure-speak.
+BANNED: "where X meets Y", "paradise", "magic", "hidden gem", "adventure awaits", "dream come true"."""
 
     try:
         response = _call_claude(
@@ -1933,12 +2142,13 @@ Overused patterns like "X meets Y" score LOW on structure_novelty."""
         voice_alignment = float(parsed.get("voice_alignment", 0.5))
 
         # Calculate overall score (weighted average)
+        # R20: Increased specificity + differentiation weight, reduced novelty/emotion
         overall = (
-            specificity * 0.25
-            + differentiation * 0.25
-            + structure_novelty * 0.20
-            + emotional_resonance * 0.15
-            + voice_alignment * 0.15
+            specificity * 0.35
+            + differentiation * 0.35
+            + structure_novelty * 0.10
+            + emotional_resonance * 0.10
+            + voice_alignment * 0.10
         )
 
         return TaglineQualityScore(
@@ -1966,3 +2176,233 @@ Overused patterns like "X meets Y" score LOW on structure_novelty."""
             voice_alignment=0.5,
             passes_threshold=False,
         )
+
+
+def check_forbidden_tagline_patterns(tagline: str) -> list[str]:
+    """Check tagline against forbidden patterns.
+
+    Returns list of matched patterns (empty if clean).
+    """
+    matches = []
+    tagline_lower = tagline.lower()
+    for pattern in FORBIDDEN_TAGLINE_PATTERNS:
+        if re.search(pattern, tagline_lower):
+            matches.append(pattern)
+    return matches
+
+
+# =============================================================================
+# FAMILY FRIENDLINESS ASSESSMENT (LLM-based scoring)
+# =============================================================================
+
+
+@dataclass
+class ContentAssessment:
+    """Result of LLM-based family friendliness assessment."""
+
+    overall_score: float  # 1.0-10.0
+    dimensions: dict[str, float]  # childcare, convenience, value, things_to_do, parent_experience
+    reasoning: str
+    confidence: str  # "high", "medium", "low"
+    highlights: list[str] = field(default_factory=list)
+    concerns: list[str] = field(default_factory=list)
+
+
+async def assess_family_friendliness(
+    resort_name: str,
+    country: str,
+    content_sections: dict[str, str],
+) -> ContentAssessment:
+    """
+    LLM-based assessment of family friendliness from content sections.
+
+    Reads ALL content and scores on 5 dimensions:
+    1. Childcare & Learning (ski school quality, childcare availability)
+    2. Convenience (logistics, walkability, ski-in/out)
+    3. Value (affordability for families)
+    4. Things to Do (rainy day, non-ski, dining)
+    5. Parent Experience (can parents ski too?)
+
+    Args:
+        resort_name: Name of the resort
+        country: Country where resort is located
+        content_sections: Dict of section_name -> HTML content
+
+    Returns:
+        ContentAssessment with overall score and dimension breakdown
+
+    Cost: ~$0.015 per call with Sonnet
+    """
+    # Build content summary (strip HTML for analysis)
+    content_summary = ""
+    for section, html in content_sections.items():
+        if html and isinstance(html, str):
+            clean = re.sub(r'<[^>]+>', ' ', html)
+            clean = re.sub(r'\s+', ' ', clean).strip()
+            content_summary += f"\n\n[{section}]\n{clean[:1500]}"
+
+    if len(content_summary) < 100:
+        return ContentAssessment(
+            overall_score=5.0,
+            dimensions={},
+            reasoning="Insufficient content for assessment",
+            confidence="low",
+        )
+
+    prompt = f"""Assess the family-friendliness of {resort_name}, {country} based on this content.
+
+CONTENT:
+{content_summary[:8000]}
+
+Score each dimension 1.0-10.0:
+
+1. CHILDCARE_LEARNING: Quality of childcare, ski school, kids programs
+   - 9+: Childcare from infancy, multiple ski school options, dedicated kids areas
+   - 7-8: Good ski school, some childcare options
+   - 5-6: Basic ski school, limited childcare
+   - <5: No childcare, minimal kids programs
+
+2. CONVENIENCE: Logistics ease for families
+   - 9+: Ski-in/out, walkable village, easy transfers
+   - 7-8: Close to slopes, good transport options
+   - 5-6: Some walking/driving required
+   - <5: Difficult logistics for families with gear and kids
+
+3. VALUE: Affordability for families
+   - 9+: Under $300/day for family, many free perks
+   - 7-8: Moderate pricing, good value relative to quality
+   - 5-6: Expensive but not unreasonable
+   - <5: Very expensive, limited value options
+
+4. THINGS_TO_DO: Non-ski activities, dining, rainy day options
+   - 9+: Abundant activities, great dining, pool/spa/sledding
+   - 7-8: Good variety, some restaurants
+   - 5-6: Limited options beyond skiing
+   - <5: Very limited non-ski activities
+
+5. PARENT_EXPERIENCE: Can parents enjoy skiing too?
+   - 9+: Expert terrain available, great apres-ski, adult dining
+   - 7-8: Good skiing for adults, some apres options
+   - 5-6: Mostly beginner terrain, limited adult activities
+   - <5: Parents will be bored
+
+CALIBRATION ANCHORS:
+- Serfaus-Fiss-Ladis (Austria) = 9.0-9.5 (world-class family resort)
+- Solid family resort = 7.0-8.0
+- Works with caveats = 5.5-7.0
+- Not suited for families = 4.0-5.5
+
+Return JSON:
+{{
+    "overall_score": 7.5,
+    "childcare_learning": 8.0,
+    "convenience": 7.0,
+    "value": 7.5,
+    "things_to_do": 6.5,
+    "parent_experience": 8.0,
+    "reasoning": "2-3 sentence assessment",
+    "confidence": "high|medium|low",
+    "highlights": ["best thing 1", "best thing 2"],
+    "concerns": ["concern 1"]
+}}"""
+
+    system = """You are a family travel analyst scoring ski resorts for families with kids under 12.
+Score based ONLY on what's in the content. Don't assume — if not mentioned, score conservatively.
+Use the full 1-10 range. Be calibrated: 9+ is exceptional, 5 is mediocre, 3 is poor."""
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-sonnet-4-20250514",
+            max_tokens=800,
+            temperature=0,
+        )
+
+        parsed = _parse_json_response(response)
+
+        dimensions = {
+            "childcare_learning": float(parsed.get("childcare_learning", 5.0)),
+            "convenience": float(parsed.get("convenience", 5.0)),
+            "value": float(parsed.get("value", 5.0)),
+            "things_to_do": float(parsed.get("things_to_do", 5.0)),
+            "parent_experience": float(parsed.get("parent_experience", 5.0)),
+        }
+
+        return ContentAssessment(
+            overall_score=float(parsed.get("overall_score", 5.0)),
+            dimensions=dimensions,
+            reasoning=parsed.get("reasoning", ""),
+            confidence=parsed.get("confidence", "medium"),
+            highlights=parsed.get("highlights", []),
+            concerns=parsed.get("concerns", []),
+        )
+
+    except Exception as e:
+        print(f"Family friendliness assessment failed: {e}")
+        return ContentAssessment(
+            overall_score=5.0,
+            dimensions={},
+            reasoning=f"Assessment failed: {e}",
+            confidence="low",
+        )
+
+
+async def assess_review_sentiment(
+    resort_name: str,
+    parent_reviews_content: str,
+) -> float | None:
+    """
+    Assess parent review sentiment and return a score 1.0-10.0.
+
+    Reads the parent_reviews_summary section and scores overall sentiment.
+    If no reviews exist, returns None (layer excluded from composite).
+
+    Args:
+        resort_name: Name of the resort
+        parent_reviews_content: HTML content of parent reviews section
+
+    Returns:
+        Score 1.0-10.0, or None if no reviews
+
+    Cost: ~$0.003 per call with Haiku
+    """
+    if not parent_reviews_content or len(parent_reviews_content) < 50:
+        return None
+
+    clean = re.sub(r'<[^>]+>', ' ', parent_reviews_content)
+    clean = re.sub(r'\s+', ' ', clean).strip()
+
+    if len(clean) < 30:
+        return None
+
+    prompt = f"""Score the parent sentiment for {resort_name} based on these review summaries.
+
+REVIEWS:
+{clean[:3000]}
+
+Return a single number from 1.0 to 10.0:
+- 9-10: Overwhelmingly positive, parents rave
+- 7-8: Mostly positive with minor complaints
+- 5-6: Mixed reviews, significant concerns
+- 3-4: Mostly negative
+- 1-2: Overwhelmingly negative
+
+Return ONLY the number, nothing else."""
+
+    system = "You score parent sentiment from review content. Return only a number 1.0-10.0."
+
+    try:
+        response = _call_claude(
+            prompt,
+            system=system,
+            model="claude-3-5-haiku-20241022",
+            max_tokens=10,
+            temperature=0,
+        )
+
+        score = float(response.strip())
+        return max(1.0, min(10.0, score))
+
+    except Exception:
+        return None

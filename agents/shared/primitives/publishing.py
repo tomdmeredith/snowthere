@@ -733,3 +733,73 @@ def get_uncrawled_urls(limit: int = 50) -> list[str]:
         urls.append(f"{base}/resorts/{country_slug}")
 
     return urls[:limit]
+
+
+# =============================================================================
+# INTERNAL RESORT LINK INJECTION (for guides)
+# =============================================================================
+
+
+def inject_internal_resort_links(
+    html_content: str,
+    published_resorts: list[dict[str, str]],
+) -> str:
+    """Inject internal links to resort pages in guide prose content.
+
+    Scans HTML content for resort name mentions and wraps the first
+    occurrence of each resort name in an <a> tag linking to the resort page.
+
+    Args:
+        html_content: HTML content (guide section prose)
+        published_resorts: List of dicts with keys: name, slug, country
+
+    Returns:
+        Modified HTML with internal links injected
+    """
+    import re
+    from html import escape as html_escape
+
+    if not html_content or not published_resorts:
+        return html_content
+
+    modified = html_content
+    linked_names: set[str] = set()
+
+    # Sort by name length descending to match longer names first
+    # (e.g., "St. Anton am Arlberg" before "St. Anton")
+    sorted_resorts = sorted(published_resorts, key=lambda r: len(r.get("name", "")), reverse=True)
+
+    for resort in sorted_resorts:
+        name = resort.get("name", "")
+        slug = resort.get("slug", "")
+        country = resort.get("country", "")
+        if not name or not slug or not country:
+            continue
+
+        # Skip if already linked
+        if name.lower() in linked_names:
+            continue
+
+        country_slug = country.lower().replace(" ", "-")
+        href = f"/resorts/{html_escape(country_slug)}/{html_escape(slug)}"
+
+        # Match the resort name NOT already inside an <a> tag or href attribute
+        # Use a negative lookbehind for common HTML link patterns
+        pattern = re.compile(
+            r'(?<!["\'/\w])' + re.escape(name) + r'(?!["\'/\w])',
+            re.IGNORECASE,
+        )
+
+        # Only replace first occurrence
+        match = pattern.search(modified)
+        if match:
+            original_text = match.group(0)
+            # Don't inject if already inside an <a> tag
+            before = modified[:match.start()]
+            if '<a ' in before and '</a>' not in before[before.rfind('<a '):]:
+                continue
+            replacement = f'<a href="{href}">{original_text}</a>'
+            modified = modified[:match.start()] + replacement + modified[match.end():]
+            linked_names.add(name.lower())
+
+    return modified

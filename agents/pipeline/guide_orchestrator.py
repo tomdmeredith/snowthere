@@ -152,6 +152,27 @@ async def generate_single_guide(
         if approval.approved and approval.final_content is not None:
             content = approval.final_content
 
+        # Stage 5.5: Inject internal resort links into guide prose
+        try:
+            from shared.primitives.publishing import inject_internal_resort_links
+            client = get_supabase_client()
+            published_resorts_resp = (
+                client.table("resorts")
+                .select("name, slug, country")
+                .eq("status", "published")
+                .execute()
+            )
+            published_resorts = published_resorts_resp.data or []
+            if published_resorts and isinstance(content, dict):
+                for section_key, section_val in content.items():
+                    if isinstance(section_val, str) and len(section_val) > 100:
+                        content[section_key] = inject_internal_resort_links(
+                            section_val, published_resorts
+                        )
+                logger.info(f"  Injected internal resort links into guide prose")
+        except Exception as e:
+            logger.warning(f"  Internal link injection failed (non-fatal): {e}")
+
         # Stage 6: Create guide in database
         logger.info(f"  Creating guide in database...")
         guide = create_guide(

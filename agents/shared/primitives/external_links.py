@@ -54,6 +54,7 @@ class ResolvedEntity:
     maps_url: str | None = None
     affiliate_url: str | None = None
     affiliate_program: str | None = None
+    flight_search_url: str | None = None
     confidence: float = 0.0
     from_cache: bool = False
     is_maps_search_fallback: bool = False
@@ -146,6 +147,35 @@ def _resolve_brand(name: str) -> ResolvedEntity | None:
             is_maps_search_fallback=False,
         )
     return None
+
+
+# ============================================================================
+# FLIGHT SEARCH URL BUILDER
+# ============================================================================
+
+# Regex to extract IATA code from airport names like "Zurich Airport (ZRH)"
+_IATA_PATTERN = re.compile(r"\(([A-Z]{3})\)")
+
+
+def _extract_iata_code(name: str) -> str | None:
+    """Extract 3-letter IATA code from an airport entity name.
+
+    Looks for pattern like (ZRH), (INN), (GVA) in the name string.
+    """
+    match = _IATA_PATTERN.search(name)
+    return match.group(1) if match else None
+
+
+def build_flight_search_url(iata_code: str) -> str:
+    """Build a Skyscanner flight search URL for a destination airport.
+
+    Args:
+        iata_code: 3-letter IATA airport code (e.g., "ZRH", "INN")
+
+    Returns:
+        Skyscanner search URL pre-filled with destination
+    """
+    return f"https://www.skyscanner.net/transport/flights-to/{iata_code.lower()}/"
 
 
 # ============================================================================
@@ -737,14 +767,26 @@ async def resolve_entity_link(
                     confidence=result.confidence,
                 )
 
+        # For airports, extract IATA code and build flight search URL
+        if entity_type == "airport":
+            iata = _extract_iata_code(name)
+            if iata:
+                result.flight_search_url = build_flight_search_url(iata)
+
         return result
 
     # === Tier 3: Maps search fallback ===
     maps_search_url = _build_maps_search_url(name, location_context)
+    flight_url = None
+    if entity_type == "airport":
+        iata = _extract_iata_code(name)
+        if iata:
+            flight_url = build_flight_search_url(iata)
     return ResolvedEntity(
         name=name,
         entity_type=entity_type,
         maps_url=maps_search_url,
+        flight_search_url=flight_url,
         confidence=0.5,  # Neutral — safe but unverified
         from_cache=False,
         is_maps_search_fallback=True,
@@ -949,7 +991,7 @@ _ENTITY_LINK_PRIORITY: dict[str, list[tuple[str, bool, bool]]] = {
     "transportation": [("direct_url", False, False), ("maps_url", False, True)],
     "retail":         [("direct_url", False, False), ("maps_url", False, True)],
     "childcare":      [("direct_url", False, False), ("maps_url", False, True)],
-    "airport":        [("direct_url", False, False), ("maps_url", False, True)],
+    "airport":        [("flight_search_url", False, False), ("direct_url", False, False), ("maps_url", False, True)],
     "village":        [("maps_url", False, True)],
 }
 _ENTITY_LINK_PRIORITY_DEFAULT: list[tuple[str, bool, bool]] = [

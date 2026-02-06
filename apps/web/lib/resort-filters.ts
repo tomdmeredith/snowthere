@@ -104,9 +104,9 @@ export function getPriceTier(dailyEstimate: number | null): BudgetTier {
   return '$$$$'
 }
 
-export function getPriceTierInfo(dailyEstimate: number | null): { tier: BudgetTier; label: string } {
+export function getPriceTierInfo(dailyEstimate: number | null): { tier: BudgetTier; label: string; isEstimated: boolean } {
   const tier = getPriceTier(dailyEstimate)
-  return { tier, label: BUDGET_LABELS[tier] }
+  return { tier, label: BUDGET_LABELS[tier], isEstimated: dailyEstimate === null }
 }
 
 // --- Filter Functions ---

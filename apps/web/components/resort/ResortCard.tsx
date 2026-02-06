@@ -17,9 +17,7 @@ export function ResortCard({ resort, countrySlug }: ResortCardProps) {
     resort.images?.find((img) => img.image_type === 'atmosphere')?.image_url ||
     resort.images?.[0]?.image_url
 
-  const priceTier = resort.costs?.estimated_family_daily
-    ? getPriceTierInfo(resort.costs.estimated_family_daily)
-    : null
+  const priceTier = getPriceTierInfo(resort.costs?.estimated_family_daily ?? null)
 
   return (
     <Link href={`/resorts/${slug}/${resort.slug}`} className="group">
@@ -54,11 +52,9 @@ export function ResortCard({ resort, countrySlug }: ResortCardProps) {
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
-              {priceTier && (
-                <span className="px-2 py-0.5 bg-gold-100 text-gold-700 rounded-full text-xs font-bold">
-                  {priceTier.tier}
-                </span>
-              )}
+              <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${priceTier.isEstimated ? 'bg-gray-100 text-gray-500' : 'bg-gold-100 text-gold-700'}`}>
+                {priceTier.tier}
+              </span>
               {resort.family_metrics?.family_overall_score && (
                 <ScoreBadge
                   score={resort.family_metrics.family_overall_score}

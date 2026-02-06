@@ -1,25 +1,21 @@
-"""Quick Take generation primitive - Editorial Verdict Model.
+"""Quick Take generation primitive - Constraint-Based Single Paragraph.
 
 Quick Takes are the BLUF (Bottom Line Up Front) for each resort.
 Parents read this first to decide if they should keep reading.
 
-Design Philosophy (Round 8):
-- Specific over generic - no "amazing views" or "great for families"
-- Honest tensions - every resort has catches, be upfront
-- Declarative confidence - clear recommendations, not hedging
-- Numbers that matter - specific ages, costs, percentages
-- Family-specific insights - not general ski info
-
-Structure (Editorial Verdict Model):
-1. THE HOOK (1 sentence) - Specific, memorable insight
-2. THE CONTEXT (1-2 sentences) - Why this matters for YOUR family
-3. THE TENSION (1-2 sentences) - What's the catch?
-4. THE VERDICT (1 sentence) - Clear recommendation
+Design Philosophy (Round 20 revision):
+- Single flowing paragraph, 40-65 words
+- Sounds like a friend talking, not a 4-part structure
+- Must include: distinctive feature, ideal kid age range, one honest catch, memorable punchline
+- Numbers matter: at least 2 numbers (age, distance, cost)
+- At least 1 proper noun specific to this resort
 
 Quality Gates:
-- Word count: 80-120 words
+- Word count: 40-65 words
 - Specificity score > 0.6
 - No forbidden phrases
+- At least 2 numbers in the paragraph
+- At least 1 proper noun specific to the resort
 - At least 2 "Perfect if" conditions
 - At least 1 "Skip if" condition (required)
 """
@@ -248,19 +244,21 @@ def validate_quick_take(result: QuickTakeResult, context: QuickTakeContext) -> Q
     """Validate Quick Take meets quality gates.
 
     Quality Gates:
-    - Word count: 80-120 words
+    - Word count: 40-65 words
     - Specificity score > 0.6
     - No forbidden phrases
+    - At least 2 numbers in the paragraph
+    - At least 1 proper noun specific to the resort
     - At least 2 "Perfect if" conditions
     - At least 1 "Skip if" condition
     """
     errors = []
 
-    # Word count check
-    if result.word_count < 80:
-        errors.append(f"Too short: {result.word_count} words (min 80)")
-    elif result.word_count > 120:
-        errors.append(f"Too long: {result.word_count} words (max 120)")
+    # Word count check (tightened from 80-120 to 40-65)
+    if result.word_count < 40:
+        errors.append(f"Too short: {result.word_count} words (min 40)")
+    elif result.word_count > 65:
+        errors.append(f"Too long: {result.word_count} words (max 65)")
 
     # Specificity check
     if result.specificity_score < 0.6:
@@ -269,6 +267,12 @@ def validate_quick_take(result: QuickTakeResult, context: QuickTakeContext) -> Q
     # Forbidden phrases check
     if result.forbidden_phrases_found:
         errors.append(f"Forbidden phrases: {', '.join(result.forbidden_phrases_found[:3])}")
+
+    # Must contain at least 2 numbers (age, distance, cost, etc.)
+    plain_text = re.sub(r'<[^>]+>', ' ', result.quick_take_html)
+    number_matches = re.findall(r'\b\d+(?:\.\d+)?', plain_text)
+    if len(number_matches) < 2:
+        errors.append(f"Need at least 2 numbers (got {len(number_matches)})")
 
     # Perfect if count
     if len(result.perfect_if) < 2:
@@ -330,49 +334,33 @@ EDITORIAL INPUTS:
 - Price Context: {context.price_context or "Not yet researched"}
 """
 
-    prompt = f"""Write a Quick Take for this ski resort using the Editorial Verdict Model.
+    prompt = f"""Write a Quick Take for this ski resort.
 
 {context_section}
 
-STRUCTURE (Follow exactly):
+WRITE A SINGLE FLOWING PARAGRAPH of 40-65 words that includes:
+1. The resort's most distinctive feature
+2. The ideal kid age range
+3. One honest catch
+4. A memorable punchline
 
-1. THE HOOK (1 sentence)
-   A specific, memorable insight that captures THIS resort's essence.
-   NOT generic ("beautiful views"). Must be specific to this place.
+No bullet points. No section breaks. One paragraph that flows like a friend talking.
 
-2. THE CONTEXT (1-2 sentences)
-   Why this matters for YOUR family specifically.
-   Reference ages, skill levels, trip types.
+CALIBRATION EXAMPLES (match this quality):
 
-3. THE TENSION (1-2 sentences)
-   What's the catch? Be honest - families trust honest assessments.
-   Every resort has downsides. Name them.
+"Zermatt is car-free, which means your kids can wander cobblestone streets while you carry nothing but hot chocolate. Ski school starts at age 4, and every chairlift has Matterhorn views. Best for families with kids 5 to 12 who will remember this trip forever. It is expensive, and that is not a typo."
 
-4. THE VERDICT (1 sentence)
-   Clear recommendation: Who should book this?
+"Serfaus takes kids from 3 months old in its Murmli childcare center, has an underground funicular to the slopes, and costs roughly half what you would pay in Switzerland. Best for families with toddlers to age 8. The village is small, which means quiet evenings but limited restaurant options."
+
+"Breckenridge puts 187 trails and a real mining town 35 minutes from Denver, with ski school from age 3. Altitude sickness hits some kids hard above 9,600 feet. Best for families who want a walkable town with dining options beyond hotel buffets."
 
 Then provide:
 - 3-4 "Perfect if..." bullets (specific conditions, not generic)
 - 2-3 "Skip if..." bullets (honest deal-breakers - REQUIRED)
 
-VOICE:
-- Smart, witty, efficient like a well-traveled friend
-- Declarative confidence - don't hedge
-- Numbers that matter (ages, percentages, costs)
-- No generic superlatives
-
-FORBIDDEN:
-- "Here's the thing..."
-- "Let's be real..."
-- Generic adjectives (amazing, stunning, incredible)
-- "Perfect for families" without specifics
-- "Hidden gem" or "best-kept secret"
-
-Word count: 80-120 words for the main Quick Take (not including bullets).
-
 Return as JSON:
 {{
-    "quick_take_html": "<p>The hook...</p><p>The context...</p><p>The tension...</p><p>The verdict...</p>",
+    "quick_take_html": "<p>Single paragraph here...</p>",
     "perfect_if": ["specific condition 1", "specific condition 2", ...],
     "skip_if": ["deal-breaker 1", "deal-breaker 2", ...],
     "reasoning": "Brief explanation of editorial choices"
@@ -382,14 +370,16 @@ Return as JSON:
 
 Your job: Help parents decide in 30 seconds if this resort is right for THEIR family.
 
-Voice: {voice_profile} - Smart, witty, efficient. Like a well-traveled friend who's skied everywhere and tells it straight.
+Voice: {voice_profile} - Sound like a friend at school pickup, not a travel brochure.
 
 Critical rules:
-1. NEVER start with "Here's the thing" or similar phrases
-2. NEVER use generic superlatives (amazing, stunning, incredible)
-3. ALWAYS include specific numbers (ages, percentages, costs)
-4. ALWAYS include honest downsides/tensions
-5. ALWAYS provide at least 1 "Skip if" condition
+1. SINGLE PARAGRAPH only, 40-65 words
+2. Must contain at least 2 specific numbers (ages, costs, distances, percentages)
+3. Must contain at least 1 proper noun specific to this resort
+4. Must include one honest catch or downside
+5. NEVER use generic superlatives (amazing, stunning, incredible)
+6. NEVER start with "Here's the thing" or similar phrases
+7. NEVER use "hidden gem", "best-kept secret", "paradise"
 
 Your Quick Takes should make parents feel confident they understand what they're getting into.
 """

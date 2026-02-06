@@ -1,18 +1,17 @@
-"""Scoring primitives for deterministic family score calculation.
+"""Scoring primitives for family score calculation.
 
-These primitives replace LLM-based scoring with deterministic formulas
-that produce decimal scores (7.35, 8.20, 6.85) instead of clustered integers.
+Three-layer hybrid scoring system (Round 20):
+  structural_score (30%) + content_score (50%) + review_score (20%)
+  If no reviews: structural (35%) + content (65%)
 
-Key Benefits:
-- Deterministic: Same inputs = same score (reproducible)
-- Explainable: Each factor contributes a specific amount
-- Differentiating: Natural variance from data differences
-- Completeness-aware: NULL data reduces score (not inflates it)
+Structural score is deterministic from resort metrics.
+Content score and review score come from LLM assessment (intelligence.py).
 
 See /methodology page for public documentation of this scoring system.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -60,37 +59,18 @@ def calculate_data_completeness(metrics: dict[str, Any]) -> float:
     return fields_present / len(KEY_COMPLETENESS_FIELDS)
 
 
-def calculate_family_score(metrics: dict[str, Any]) -> float:
+def calculate_structural_score(metrics: dict[str, Any]) -> float:
     """
-    Calculate deterministic family score from resort metrics.
+    Calculate deterministic structural score from resort metrics.
 
-    Produces scores like 7.3, 8.2, 6.8 instead of clustered integers 7, 8, 9.
-
-    NULL data = "unknown" = no points (not free points). A resort with ALL NULL
-    data scores ~3.5 instead of the old 5.7. This is intentional — we should
-    not reward missing data.
-
-    A completeness multiplier (0.7 + 0.3 * completeness) penalizes resorts
-    where we have little data: all NULL = 70% of raw score, all populated = 100%.
+    This is one layer of the three-layer hybrid scoring system.
+    Missing data = no bonus, but no penalty either (no completeness multiplier).
 
     Args:
         metrics: Dict containing resort family metrics from database
-                 (has_childcare, childcare_min_age, ski_school_min_age, etc.)
 
     Returns:
-        Family score as float (1.0 - 10.0)
-
-    Example:
-        >>> metrics = {
-        ...     "has_childcare": True,
-        ...     "childcare_min_age": 6,  # 6 months
-        ...     "ski_school_min_age": 3,
-        ...     "beginner_terrain_pct": 35,
-        ...     "kids_ski_free_age": 5,
-        ...     "has_ski_in_out": True,
-        ... }
-        >>> calculate_family_score(metrics)
-        8.2
+        Structural score as float (1.0 - 10.0)
     """
     score = 5.0  # Start neutral
 
@@ -98,37 +78,34 @@ def calculate_family_score(metrics: dict[str, Any]) -> float:
     # CHILDCARE QUALITY (+0.0 to +1.5)
     # =========================================================================
     if metrics.get("has_childcare") or metrics.get("childcare_available"):
-        score += 0.8  # Base for having childcare
+        score += 0.8
 
-        childcare_min_age = metrics.get("childcare_min_age")  # in months
+        childcare_min_age = metrics.get("childcare_min_age")
         if childcare_min_age is not None:
-            if childcare_min_age <= 6:  # 6 months or younger
+            if childcare_min_age <= 6:
                 score += 0.4
-            if childcare_min_age <= 3:  # 3 months or younger (exceptional)
+            if childcare_min_age <= 3:
                 score += 0.3
 
     # =========================================================================
     # SKI SCHOOL QUALITY (+0.0 to +1.0)
-    # NULL has_ski_school = unknown = no points (was: default True = free 0.2)
     # =========================================================================
-    has_ski_school = metrics.get("has_ski_school")  # None = unknown = no points
-    ski_school_min_age = metrics.get("ski_school_min_age")  # in years
+    has_ski_school = metrics.get("has_ski_school")
+    ski_school_min_age = metrics.get("ski_school_min_age")
 
     if has_ski_school is True or ski_school_min_age is not None:
-        score += 0.2  # Base for having ski school
+        score += 0.2
 
         if ski_school_min_age is not None:
             if ski_school_min_age <= 3:
-                score += 0.5  # Takes 3-year-olds
+                score += 0.5
             elif ski_school_min_age <= 4:
-                score += 0.3  # Takes 4-year-olds
+                score += 0.3
 
     # =========================================================================
     # TERRAIN FOR FAMILIES (+0.0 to +1.2)
-    # NULL terrain = unknown = no terrain points (was: default 25 = free 0.0)
     # =========================================================================
     beginner_pct = metrics.get("beginner_terrain_pct") or metrics.get("kid_friendly_terrain_pct")
-    # Only score terrain if we have actual data
     if beginner_pct is not None:
         if beginner_pct >= 30:
             score += 0.3
@@ -145,32 +122,27 @@ def calculate_family_score(metrics: dict[str, Any]) -> float:
     # VALUE FACTORS (+0.0 to +0.8)
     # =========================================================================
     kids_ski_free_age = metrics.get("kids_ski_free_age")
-
     if kids_ski_free_age is not None:
         if kids_ski_free_age >= 5:
-            score += 0.4  # Kids 5 and under ski free
+            score += 0.4
         if kids_ski_free_age >= 10:
-            score += 0.4  # Kids 10 and under ski free (exceptional)
+            score += 0.4
 
     # =========================================================================
     # VILLAGE CONVENIENCE (+0.0 to +0.5)
-    # NULL english_friendly = unknown = no points (was: default True = free 0.2)
     # =========================================================================
     if metrics.get("has_ski_in_out"):
         score += 0.3
 
-    if metrics.get("english_friendly") is True:  # Must be explicitly True
+    if metrics.get("english_friendly") is True:
         score += 0.2
 
-    # =========================================================================
-    # COMPLETENESS MULTIPLIER
-    # Penalizes low-data resorts: all NULL = 70% of raw, all populated = 100%
-    # =========================================================================
-    completeness = calculate_data_completeness(metrics)
-    multiplier = 0.7 + 0.3 * completeness
+    # Cap at 10.0 and round to 1 decimal (no completeness multiplier)
+    return min(10.0, round(score, 1))
 
-    # Cap at 10.0 and round to 1 decimal
-    return min(10.0, round(score * multiplier, 1))
+
+# Backwards-compatible alias
+calculate_family_score = calculate_structural_score
 
 
 def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreakdown:
@@ -266,14 +238,12 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
         convenience += 0.2
         factors.append("English friendly (+0.2)")
 
-    # Completeness multiplier
     completeness = calculate_data_completeness(metrics)
-    multiplier = 0.7 + 0.3 * completeness
 
     raw_score = base + childcare + ski_school + terrain + value + convenience
-    total = min(10.0, round(raw_score * multiplier, 1))
+    total = min(10.0, round(raw_score, 1))
 
-    factors.append(f"Data completeness: {completeness:.0%} (multiplier: {multiplier:.2f})")
+    factors.append(f"Data completeness: {completeness:.0%}")
 
     return ScoreBreakdown(
         total=total,
@@ -284,7 +254,7 @@ def calculate_family_score_with_breakdown(metrics: dict[str, Any]) -> ScoreBreak
         value=round(value, 1),
         convenience=round(convenience, 1),
         completeness=round(completeness, 2),
-        completeness_multiplier=round(multiplier, 2),
+        completeness_multiplier=1.0,  # No longer applied
         factors=factors,
     )
 
@@ -320,3 +290,79 @@ def format_score_explanation(breakdown: ScoreBreakdown) -> str:
         lines.append(f"  • {factor}")
 
     return "\n".join(lines)
+
+
+# =============================================================================
+# COMPOSITE SCORING (Three-Layer Hybrid)
+# =============================================================================
+
+
+@dataclass
+class CompositeScore:
+    """Result of the three-layer hybrid scoring system."""
+
+    family_score: float  # Final composite score (1.0-10.0)
+    structural_score: float
+    content_score: float | None  # From LLM assessment
+    review_score: float | None  # From LLM review sentiment
+    confidence: str  # "high", "medium", "low"
+    reasoning: str
+    dimensions: dict[str, float] = field(default_factory=dict)
+    scored_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+def calculate_composite_family_score(
+    structural: float,
+    content: float | None = None,
+    review: float | None = None,
+    content_dimensions: dict[str, float] | None = None,
+    content_reasoning: str = "",
+) -> CompositeScore:
+    """
+    Calculate composite family score from three layers.
+
+    Weights:
+      - With reviews: structural (30%) + content (50%) + review (20%)
+      - Without reviews: structural (35%) + content (65%)
+      - Without content assessment: structural score only (low confidence)
+
+    Args:
+        structural: Deterministic score from metrics (1.0-10.0)
+        content: LLM-assessed content score (1.0-10.0) or None
+        review: LLM-assessed review sentiment score (1.0-10.0) or None
+        content_dimensions: Per-dimension scores from content assessment
+        content_reasoning: LLM reasoning for content score
+
+    Returns:
+        CompositeScore with all components and confidence level
+    """
+    reasoning_parts = [f"Structural: {structural:.1f}"]
+
+    if content is not None and review is not None:
+        score = structural * 0.30 + content * 0.50 + review * 0.20
+        confidence = "high"
+        reasoning_parts.append(f"Content: {content:.1f}")
+        reasoning_parts.append(f"Review: {review:.1f}")
+        reasoning_parts.append("Weights: 30/50/20")
+    elif content is not None:
+        score = structural * 0.35 + content * 0.65
+        confidence = "medium"
+        reasoning_parts.append(f"Content: {content:.1f}")
+        reasoning_parts.append("No reviews — weights: 35/65")
+    else:
+        score = structural
+        confidence = "low"
+        reasoning_parts.append("Structural only — limited data")
+
+    if content_reasoning:
+        reasoning_parts.append(content_reasoning)
+
+    return CompositeScore(
+        family_score=min(10.0, round(score, 1)),
+        structural_score=structural,
+        content_score=content,
+        review_score=review,
+        confidence=confidence,
+        reasoning=" | ".join(reasoning_parts),
+        dimensions=content_dimensions or {},
+    )

@@ -10,6 +10,7 @@ interface QuickScoreSummaryProps {
   perfectIf: string[]
   skipIf: string[]
   lastUpdated?: string
+  scoreConfidence?: 'high' | 'medium' | 'low' | null
 }
 
 function getScoreEmoji(score: number): string {
@@ -28,6 +29,15 @@ function getScoreLabel(score: number): string {
   return 'Fair'
 }
 
+function getConfidenceLabel(confidence: 'high' | 'medium' | 'low' | null | undefined): string | null {
+  switch (confidence) {
+    case 'high': return 'Comprehensive assessment'
+    case 'medium': return 'Based on available data'
+    case 'low': return 'Limited data — score may update'
+    default: return null
+  }
+}
+
 export function QuickScoreSummary({
   familyScore,
   bestAgeMin,
@@ -35,6 +45,7 @@ export function QuickScoreSummary({
   perfectIf,
   skipIf,
   lastUpdated,
+  scoreConfidence,
 }: QuickScoreSummaryProps) {
   if (!familyScore) return null
 
@@ -77,6 +88,12 @@ export function QuickScoreSummary({
               </span>
             </div>
             <p className="text-xs text-dark-500">Family Score</p>
+            {(() => {
+              const confidenceText = scoreConfidence ? getConfidenceLabel(scoreConfidence) : null
+              return confidenceText ? (
+                <p className="text-[11px] text-dark-400 italic">{confidenceText}</p>
+              ) : null
+            })()}
           </div>
         </div>
 

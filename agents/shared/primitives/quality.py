@@ -645,7 +645,7 @@ def batch_issues_for_fix(
 
 PERFECT_PAGE_CHECKLIST = {
     "content": [
-        ("quick_take_length", "150-300 words", "Quick Take is optimal length for scanning"),
+        ("quick_take_length", "40-80 words", "Quick Take is optimal length for scanning"),
         ("tagline_exists", "Has unique tagline", "Resort has a distinctive 8-12 word tagline"),
         ("no_em_dashes", "No em/en-dashes", "Uses commas/periods instead of dashes"),
         ("no_llm_markers", "No LLM markers", "No 'Additionally', 'Furthermore', 'It's worth noting'"),
@@ -841,13 +841,13 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     # quick_take_length
     quick_take = content.get("quick_take", "")
     word_count = _count_words(quick_take)
-    passed = 150 <= word_count <= 300
+    passed = 40 <= word_count <= 80
     content_results.append(CheckResult(
         check_id="quick_take_length",
-        label="150-300 words",
+        label="40-80 words",
         description="Quick Take is optimal length for scanning",
         passed=passed,
-        details=f"{word_count} words" + (" (too short)" if word_count < 150 else " (too long)" if word_count > 300 else ""),
+        details=f"{word_count} words" + (" (too short)" if word_count < 40 else " (too long)" if word_count > 80 else ""),
     ))
 
     # tagline_exists
@@ -1006,7 +1006,7 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
         import json
         try:
             perfect_if = json.loads(perfect_if)
-        except:
+        except (json.JSONDecodeError, TypeError, ValueError):
             perfect_if = []
     has_perfect = len(perfect_if) >= 3
     data_results.append(CheckResult(
@@ -1023,7 +1023,7 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
         import json
         try:
             skip_if = json.loads(skip_if)
-        except:
+        except (json.JSONDecodeError, TypeError, ValueError):
             skip_if = []
     has_skip = len(skip_if) >= 1
     data_results.append(CheckResult(
