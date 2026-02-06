@@ -1,5 +1,6 @@
 import { Metadata } from 'next'
 import { SITE_URL } from '@/lib/constants'
+import { sanitizeJSON } from '@/lib/sanitize'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/layout/Navbar'
 import { FloatingShapes } from '@/components/home/FloatingShapes'
@@ -88,7 +89,7 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: sanitizeJSON({
             '@context': 'https://schema.org',
             '@type': 'WebSite',
             name: 'Snowthere',
@@ -109,7 +110,7 @@ export default async function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
+          __html: sanitizeJSON({
             '@context': 'https://schema.org',
             '@type': 'Organization',
             name: 'Snowthere',

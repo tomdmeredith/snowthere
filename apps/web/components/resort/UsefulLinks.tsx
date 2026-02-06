@@ -8,9 +8,9 @@ interface ResortLink {
   title: string
   url: string
   category: string
-  description?: string
+  description?: string | null
   is_affiliate?: boolean
-  affiliate_url?: string
+  affiliate_url?: string | null
 }
 
 interface UsefulLinksProps {

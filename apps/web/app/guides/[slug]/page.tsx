@@ -13,6 +13,7 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants'
+import { sanitizeJSON } from '@/lib/sanitize'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { GuideContent } from '@/components/guides/GuideContent'
@@ -240,7 +241,7 @@ export default async function GuidePage({
           <script
             key={i}
             type="application/ld+json"
-            dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+            dangerouslySetInnerHTML={{ __html: sanitizeJSON(schema) }}
           />
         ))}
 

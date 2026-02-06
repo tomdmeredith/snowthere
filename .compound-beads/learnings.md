@@ -4,6 +4,109 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Round 20: Content Quality & Linking Overhaul + Type Safety
+
+**Arc:**
+- **Started believing**: Content quality improvements and type safety are separate concerns
+- **Ended believing**: Content quality, type safety, and security hardening form a single trust layer — users trust accurate content, TypeScript catches data shape bugs, sanitization prevents injection
+- **Transformation**: From treating content, types, and security as independent workstreams to a unified quality-and-trust layer where each reinforces the others
+
+**Technical:**
+- Strong-tag-first entity extraction: parse `<strong>` tags from HTML content before falling back to LLM extraction — eliminates ~$0.03/resort Claude API call
+- IATA code extraction from content enables automatic Skyscanner flight search URL generation (no API call needed)
+- Quick Takes at 40-65 words (single paragraph) outperform 80-120 word 4-part editorial model for scannability
+- Tagline forbidden pattern regex blocklist prevents "hidden gem", "world-class", "winter wonderland" etc. — more effective than prompt instructions alone
+- Three-layer hybrid scoring (structural 30% + content LLM 50% + review 20%) provides balanced quality signal
+- Completeness multiplier on structural score caused double-penalty with data_completeness gate — removed
+- Dollar sign fallback (`$$` when NULL) ensures every resort card shows pricing signal, avoids blank badges
+- `as unknown as T` pattern for Supabase complex join returns — safer than `as any` and preserves type checking
+- Supabase returns object for 1:1 joins and array for 1:many joins — interface must handle both shapes
+- `sanitizeHTML()` via `sanitize-html` library strips dangerous tags/attributes while preserving safe formatting
+- `sanitizeJSON()` escapes `<`, `>`, `&` in JSON-LD `<script>` blocks to prevent script injection
+- Never use `as any` for Supabase join types — define intermediate interfaces that handle both object and array returns
+
+**Process:**
+- Type safety and security hardening should be done together — both are about correctness and trust
+- Expert review panels (7 reviewers across security, TypeScript, Python, simplicity, performance) catch issues invisible in self-review
+- UI testing via browser (Playwright MCP) is essential — confirms components render correctly with real data
+- Backfill scripts should support `--dry-run` for cost estimation before real execution
+
+**Key Insight:**
+Content quality, TypeScript type safety, and HTML/JSON sanitization form a single trust layer. Users trust accurate Quick Takes, TypeScript catches data shape bugs at build time, and sanitization prevents injection at render time. Treating them as separate workstreams leaves gaps; treating them as one layer reinforces each part.
+
+---
+
+## Round 19: SEO Fixes, Programmatic Pages & Country Content
+
+**Arc:**
+- **Started believing**: The homepage H1 was rendering correctly and country pages were properly configured
+- **Ended believing**: Client components hide H1 from crawlers, missing generateStaticParams prevents static generation, and 12h ISR is too slow for content updates
+- **Transformation**: From trusting client-rendered content to ensuring all critical SEO elements are server-rendered and statically generated
+
+**Technical:**
+- `'use client'` on a component containing H1 makes it invisible to crawlers — critical SEO elements must be server components
+- `generateStaticParams()` missing from dynamic routes prevents Next.js from pre-rendering pages at build time
+- ISR at 12h is too slow for content pipeline that updates daily — 6h is a better balance
+- Programmatic collection pages (best-for-beginners, best-for-toddlers, etc.) provide additional crawlable entry points
+- Next.js route constraint: can't have `[collection]` and `[country]` dynamic segments at the same level under `/resorts/` — use `/collections/` path instead
+- Country intro content via AI generation improves thin country listing pages for SEO
+- Vercel 308 redirects handle canonical normalization (www vs non-www) — duplicates in GSC are legacy entries that will resolve
+
+**Process:**
+- Always verify H1 tags are server-rendered — inspect page source, not DevTools
+- Check that all dynamic routes have `generateStaticParams()` for proper static generation
+- Programmatic SEO pages should be data-driven (query DB for resorts matching criteria)
+- Country pages benefit from intro content to avoid thin content penalties
+
+**Key Insight:**
+The difference between "looks right in the browser" and "visible to crawlers" is server vs client rendering. A beautiful H1 inside a `'use client'` component is invisible to Google. Always verify critical SEO elements in page source.
+
+---
+
+## Pipeline Improvements (PI)
+
+**Arc:**
+- **Started believing**: Entity extraction confidence scores were appropriate and stale detection worked correctly
+- **Ended believing**: Conservative extraction was missing valid entities; stale detection had a bug returning N oldest instead of actually stale; full refresh is overkill for maintenance
+- **Transformation**: From accepting pipeline defaults to targeted improvements that increase link density 3x and reduce refresh costs 85%
+
+**Technical:**
+- LLM entity extraction defaults to conservative confidence scores — explicit guidance with concrete examples (e.g., "Kandahar Lodge → 0.9") increases yield 3x
+- Multi-entity JSON examples in extraction prompts produce more entities than single-entity examples
+- Confidence threshold 0.6 → 0.5 captures valid entities without introducing noise
+- Major cities (Sandy, Draper, Vancouver) must be explicitly excluded from entity extraction
+- Light refresh mode (~$0.50 vs ~$3) updates costs, entity links, and images without re-researching or re-generating content
+- JSON serialization of dataclasses needs `json.dumps(metadata, default=str)` — dataclasses aren't JSON-serializable by default
+- Stale detection bug: calculating cutoff date but not using it in the query filter — always test query results against expectations
+
+**Key Insight:**
+Pipeline defaults accumulate hidden costs: conservative extraction misses 2/3 of valid entities, stale detection refreshes wrong resorts, and full refresh wastes $2.50/resort on unchanged content. Targeted improvements to each default multiplied effectiveness without increasing complexity.
+
+---
+
+## Linking Strategy Overhaul (LS)
+
+**Arc:**
+- **Started believing**: External linking is a flat priority chain — affiliate beats direct beats maps for everything
+- **Ended believing**: Link destinations must match user intent by entity type — parents want to book hotels, get restaurant directions, register for ski school
+- **Transformation**: From generic link injection to context-aware destinations that match what parents actually do with each entity type
+
+**Technical:**
+- Data-driven priority table per entity type replaces nested if/elif chains — easier to maintain and reason about
+- Hotels → affiliate > direct > maps (parents book online)
+- Restaurants → maps > direct (parents need directions)
+- Ski schools → direct > maps (parents register online)
+- UTM medium `in_content` distinguishes entity links from sidebar links (`resort_page`) for attribution
+- `rel="noopener"` (no nofollow) on entity links sends referrer for partner traffic attribution
+- `rel="sponsored noopener"` on affiliate links satisfies Google's sponsored link requirement
+- `html.escape(url, quote=True)` before href interpolation prevents XSS via crafted URLs
+- sanitize.ts rel allowlist (`noopener`, `noreferrer`, `nofollow`, `sponsored`, `ugc`) prevents arbitrary attribute injection
+
+**Key Insight:**
+A parent looking up "Hotel Sonne Zermatt" wants to book a room. A parent looking up "Chez Vrony" wants driving directions. Link destinations should match the action users take with each entity type, not follow a universal priority order.
+
+---
+
 ## Round 16: Error Handling & Polish
 
 **Arc:**
@@ -419,6 +522,14 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Filter state in component state | URL search params as single source of truth (shareable, bookmarkable) | 16 |
 | Dead-end empty states | Actionable empty states with clear filters + newsletter CTA | 16 |
 | Default browser 404 | Branded 404 with actionable recovery CTAs | 16 |
+| `as any` for Supabase join types | Define intermediate interfaces handling both object and array returns | 20 |
+| Flat link priority (affiliate > direct > maps for all) | Context-aware priority per entity type (hotel→book, restaurant→maps) | LS |
+| 80-120 word 4-part Quick Takes | 40-65 word single paragraph (more scannable) | 20 |
+| `'use client'` on components with H1 | Server component for all critical SEO elements | 19 |
+| Missing `generateStaticParams()` on dynamic routes | Always add for proper static generation | 19 |
+| LLM extraction with generic confidence guidance | Concrete confidence examples (e.g., "Kandahar Lodge → 0.9") | PI |
+| Full refresh for stale resorts (~$3) | Light refresh for unchanged content (~$0.50, 85% savings) | PI |
+| Nested if/elif for link destination logic | Data-driven priority table per entity type | LS |
 
 ---
 
@@ -453,6 +564,19 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Customer perspective test walkthroughs | Different user types reveal different UX paths through same features | 16 |
 | Actionable error/empty states | Recovery CTAs turn dead ends into engagement | 16 |
 | Sticky filter bar with backdrop blur | Controls stay accessible during scroll without obscuring content | 16 |
+| `as unknown as T` for Supabase joins | Safer than `as any` — preserves downstream type checking | 20 |
+| `sanitizeHTML()` on all dangerouslySetInnerHTML | Defense-in-depth against stored XSS from DB content | 20 |
+| `sanitizeJSON()` on all JSON-LD blocks | Prevents script injection via crafted schema data | 20 |
+| Strong-tag-first entity extraction | Parse `<strong>` from HTML before LLM fallback — saves $0.03/resort | 20 |
+| Three-layer hybrid scoring | Structural + content LLM + review balances objectivity and nuance | 20 |
+| Forbidden pattern regex blocklist | More effective than prompt instructions for preventing generic LLM output | 20 |
+| Context-aware link destinations | Match link target to user intent per entity type | LS |
+| Light refresh mode for stale resorts | Updates costs/links/images without full re-research — 85% cost reduction | PI |
+| Concrete confidence examples in extraction prompts | "Kandahar Lodge → 0.9" yields 3x more entities than generic guidance | PI |
+| Server components for SEO-critical elements | H1, meta tags, JSON-LD must be server-rendered for crawler visibility | 19 |
+| Programmatic collection pages from DB queries | Data-driven pages (best-for-beginners, etc.) create crawlable entry points | 19 |
+| `html.escape(url, quote=True)` before href interpolation | Defense-in-depth against XSS via crafted URLs in entity links | LS |
+| Expert review panel (7 reviewers) | Security, TypeScript, Python, simplicity, performance catch different issues | 20 |
 
 ---
 
@@ -470,6 +594,11 @@ Concrete rules distilled from past failures. Never repeat these.
 | Never use temporary image URLs for permanent storage | Replicate/Glif URLs expire; always re-upload to Supabase Storage | R13 |
 | Never render DB content as plain text if it may contain HTML | Use `dangerouslySetInnerHTML` + `sanitizeHtml()` for any stored content | R13 |
 | Never assume API keys work across Google Cloud projects | Keys from Tom Global don't work for Snowthere project APIs | R13.2 |
+| Never use `as any` for Supabase complex join returns | Define proper intermediate types; use `as unknown as T` — `as any` silently disables all type checking downstream | R20 |
+| Never put H1 or critical SEO elements inside `'use client'` components | Client components are invisible to crawlers — server-render all SEO-critical content | R19 |
+| Never omit `generateStaticParams()` from dynamic routes | Without it, Next.js won't pre-render pages at build time, hurting crawl efficiency | R19 |
+| Never use `dangerouslySetInnerHTML` without `sanitizeHTML()` | All DB content may contain malicious HTML — sanitize at every render point | R20 |
+| Never inject JSON-LD without `sanitizeJSON()` | Crafted data could contain `</script>` and break out of JSON-LD block | R20 |
 
 ---
 
@@ -486,6 +615,11 @@ Approaches tried and abandoned. Don't revisit these.
 | Generic "loading..." spinner | Users perceived slow loading, no structural context | Skeleton loaders matching actual page structure | R16 |
 | Shrinking extraction schema to match DB | Lost family-relevant budget data (lesson costs, rental prices) | Expanded DB schema to match what families actually need | R5.2 |
 | `robots.txt/route.ts` alongside `robots.ts` | Route handler silently overrode the comprehensive version | Single `robots.ts` file | R12 |
+| `as any` casts for Supabase joins (~15 instances) | Silently bypassed all type checking, hiding real data shape bugs | Intermediate interfaces with `as unknown as T` | R20 |
+| 4-part Editorial Verdict Model for Quick Takes (80-120 words) | Too long for scanning, parents want quick verdict not structured essay | 40-65 word single paragraph with specific facts | R20 |
+| Completeness multiplier in structural score | Double-penalized with data_completeness gate — low completeness resorts penalized twice | Removed multiplier, kept separate data_completeness gate | R20 |
+| Universal link priority (affiliate > direct > maps) | Doesn't match user intent — parent wanting restaurant directions gets booking page | Per-entity-type priority table matching user action | LS |
+| Full refresh for every stale resort (~$3/resort) | Most resort data doesn't change — re-researching is waste | Light refresh (~$0.50) for costs, links, images only | PI |
 
 ---
 
@@ -502,3 +636,9 @@ Recurring situations and the best response. When you see X, do Y.
 | Data from multiple providers/APIs | Implement fallback chain with graceful degradation | Single-provider dependency blocks entire pipeline on outage | R13 |
 | Environment variable used in multiple files | Centralize in one constants file with `.trim()` | Scattered definitions guarantee inconsistency | R12 |
 | New feature touches user-facing states | Design all states: loading, empty, error, success, filtered | Every undesigned state is a UX gap users will find | R16 |
+| Supabase query returns unexpected shape | Define interfaces handling both object (1:1) and array (1:many) join returns | Supabase join return types vary by relationship cardinality | R20 |
+| `dangerouslySetInnerHTML` anywhere in codebase | Immediately add `sanitizeHTML()` wrapper — no exceptions | All DB content is potential XSS vector | R20 |
+| JSON-LD `<script>` block with DB data | Wrap in `sanitizeJSON()` to escape `<`, `>`, `&` | Crafted data could break out of script block | R20 |
+| Entity extraction returns few results | Add concrete confidence examples + lower threshold + multi-entity JSON template | Default LLM extraction is too conservative | PI |
+| Links need different behavior per entity type | Build data-driven priority table, not nested conditionals | User intent varies: booking vs directions vs registration | LS |
+| Client component renders SEO-critical content | Move to server component or extract server-rendered wrapper | Crawlers can't see client-rendered content | R19 |

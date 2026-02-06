@@ -63,7 +63,7 @@ function IntroSection({ content }: { content?: string }) {
 
   return (
     <div className="prose prose-lg max-w-none text-gray-700">
-      <div dangerouslySetInnerHTML={{ __html: content }} />
+      <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }} />
     </div>
   )
 }
@@ -74,7 +74,7 @@ function TextSection({ title, content }: { title?: string; content?: string }) {
       {title && <SectionHeader title={title} type="text" />}
       {content && (
         <div className="prose prose-lg max-w-none text-gray-700">
-          <div dangerouslySetInnerHTML={{ __html: content }} />
+          <div dangerouslySetInnerHTML={{ __html: sanitizeHTML(content) }} />
         </div>
       )}
     </div>

@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-> Compound Beads v3.0 | Last Updated: 2026-02-05
+> Compound Beads v3.0 | Last Updated: 2026-02-06
 
-**All rounds through R16 + Linking Strategy + Pipeline Improvements complete.** No active round. Site is live, pipeline is autonomous, entity linking improved.
+**Round 20 COMMITTED + EXPERT REVIEWED.** All code committed (b5c3e8f content, 0c7121b type safety + security). All 7 expert reviewers STRONG APPROVE / APPROVE. Migrations 042+043 applied. Backfills not yet run (~$9.29).
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -12,38 +12,36 @@
 - SEO/GEO optimized (Schema.org, llms.txt, AI crawler whitelist)
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
-**Intelligence Summary**:
-- **Working well**: Autonomous pipeline, deterministic scoring, 4-tier image fallback, ISR revalidation, improved entity linking (HIGH confidence extraction, light refresh mode)
-- **Needs attention**: 9 resorts at 0% completeness, 20 cost data outliers, migration 036 not applied
-- **Watch**: Google indexing pace, affiliate program signups pending
+**Stats**: ~75 resorts, 10 guides, 14 countries, 6 collection pages, 96 static pages
 
-**Recent Session (2026-02-05) — Pipeline Improvements**:
-- **Entity extraction prompt**: HIGH confidence (0.8+) guidance, multi-entity example, explicit city exclusion
-- **Confidence threshold**: 0.6 → 0.5 (catches more valid entities)
-- **Stale detection fix**: `get_stale_resorts()` now actually filters by days_threshold (was returning N oldest regardless)
-- **Light refresh mode**: New `_run_light_refresh()` function (~$0.50 vs ~$3), skips research/content, updates costs/links/images
-- **CLI flag**: `--light-refresh` added to cron.py
-- **JSON serialization fix**: `log_reasoning()` now handles dataclasses (KeywordResearchConfig error fixed)
-- **Backfills**: Whitefish (3→12), Obergurgl (4→14), Okemo (4→14), Snowbird (10→29), Sun Peaks (9→17)
+**Round 20 Changes (committed b5c3e8f)**:
+- Strong-tag-first entity extraction (eliminates ~$0.03/resort Claude calls)
+- Airport links → Skyscanner flight search URLs via IATA code extraction
+- Quick Takes: 40-65 word single paragraph (was 80-120 word 4-part)
+- Taglines: fact-based calibration + forbidden pattern regex blocklist
+- Three-layer hybrid scoring: structural 30% + content LLM 50% + review 20%
+- Dollar sign always shown on resort cards (fallback $$ when NULL)
+- Internal resort links injected into guide prose
+- 3 new backfill scripts: costs, quick_takes, hybrid_scores
 
-**Key Commits (2026-02-05)**:
-```
-1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
-82a3951 fix: Exclude major cities from entity extraction
-b182e33 fix: Treat 'refreshed' status as success in exit code
-98cbc6b feat: Pipeline improvements — entity extraction, stale detection fix, light refresh mode
-```
+**Type Safety + Security (committed 0c7121b)**:
+- Zero `as any` casts (was ~15) — proper types for Supabase joins
+- `sanitizeHTML()` on all `dangerouslySetInnerHTML` paths
+- `sanitizeJSON()` on all JSON-LD `<script>` blocks (7 pages)
+- 8 missing fields added to `database.types.ts` (migrations 042+043)
 
-**Stats**: 43+ resorts published, 10 guides published, pipeline adds ~6/day
+**Next Steps**:
+- Run backfills: costs → links --clear-cache → quick_takes → taglines → hybrid_scores (~$9.29)
+- Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
 
 **Pipeline**: Active on Railway (snowthere-agents)
-- Resorts: ~6/day, improved entity linking (10-20 links/resort vs 3-5 before)
+- Resorts: ~6/day, entity linking (10-20 links/resort)
 - Light refresh for stale resorts (~$0.50 vs ~$3)
 - Guides: Mon/Thu, 3-agent expert panel
 - Newsletter: Thursday 6am PT
 
 **Infrastructure**:
-- Vercel: www.snowthere.com (ISR)
+- Vercel: www.snowthere.com (ISR, 96 static pages)
 - Railway: snowthere-agents (daily cron)
 - Supabase: Snowthere, AWS us-east-2, 30+ tables
 

@@ -85,6 +85,14 @@ export interface Database {
           terrain_beginner_pct: number | null
           terrain_intermediate_pct: number | null
           terrain_advanced_pct: number | null
+          data_completeness: number | null
+          structural_score: number | null
+          content_score: number | null
+          review_score: number | null
+          score_confidence: 'high' | 'medium' | 'low' | null
+          score_reasoning: string | null
+          score_dimensions: Json | null
+          scored_at: string | null
         }
         Insert: {
           resort_id: string
@@ -103,6 +111,14 @@ export interface Database {
           terrain_beginner_pct?: number | null
           terrain_intermediate_pct?: number | null
           terrain_advanced_pct?: number | null
+          data_completeness?: number | null
+          structural_score?: number | null
+          content_score?: number | null
+          review_score?: number | null
+          score_confidence?: 'high' | 'medium' | 'low' | null
+          score_reasoning?: string | null
+          score_dimensions?: Json | null
+          scored_at?: string | null
         }
         Update: {
           resort_id?: string
@@ -121,6 +137,14 @@ export interface Database {
           terrain_beginner_pct?: number | null
           terrain_intermediate_pct?: number | null
           terrain_advanced_pct?: number | null
+          data_completeness?: number | null
+          structural_score?: number | null
+          content_score?: number | null
+          review_score?: number | null
+          score_confidence?: 'high' | 'medium' | 'low' | null
+          score_reasoning?: string | null
+          score_dimensions?: Json | null
+          scored_at?: string | null
         }
       }
       resort_content: {

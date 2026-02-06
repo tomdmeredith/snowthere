@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { SITE_URL } from '@/lib/constants'
+import { sanitizeJSON } from '@/lib/sanitize'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui'
 import { Navbar } from '@/components/layout/Navbar'
@@ -126,7 +127,7 @@ export default async function ResortsPage({
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJSON(itemListJsonLd) }}
       />
       <Navbar />
       <main id="main-content" className="min-h-screen bg-white">

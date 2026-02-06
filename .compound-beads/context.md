@@ -1,27 +1,128 @@
 # Snowthere Context
 
-> Last synced: 2026-02-05 (Pipeline Improvements)
+> Last synced: 2026-02-06 (Round 20 + Type Safety/Security)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
 
 ## Current State
 
-**All rounds through R16 + Linking Strategy + Pipeline Improvements complete.** No active round. Site is live, pipeline is autonomous, entity linking significantly improved.
+**Round 20 COMMITTED + EXPERT REVIEWED.** All code committed (b5c3e8f + 0c7121b). All 7 expert reviewers STRONG APPROVE / APPROVE. Migrations 042+043 applied. Backfills pending (~$9.29).
 
-- **Resorts:** 58+ with entity links, pipeline adds ~6/day
-- **Entity Links:** Improved — resorts now get 10-20 links (was 3-5 before extraction prompt fix)
+- **Resorts:** ~75 published with entity links, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
-- **Images:** Nano Banana Pro on Replicate is the default model (4-tier fallback); UGC photos now unblocked via Google Places API
+- **Countries:** 14 with country pages + intro content
+- **Collections:** 6 programmatic SEO pages (best-for-beginners, best-for-toddlers, etc.)
+- **Static Pages:** 96 (build passes, zero TypeScript errors)
+- **Entity Links:** Strong-tag-first extraction, Skyscanner flight URLs, context-aware destinations
+- **Scoring:** Three-layer hybrid: structural 30% + content LLM 50% + review 20%
+- **Quick Takes:** 40-65 word single paragraph format (fact-based, not 4-part editorial)
+- **Type Safety:** Zero `as any` casts, 8 migration fields in database.types.ts
+- **Security:** `sanitizeHTML()` on all dangerouslySetInnerHTML, `sanitizeJSON()` on all JSON-LD
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
-- **SEO:** All pages have canonical tags, IndexNow verified, GSC API connected, JSON-LD on homepage + index pages
+- **SEO:** HeroSpielplatz now server component (H1 visible), country pages have generateStaticParams, ISR 6h
 - **Rich Results:** WebSite + Organization schema (homepage), ItemList schema (/resorts, /guides)
-- **Sitemap:** Image sitemap extension, 6 legal pages added
-- **Indexing:** 4 indexed by Google (of 54 discovered), 7 pages manually requested for priority crawl
-- **Scores:** Deterministic decimal (3.8-8.3 range, avg 5.4), completeness multiplier applied
-- **Data Quality:** Backfill complete — 43% avg completeness, 7 resorts show full tables, 22 partial, 9 hidden
-- **Linking:** Context-aware destinations (hotel→booking, restaurant→maps, ski_school→direct), UTMs on in-content links, rel allowlist validation
-- **Google Places:** Both APIs enabled, correct API key deployed to Railway, type mapping fixed for API (New)
+- **Sitemap:** Image sitemap extension, legal pages added
+- **Google Places:** Both APIs enabled, correct API key deployed to Railway
+- **Migrations:** 042 + 043 applied to cloud Supabase (Feb 6)
+
+---
+
+## Round 20: Content Quality & Linking Overhaul + Type Safety (2026-02-06) ✅
+
+**Goal:** Improve content quality (Quick Takes, taglines, scoring), add Skyscanner flight links, inject resort links into guides, eliminate TypeScript `as any` casts, harden security across all pages.
+
+### Content Quality — COMMITTED (b5c3e8f)
+
+1. **Strong-tag-first entity extraction** — Eliminates ~$0.03/resort Claude calls by parsing `<strong>` tags before falling back to LLM extraction
+2. **Airport links → Skyscanner** — IATA code extraction from content, flight search URLs generated automatically
+3. **Quick Takes reformatted** — 40-65 word single paragraph (was 80-120 word 4-part editorial model)
+4. **Taglines calibrated** — Fact-based generation + forbidden pattern regex blocklist (blocks "hidden gem", "world-class", etc.)
+5. **Three-layer hybrid scoring** — structural 30% + content LLM 50% + review 20%, completeness multiplier removed
+6. **Dollar sign always shown** — Resort cards show $$ fallback when `estimated_family_daily` is NULL
+7. **Guide resort links** — Internal resort links injected into guide prose via `resort-linker.ts`
+8. **Content prompts** — Mandatory `<strong>` for named businesses, IATA codes in getting_there
+9. **3 new backfill scripts** — `backfill_costs.py`, `backfill_quick_takes.py`, `backfill_hybrid_scores.py`
+10. **`calculate_structural_score()`** — Replaces `calculate_family_score()` (alias kept for compatibility)
+
+### Type Safety + Security — COMMITTED (0c7121b)
+
+11. **Zero `as any` casts** — Defined `SupabaseResortRow`, `SimilarityRow` types; exported `TrailMapData`; fixed `UsefulLinks` null types
+12. **8 missing fields in database.types.ts** — `data_completeness`, `structural_score`, `content_score`, `review_score`, `score_confidence`, `score_reasoning`, `score_dimensions`, `scored_at`
+13. **`sanitizeHTML()` hardening** — Applied to ContentRenderer content sections (6), GuideContent IntroSection + TextSection
+14. **`sanitizeJSON()` hardening** — Applied to all JSON-LD blocks across 7 pages (homepage, /resorts, /guides, /guides/[slug], /resorts/[country], /resorts/[country]/[slug], /collections/[collection])
+15. **Nullish coalescing** — `||` → `??` for score_confidence, explicit `!= null` for data_completeness checks
+
+### Migrations
+
+- **042:** `structural_score`, `content_score`, `review_score`, `score_confidence`, `score_reasoning`, `score_dimensions`, `scored_at` columns on `resort_family_metrics`
+- **043:** `hybrid_score` column on `resort_family_metrics`
+- Both applied to cloud Supabase via SQL Editor (Feb 6)
+
+### Expert Review — ALL PASS
+
+| Reviewer | Verdict |
+|----------|---------|
+| Security (full app audit) | STRONG APPROVE |
+| Security (backfills + data flow) | APPROVE |
+| TypeScript (type safety re-review) | STRONG APPROVE |
+| TypeScript (original R20) | APPROVE (all findings fixed) |
+| Python | APPROVE |
+| Code Simplicity | APPROVE |
+| Performance | APPROVE |
+
+### UI Testing — PASS
+- Zermatt resort page: all sections render (Quick Take, Getting There, entity links, sidebar, trail map, FAQ)
+- Resort listing: 75 resorts with $$ price badges
+- Build: 96 static pages, zero errors
+
+### Key Commits
+```
+0c7121b fix: Type safety + security hardening across frontend
+b5c3e8f feat: Round 20 — Content quality & linking overhaul
+```
+
+### Pending
+- Run backfills: costs → links --clear-cache → quick_takes → taglines → hybrid_scores (~$9.29)
+- Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
+
+**Arc:**
+- Started believing: Content quality improvements and type safety are separate concerns
+- Ended believing: Content quality, type safety, and security hardening form a single trust layer
+- Transformation: From treating content, types, and security as independent workstreams to a unified quality-and-trust layer where each reinforces the others
+
+---
+
+## Round 19: SEO Fixes, Programmatic Pages & Country Content (2026-02-05) ✅
+
+**Goal:** Fix critical SEO issues (invisible H1, missing static params, slow ISR), add programmatic collection pages, build country intro content system.
+
+### SEO Fixes — COMMITTED (cae670a)
+
+1. **HeroSpielplatz → server component** — Was `'use client'`, making H1 invisible to crawlers
+2. **Country pages `generateStaticParams()`** — Was missing, preventing static generation
+3. **ISR reduced to 6h** — Was 12h, too slow for content updates
+4. **Canonical leak** — Verified Vercel already has 308 redirect (GSC duplicates are legacy)
+
+### Programmatic Pages — 6 CREATED
+
+5. **Collection pages** at `/collections/[collection]` — best-for-beginners, best-for-toddlers, best-value, best-for-teens, shortest-transfer, best-ski-schools
+6. **Route constraint:** Can't have `[collection]` and `[country]` at same level under `/resorts/`
+
+### Country Content System
+
+7. **Country intro content** — AI-generated intros for all 14 country pages
+8. **BreadcrumbList JSON-LD** — Added to country pages
+
+### Key Commits
+```
+cae670a feat: Round 19 — SEO fixes, programmatic pages, country content system
+```
+
+**Arc:**
+- Started believing: The homepage H1 was rendering correctly and country pages were properly configured
+- Ended believing: Client components hide H1 from crawlers, missing generateStaticParams prevents static generation
+- Transformation: From trusting client-rendered content to ensuring all critical SEO elements are server-rendered and statically generated
 
 ---
 
@@ -626,8 +727,8 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 - ~~Kitzbühel 404~~ — Fixed in R14 (Unicode normalization + ASCII slug)
 - **MCP parity at ~40%** — 58 of ~340 primitive functions exposed; 22 modules missing → R17
 - **Runner monolith** — `run_resort_pipeline()` is 1,627 lines, no partial re-run → R18
-- Quick Take length occasionally exceeds 120 word limit (minor)
-- Quick Take score discrepancy — LLM-generated prose score may not match deterministic formula score (E1)
+- ~~Quick Take length occasionally exceeds 120 word limit~~ — Reformatted to 40-65 word single paragraph in R20
+- ~~Quick Take score discrepancy~~ — Three-layer hybrid scoring replaces single-score model in R20
 - Affiliate programs: migration 032 created but manual network signups pending
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
 - Google Places API key is unrestricted (allows all 32 Maps APIs) — should restrict to Places only
@@ -731,11 +832,13 @@ _(no active task)_
 
 ## Pending Manual Work
 
-- Sign up for affiliate networks (Travelpayouts, Awin, Impact, AvantLink, CJ, FlexOffers)
+- ~~Commit type safety + security hardening fixes~~ → DONE (0c7121b)
+- **Run backfills** (~$9.29): costs → links --clear-cache → quick_takes → taglines → hybrid_scores
+- Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
 - Run migration 032_comprehensive_affiliate_programs.sql on production
+- Apply migration 036 to cloud Supabase (data_requests table for GDPR form)
 - Request indexing for remaining GSC pages (daily quota, ~10/day)
 - Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
-- Apply migration 036 to cloud Supabase (data_requests table for GDPR form)
 - Homepage redesign (moved to after R16)
 
 ## Key Files
@@ -752,11 +855,10 @@ _(no active task)_
 ## Recent Commits
 
 ```
+0c7121b fix: Type safety + security hardening across frontend
+b5c3e8f feat: Round 20 — Content quality & linking overhaul
+cae670a feat: Round 19 — SEO fixes, programmatic pages, country content system
+ea1fd95 docs: Update compound beads context for Pipeline Improvements session
 1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
 82a3951 fix: Exclude major cities from entity extraction
-b182e33 fix: Treat 'refreshed' status as success in exit code
-98cbc6b feat: Pipeline improvements — entity extraction, stale detection fix, light refresh mode
-b2174dc feat: Entity link coverage overhaul — brand registry, quality gates, resort_entities atoms
-ede019f refactor: Expert review fixes — html.escape, dead code removal, rel allowlist
-1412d97 fix: Send referrer on all entity links for partner traffic attribution
 ```

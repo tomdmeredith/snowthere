@@ -11,7 +11,7 @@ interface DifficultyBreakdown {
   unknown?: number
 }
 
-interface TrailMapData {
+export interface TrailMapData {
   quality: 'full' | 'partial' | 'minimal' | 'none'
   piste_count: number
   lift_count: number

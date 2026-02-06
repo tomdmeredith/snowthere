@@ -2,6 +2,7 @@ import { Metadata } from 'next'
 import Link from 'next/link'
 import { BookOpen, Map, CheckSquare, CreditCard, Snowflake, Calendar } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants'
+import { sanitizeJSON } from '@/lib/sanitize'
 import { supabase } from '@/lib/supabase'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
@@ -160,7 +161,7 @@ export default async function GuidesPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJSON(itemListJsonLd) }}
       />
       <Navbar />
       <div className="min-h-screen bg-gradient-to-br from-[#FFF5E6] via-[#FFE8E8] to-[#E8F4FF]">

@@ -3,9 +3,9 @@ import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { supabase } from '@/lib/supabase'
-import { ResortWithDetails } from '@/lib/database.types'
+import { ResortWithDetails, SkiPass } from '@/lib/database.types'
 import { SITE_URL } from '@/lib/constants'
-import { createSanitizedHTML } from '@/lib/sanitize'
+import { sanitizeHTML, sanitizeJSON } from '@/lib/sanitize'
 import { injectResortLinks } from '@/lib/resort-linker'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
@@ -14,7 +14,7 @@ import { FamilyMetricsTable } from '@/components/resort/FamilyMetricsTable'
 import { CostTable } from '@/components/resort/CostTable'
 import { SkiCalendar } from '@/components/resort/SkiCalendar'
 import { FAQSection } from '@/components/resort/FAQSection'
-import { TrailMap } from '@/components/resort/TrailMap'
+import { TrailMap, type TrailMapData } from '@/components/resort/TrailMap'
 import { HeroImage } from '@/components/resort/HeroImage'
 import { TerrainBreakdown } from '@/components/resort/TerrainBreakdown'
 import { ContentRenderer } from '@/components/resort/ContentRenderer'
@@ -39,6 +39,18 @@ import {
 
 interface Props {
   params: { country: string; slug: string }
+}
+
+// Supabase .select() with joins returns passes as nested objects before transformation
+type SupabaseResortRow = Omit<ResortWithDetails, 'passes'> & {
+  passes: { access_type: string | null; pass: SkiPass }[]
+}
+
+// Supabase similarity join row shape
+interface SimilarityRow {
+  similarity_score: number
+  resort_a?: { id: string; name: string; country: string; slug: string; status: string }
+  resort_b?: { id: string; name: string; country: string; slug: string; status: string }
 }
 
 async function getResort(country: string, slug: string): Promise<ResortWithDetails | null> {
@@ -73,8 +85,8 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
 
   if (error || !resort) return null
 
-  // Cast resort to any to avoid TypeScript spread issues with Supabase's complex return type
-  const resortData = resort as any
+  // Cast Supabase complex join return type to our known shape
+  const resortData = resort as unknown as SupabaseResortRow
 
   // Transform the passes relation
   const transformedResort: ResortWithDetails = {
@@ -94,7 +106,7 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
     content: resortData.content,
     costs: resortData.costs,
     calendar: resortData.calendar || [],
-    passes: (resortData.passes || []).map((p: any) => ({
+    passes: (resortData.passes || []).map((p) => ({
       ...p.pass,
       access_type: p.access_type,
     })),
@@ -154,7 +166,7 @@ async function getSimilarResorts(resortId: string, limit: number = 6): Promise<S
   const results: SimilarResortData[] = []
 
   if (similarA) {
-    for (const row of similarA as any[]) {
+    for (const row of similarA as unknown as SimilarityRow[]) {
       if (row.resort_b?.status === 'published') {
         // Fetch family score separately
         const { data: metricsData } = await supabase
@@ -177,7 +189,7 @@ async function getSimilarResorts(resortId: string, limit: number = 6): Promise<S
   }
 
   if (similarB) {
-    for (const row of similarB as any[]) {
+    for (const row of similarB as unknown as SimilarityRow[]) {
       if (row.resort_a?.status === 'published') {
         // Fetch family score separately
         const { data: metricsData } = await supabase
@@ -239,8 +251,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       : `${ageRange}${terrainPct}${dailyCost}Complete family guide to skiing at ${resort.name}, ${resort.country}. Kid-friendly terrain, real costs, and honest parent reviews.`)
 
   // Find best available OG image from resort images
-  const ogImage = resort.images?.find((img: any) => img.image_type === 'hero')?.image_url
-    || resort.images?.find((img: any) => img.image_type === 'atmosphere')?.image_url
+  const ogImage = resort.images?.find((img) => img.image_type === 'hero')?.image_url
+    || resort.images?.find((img) => img.image_type === 'atmosphere')?.image_url
     || null
 
   // Build canonical URL
@@ -338,21 +350,21 @@ export default async function ResortPage({ params }: Props) {
   // We share linkedSlugs across all sections to avoid duplicate links
   const linkedSlugs = new Set<string>()
   const linkedContent = {
-    getting_there: content?.getting_there ? await injectResortLinks(content.getting_there as string, resort.name, linkedSlugs) : null,
-    where_to_stay: content?.where_to_stay ? await injectResortLinks(content.where_to_stay as string, resort.name, linkedSlugs) : null,
-    lift_tickets: content?.lift_tickets ? await injectResortLinks(content.lift_tickets as string, resort.name, linkedSlugs) : null,
-    on_mountain: content?.on_mountain ? await injectResortLinks(content.on_mountain as string, resort.name, linkedSlugs) : null,
-    off_mountain: content?.off_mountain ? await injectResortLinks(content.off_mountain as string, resort.name, linkedSlugs) : null,
-    parent_reviews_summary: content?.parent_reviews_summary ? await injectResortLinks(content.parent_reviews_summary as string, resort.name, linkedSlugs) : null,
+    getting_there: content?.getting_there ? sanitizeHTML(await injectResortLinks(content.getting_there as string, resort.name, linkedSlugs)) : null,
+    where_to_stay: content?.where_to_stay ? sanitizeHTML(await injectResortLinks(content.where_to_stay as string, resort.name, linkedSlugs)) : null,
+    lift_tickets: content?.lift_tickets ? sanitizeHTML(await injectResortLinks(content.lift_tickets as string, resort.name, linkedSlugs)) : null,
+    on_mountain: content?.on_mountain ? sanitizeHTML(await injectResortLinks(content.on_mountain as string, resort.name, linkedSlugs)) : null,
+    off_mountain: content?.off_mountain ? sanitizeHTML(await injectResortLinks(content.off_mountain as string, resort.name, linkedSlugs)) : null,
+    parent_reviews_summary: content?.parent_reviews_summary ? sanitizeHTML(await injectResortLinks(content.parent_reviews_summary as string, resort.name, linkedSlugs)) : null,
   }
 
   // Find hero and atmosphere images
-  const images = (resort as any).images || []
-  const heroImage = images.find((img: any) => img.image_type === 'hero')
-  const atmosphereImage = images.find((img: any) => img.image_type === 'atmosphere')
+  const images = resort.images || []
+  const heroImage = images.find((img) => img.image_type === 'hero')
+  const atmosphereImage = images.find((img) => img.image_type === 'atmosphere')
 
   // Get links for sidebar
-  const links = (resort as any).links || []
+  const links = resort.links || []
 
   // Build SkiResort schema for SEO/GEO
   const countrySlug = resort.country.toLowerCase().replace(/\s+/g, '-')
@@ -403,13 +415,13 @@ export default async function ResortPage({ params }: Props) {
       {/* SkiResort Schema for SEO/GEO */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(skiResortSchema) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJSON(skiResortSchema) }}
       />
 
       {/* BreadcrumbList Schema */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: sanitizeJSON(breadcrumbSchema) }}
       />
 
       {/* FAQ Schema - server-rendered for Googlebot */}
@@ -417,7 +429,7 @@ export default async function ResortPage({ params }: Props) {
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
+            __html: sanitizeJSON({
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
               mainEntity: faqs.map((faq) => ({
@@ -600,9 +612,9 @@ export default async function ResortPage({ params }: Props) {
             )}
 
             {/* The Numbers Table — shown when data completeness >= 0.3 */}
-            {metrics && (metrics as any).data_completeness >= 0.3 && (
+            {metrics && metrics.data_completeness != null && metrics.data_completeness >= 0.3 && (
               <div className="animate-in animate-in-3">
-                {(metrics as any).data_completeness < 0.6 && (
+                {metrics.data_completeness < 0.6 && (
                   <p className="text-sm text-dark-400 mb-2 italic">
                     Some data is pending verification. We update as we confirm details.
                   </p>
@@ -693,7 +705,7 @@ export default async function ResortPage({ params }: Props) {
             <TrailMap
               resortName={resort.name}
               country={resort.country}
-              data={resort.trail_map_data as any}
+              data={resort.trail_map_data as TrailMapData | null}
               latitude={resort.latitude ?? undefined}
               longitude={resort.longitude ?? undefined}
             />
@@ -741,12 +753,12 @@ export default async function ResortPage({ params }: Props) {
                   perfectIf={metrics.perfect_if || []}
                   skipIf={metrics.skip_if || []}
                   lastUpdated={resort.last_refreshed || resort.updated_at}
-                  scoreConfidence={(metrics as any).score_confidence || null}
+                  scoreConfidence={metrics.score_confidence ?? null}
                 />
               )}
 
               {/* Cost Summary Card — shown when metrics completeness >= 0.3 and at least one price exists */}
-              {costs && metrics && (metrics as any).data_completeness >= 0.3 &&
+              {costs && metrics && metrics.data_completeness != null && metrics.data_completeness >= 0.3 &&
                 (costs.lift_adult_daily != null || costs.lodging_mid_nightly != null ||
                  costs.meal_family_avg != null || costs.estimated_family_daily != null) && (
                 <CostTable costs={costs} />
