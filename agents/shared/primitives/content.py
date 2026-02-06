@@ -325,3 +325,91 @@ def _format_context(context: dict[str, Any]) -> str:
         else:
             lines.append(f"{key}: {value}")
     return "\n".join(lines)
+
+
+# =============================================================================
+# COUNTRY PAGE CONTENT
+# =============================================================================
+
+
+def generate_country_intro(
+    country_name: str,
+    resort_data: list[dict[str, Any]],
+    voice_profile: str = "instagram_mom",
+) -> str:
+    """
+    Generate an intro paragraph for a country index page.
+
+    Addresses the parent question: "Should we ski in [Country]?"
+    Includes price comparison, standout resorts, and practical tips.
+
+    Args:
+        country_name: Country name (e.g., "Austria")
+        resort_data: List of dicts with keys: name, family_score, daily_cost, best_ages
+        voice_profile: Voice profile to use
+
+    Returns:
+        200-300 word intro as plain text (not HTML)
+    """
+    profile = get_voice_profile(voice_profile)
+    client = get_claude_client()
+
+    # Build resort summary for context
+    resort_summaries = []
+    for r in resort_data[:10]:  # Limit context to 10 resorts
+        parts = [r.get("name", "Unknown")]
+        if r.get("family_score"):
+            parts.append(f"score {r['family_score']}/10")
+        if r.get("daily_cost"):
+            parts.append(f"~${r['daily_cost']}/day")
+        if r.get("best_ages"):
+            parts.append(f"ages {r['best_ages']}")
+        resort_summaries.append(" | ".join(parts))
+
+    resorts_context = "\n".join(resort_summaries) if resort_summaries else "No resorts yet"
+
+    avg_cost = None
+    costs = [r["daily_cost"] for r in resort_data if r.get("daily_cost")]
+    if costs:
+        avg_cost = sum(costs) / len(costs)
+
+    system_prompt = f"""You are writing content for Snowthere, a family ski resort guide.
+
+VOICE PROFILE: {profile.name}
+{profile.description}
+
+TONE:
+{chr(10).join(f'- {t}' for t in profile.tone)}
+
+PATTERNS TO USE:
+{chr(10).join(f'- {p}' for p in profile.patterns)}
+
+AVOID:
+{chr(10).join(f'- {a}' for a in profile.avoid)}
+
+Write a 200-300 word flowing paragraph. No headings, bullet points, or HTML tags. Plain text only."""
+
+    prompt = f"""Write a 200-300 word intro for a page listing family ski resorts in {country_name}.
+
+CONTEXT:
+- {len(resort_data)} family ski resorts in {country_name}
+{f'- Average daily family cost: ~${avg_cost:.0f}' if avg_cost else ''}
+- Resort details:
+{resorts_context}
+
+REQUIREMENTS:
+1. Answer the parent's question: "Should we ski in {country_name}?"
+2. If European: mention the value angle (often cheaper than US resorts when you include lodging/food)
+3. Call out 2-3 standout resorts by name with why they're notable
+4. Include one practical tip (e.g., best time to visit, booking tip)
+5. End with an encouraging, actionable sentence
+6. Do NOT be generic — reference specific data from the resort list"""
+
+    message = client.messages.create(
+        model=settings.default_model,
+        max_tokens=500,
+        system=system_prompt,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    return message.content[0].text.strip()

@@ -11,6 +11,7 @@ import { ChevronRight } from 'lucide-react'
 import { SearchInput } from '@/components/resort/SearchInput'
 import { ResortFilters } from '@/components/resort/ResortFilters'
 import { ResortGrid } from '@/components/resort/ResortGrid'
+import { sanitizeJSON } from '@/lib/sanitize'
 import {
   type ResortListItem,
   type FilterParams,
@@ -22,6 +23,23 @@ import {
   parseAgeRanges,
   getAgeDisplayText,
 } from '@/lib/resort-filters'
+
+interface CountryIntro {
+  intro_text: string | null
+  resort_count: number
+  avg_daily_cost: number | null
+}
+
+async function getCountryIntro(countryName: string): Promise<CountryIntro | null> {
+  const { data, error } = await supabase
+    .from('country_content')
+    .select('intro_text, resort_count, avg_daily_cost')
+    .eq('country', countryName)
+    .single()
+
+  if (error || !data) return null
+  return data as CountryIntro
+}
 
 interface PageProps {
   params: { country: string }
@@ -76,27 +94,48 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const countryName = slugToCountryName(params.country)
-  const resorts = await getResortsByCountry(countryName)
+  const [resorts, intro] = await Promise.all([
+    getResortsByCountry(countryName),
+    getCountryIntro(countryName),
+  ])
 
   if (resorts.length === 0) {
     return { title: 'Country Not Found' }
   }
 
   const canonicalUrl = `${SITE_URL}/resorts/${countryToSlug(countryName)}`
+  const description = intro?.intro_text
+    ? intro.intro_text.slice(0, 155) + '...'
+    : `${resorts.length} kid-friendly ski resorts in ${countryName}. Family scores, best ages, and honest parent reviews for every resort.`
 
   return {
     title: `Family Ski Resorts in ${countryName}`,
-    description: `${resorts.length} kid-friendly ski resorts in ${countryName}. Family scores, best ages, and honest parent reviews for every resort.`,
+    description,
     alternates: { canonical: canonicalUrl },
     openGraph: {
       type: 'website',
       title: `Family Ski Resorts in ${countryName} | Snowthere`,
-      description: `${resorts.length} kid-friendly ski resorts in ${countryName}. Family scores, best ages, and honest parent reviews for every resort.`,
+      description,
       url: canonicalUrl,
       siteName: 'Snowthere',
       locale: 'en_US',
     },
   }
+}
+
+export async function generateStaticParams() {
+  const { data: resorts } = await supabase
+    .from('resorts')
+    .select('country')
+    .eq('status', 'published')
+
+  const countries = Array.from(
+    new Set((resorts || []).map((r: { country: string }) => r.country))
+  )
+
+  return countries.map((country) => ({
+    country: country.toLowerCase().replace(/\s+/g, '-'),
+  }))
 }
 
 export const revalidate = 3600
@@ -107,7 +146,10 @@ export default async function CountryResortsPage({
 }: PageProps) {
   const countryName = slugToCountryName(params.country)
   const slug = countryToSlug(countryName)
-  const allResorts = await getResortsByCountry(countryName)
+  const [allResorts, countryIntro] = await Promise.all([
+    getResortsByCountry(countryName),
+    getCountryIntro(countryName),
+  ])
 
   if (allResorts.length === 0) {
     notFound()
@@ -127,8 +169,37 @@ export default async function CountryResortsPage({
   const selectedAges = parseAgeRanges(searchParams.ages)
   const ageDisplayText = getAgeDisplayText(selectedAges)
 
+  const breadcrumbJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: 'Home',
+        item: SITE_URL,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: 'Resorts',
+        item: `${SITE_URL}/resorts`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: countryName,
+        item: `${SITE_URL}/resorts/${slug}`,
+      },
+    ],
+  }
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: sanitizeJSON(breadcrumbJsonLd) }}
+      />
       <Navbar />
       <main id="main-content" className="min-h-screen bg-white">
         {/* Breadcrumb */}
@@ -212,6 +283,18 @@ export default async function CountryResortsPage({
             </div>
           </div>
         </header>
+
+        {/* Country intro content (pipeline-generated or data-driven fallback) */}
+        {(countryIntro?.intro_text || allResorts.length >= 3) && (
+          <section className="container-page py-10">
+            <div className="max-w-3xl">
+              <p className="text-lg text-dark-600 leading-relaxed">
+                {countryIntro?.intro_text ||
+                  `${allResorts.length} family ski resorts in ${countryName}, scored and reviewed for families with kids. Each guide includes cost breakdowns, best ages, and practical tips from real parents.`}
+              </p>
+            </div>
+          </section>
+        )}
 
         {/* Filter Bar (no country pills — country is locked by route) */}
         <ResortFilters

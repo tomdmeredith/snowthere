@@ -604,7 +604,7 @@ No exclusion list exists - resorts are discovered via pass networks, keyword res
 
 ## Compound Beads Workflow
 
-This project uses compound-beads v2.0.
+This project uses Compound Beads v3.0. `AGENTS.md` at project root provides passive context (auto-loaded by Claude Code).
 
 ### Commands
 

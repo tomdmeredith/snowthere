@@ -1032,6 +1032,22 @@ async def run_daily_pipeline(
         src = r.get("source", "unknown")
         source_counts[src] = source_counts.get(src, 0) + 1
 
+    # =========================================================================
+    # STEP: Generate/Refresh Country Intros (after resort pipeline)
+    # =========================================================================
+    if not dry_run and published_count > 0:
+        try:
+            country_intros_result = generate_missing_country_intros()
+            digest["country_intros"] = country_intros_result
+        except Exception as e:
+            log_reasoning(
+                task_id=None,
+                agent_name="orchestrator",
+                action="country_intros_error",
+                reasoning=f"Country intro generation failed: {e}",
+                metadata={"run_id": run_id, "error": str(e)},
+            )
+
     # Get quality queue metrics
     quality_metrics = get_quality_metrics()
 
@@ -1067,6 +1083,130 @@ async def run_daily_pipeline(
     )
 
     return digest
+
+
+def generate_missing_country_intros(min_resorts: int = 3, max_generate: int = 3) -> dict[str, Any]:
+    """Generate country intro content for countries with enough resorts but no intro.
+
+    Runs after the daily resort pipeline to enrich country pages with unique,
+    voice-consistent content that targets "best family ski resorts in [country]" queries.
+
+    Args:
+        min_resorts: Minimum published resorts a country needs before generating an intro
+        max_generate: Maximum number of intros to generate per run (caps LLM costs)
+
+    Returns:
+        Result dict with generated/skipped counts
+    """
+    from shared.primitives.content import generate_country_intro
+    from shared.primitives.publishing import revalidate_page
+
+    client = get_supabase_client()
+
+    # Get all countries with published resort counts
+    resorts_resp = (
+        client.table("resorts")
+        .select("country, slug, name, resort_family_metrics(family_overall_score, best_age_min, best_age_max), resort_costs(estimated_family_daily)")
+        .eq("status", "published")
+        .execute()
+    )
+
+    # Group resorts by country
+    country_resorts: dict[str, list] = {}
+    for r in resorts_resp.data or []:
+        country = r["country"]
+        if country not in country_resorts:
+            country_resorts[country] = []
+        country_resorts[country].append(r)
+
+    # Check which countries already have intros
+    existing_resp = (
+        client.table("country_content")
+        .select("country")
+        .execute()
+    )
+    existing_countries = {r["country"] for r in existing_resp.data or []}
+
+    results = {"generated": [], "skipped": [], "errors": []}
+    generated_count = 0
+
+    for country, resorts in country_resorts.items():
+        if generated_count >= max_generate:
+            results["skipped"].append({"country": country, "reason": f"Hit max_generate limit ({max_generate})"})
+            continue
+
+        if len(resorts) < min_resorts:
+            results["skipped"].append({"country": country, "reason": f"Only {len(resorts)} resorts (need {min_resorts})"})
+            continue
+
+        if country in existing_countries:
+            results["skipped"].append({"country": country, "reason": "Intro already exists"})
+            continue
+
+        # Build resort data for the primitive
+        # Supabase joins return lists for one-to-many, dicts for one-to-one
+        resort_data = []
+        for r in resorts:
+            metrics = r.get("resort_family_metrics") or {}
+            if isinstance(metrics, list):
+                metrics = metrics[0] if metrics else {}
+            costs = r.get("resort_costs") or {}
+            if isinstance(costs, list):
+                costs = costs[0] if costs else {}
+
+            ages = None
+            if metrics.get("best_age_min") and metrics.get("best_age_max"):
+                ages = f"{metrics['best_age_min']}-{metrics['best_age_max']}"
+
+            resort_data.append({
+                "name": r["name"],
+                "family_score": metrics.get("family_overall_score"),
+                "daily_cost": costs.get("estimated_family_daily"),
+                "best_ages": ages,
+            })
+
+        try:
+            intro_text = generate_country_intro(country, resort_data)
+
+            # Calculate avg cost
+            costs_list = [rd["daily_cost"] for rd in resort_data if rd.get("daily_cost")]
+            avg_cost = sum(costs_list) / len(costs_list) if costs_list else None
+
+            # Upsert into country_content
+            client.table("country_content").upsert({
+                "country": country,
+                "intro_text": intro_text,
+                "resort_count": len(resorts),
+                "avg_daily_cost": avg_cost,
+            }, on_conflict="country").execute()
+
+            results["generated"].append(country)
+            generated_count += 1
+
+            log_reasoning(
+                task_id=None,
+                agent_name="orchestrator",
+                action="country_intro_generated",
+                reasoning=f"Generated country intro for {country} ({len(resorts)} resorts)",
+                metadata={"country": country, "resort_count": len(resorts)},
+            )
+
+            # Revalidate the country page so new intro appears
+            country_slug = country.lower().replace(" ", "-")
+            revalidate_page(f"/resorts/{country_slug}")
+
+        except Exception as e:
+            results["errors"].append({"country": country, "error": str(e)})
+
+    log_reasoning(
+        task_id=None,
+        agent_name="orchestrator",
+        action="country_intros_complete",
+        reasoning=f"Country intros: {len(results['generated'])} generated, {len(results['skipped'])} skipped, {len(results['errors'])} errors",
+        metadata=results,
+    )
+
+    return results
 
 
 async def run_single_resort(

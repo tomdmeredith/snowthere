@@ -6,7 +6,7 @@ ensure agents have the same publishing capabilities as human editors.
 """
 
 import httpx
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 
 from ..config import settings
@@ -589,8 +589,6 @@ def get_stale_resorts(days_threshold: int = 30, limit: int = 20) -> list[dict]:
     Returns:
         List of stale resort records (only those actually older than threshold)
     """
-    from datetime import timedelta
-
     client = get_supabase_client()
 
     # Calculate actual cutoff date
@@ -632,3 +630,106 @@ def mark_resort_refreshed(resort_id: str) -> dict:
     )
 
     return response.data[0] if response.data else {}
+
+
+# =============================================================================
+# GOOGLE SEARCH CONSOLE INDEXING REQUESTS
+# =============================================================================
+
+
+def request_indexing(urls: list[str]) -> dict[str, Any]:
+    """
+    Generate a prioritized URL list for manual Google Search Console submission.
+
+    Note: The Google Indexing API only works for JobPosting/BroadcastEvent schemas,
+    and the URL Inspection API can only inspect (not request indexing). The "Request
+    Indexing" action is manual-only in the GSC UI.
+
+    Args:
+        urls: List of full URLs to submit for indexing
+
+    Returns:
+        Result dict with prioritized URL list for manual submission
+    """
+    if not urls:
+        return {"success": True, "submitted": 0, "message": "No URLs to submit"}
+
+    log_reasoning(
+        task_id=None,
+        agent_name="publisher",
+        action="request_indexing",
+        reasoning=f"Generated prioritized list of {len(urls)} URLs for manual GSC submission",
+        metadata={"url_count": len(urls), "urls": urls[:10]},
+    )
+
+    return {
+        "success": True,
+        "manual_submission_urls": urls,
+        "url_count": len(urls),
+        "instruction": "Submit these URLs in Google Search Console > URL Inspection > Request Indexing (max 10/day)",
+    }
+
+
+def get_uncrawled_urls(limit: int = 50) -> list[str]:
+    """
+    Get URLs of published resorts/guides that may not yet be indexed.
+
+    Prioritizes: guides first, then collection pages, then recently published
+    resorts, then country pages.
+
+    Args:
+        limit: Maximum number of URLs to return
+
+    Returns:
+        Prioritized list of URLs for indexing submission
+    """
+    client = get_supabase_client()
+    vercel_url = getattr(settings, "vercel_url", None)
+    if not vercel_url:
+        return []
+
+    base = vercel_url.rstrip("/")
+    urls = []
+
+    # 1. Published guides (highest priority — fewest indexed per GSC data)
+    guides_resp = (
+        client.table("guides")
+        .select("slug")
+        .eq("status", "published")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    for guide in guides_resp.data or []:
+        urls.append(f"{base}/guides/{guide['slug']}")
+
+    # 2. Collection pages (programmatic SEO — static slugs)
+    collection_slugs = [
+        "best-for-toddlers",
+        "best-for-beginners",
+        "cheapest-family-resorts",
+        "epic-pass-resorts",
+        "ikon-pass-resorts",
+        "with-childcare",
+    ]
+    for slug in collection_slugs:
+        urls.append(f"{base}/collections/{slug}")
+
+    # 3. Recently published resorts (most likely to be uncrawled)
+    resorts_resp = (
+        client.table("resorts")
+        .select("slug, country")
+        .eq("status", "published")
+        .order("updated_at", desc=True)
+        .execute()
+    )
+    for resort in resorts_resp.data or []:
+        country_slug = resort["country"].lower().replace(" ", "-")
+        urls.append(f"{base}/resorts/{country_slug}/{resort['slug']}")
+
+    # 4. Country index pages
+    countries = list({r["country"] for r in resorts_resp.data or []})
+    for country in sorted(countries):
+        country_slug = country.lower().replace(" ", "-")
+        urls.append(f"{base}/resorts/{country_slug}")
+
+    return urls[:limit]

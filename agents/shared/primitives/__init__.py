@@ -39,6 +39,7 @@ from .content import (
     generate_faq,
     apply_voice,
     generate_seo_meta,
+    generate_country_intro,
 )
 
 # Database primitives
@@ -97,6 +98,8 @@ from .publishing import (
     get_publish_candidates,
     get_stale_resorts,
     mark_resort_refreshed,
+    request_indexing,
+    get_uncrawled_urls,
 )
 
 # System primitives
@@ -459,6 +462,8 @@ __all__ = [
     "generate_faq",
     "apply_voice",
     "generate_seo_meta",
+    # Content - Country pages
+    "generate_country_intro",
     # Database - Resort CRUD
     "list_resorts",
     "get_resort",
@@ -505,6 +510,9 @@ __all__ = [
     "get_publish_candidates",
     "get_stale_resorts",
     "mark_resort_refreshed",
+    # Publishing - Indexing
+    "request_indexing",
+    "get_uncrawled_urls",
     # System - Cost tracking
     "log_cost",
     "get_daily_spend",

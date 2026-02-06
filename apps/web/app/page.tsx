@@ -128,7 +128,7 @@ export default async function HomePage() {
       {/* Navigation */}
       <Navbar />
 
-      {/* Hero Section - Tilted image + stacked headline */}
+      {/* Hero Section - Server wrapper provides H1, client component adds animation */}
       <HeroSpielplatz />
 
       {/* Value Story - Alps vs Colorado comparison */}

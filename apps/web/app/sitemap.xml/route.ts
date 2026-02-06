@@ -71,6 +71,25 @@ export async function GET() {
     <priority>0.9</priority>
   </url>`
 
+  // Collection (programmatic SEO) pages
+  const collectionSlugs = [
+    'best-for-toddlers',
+    'best-for-beginners',
+    'cheapest-family-resorts',
+    'epic-pass-resorts',
+    'ikon-pass-resorts',
+    'with-childcare',
+  ]
+
+  const collectionUrls = collectionSlugs
+    .map((slug) => `  <url>
+    <loc>${SITE_URL}/collections/${slug}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>`)
+    .join('\n')
+
   // Legal and static pages
   const legalUrls = ['/about', '/methodology', '/contact', '/privacy', '/terms', '/quiz']
     .map((path) => `  <url>
@@ -138,6 +157,7 @@ ${imageTags}
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
 ${staticUrls}
+${collectionUrls}
 ${legalUrls}
 ${countryUrls}
 ${resortUrls}

@@ -1,6 +1,3 @@
-'use client'
-
-import { motion } from 'framer-motion'
 import Image from 'next/image'
 import { AgeSelector } from './AgeSelector'
 
@@ -30,13 +27,8 @@ export function HeroSpielplatz() {
 
       <div className="container-page relative z-10">
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Left: Tilted Hero Image */}
-          <motion.div
-            initial={{ opacity: 0, rotate: 0 }}
-            animate={{ opacity: 1, rotate: -3 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            className="relative order-2 lg:order-1"
-          >
+          {/* Left: Tilted Hero Image — server-rendered with CSS animation */}
+          <div className="relative order-2 lg:order-1 animate-in animate-in-1" style={{ transform: 'rotate(-3deg)' }}>
             <div
               className="relative overflow-hidden rounded-3xl"
               style={{
@@ -52,32 +44,22 @@ export function HeroSpielplatz() {
                 className="w-full h-auto object-cover"
                 priority
               />
-              {/* Subtle overlay for text contrast if needed */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
             </div>
 
-            {/* Fun label on image */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.4 }}
-              className="absolute -bottom-4 -right-4 bg-coral-500 text-white px-4 py-2 rounded-full font-semibold shadow-coral-lg transform rotate-3"
-            >
+            <div className="absolute -bottom-4 -right-4 bg-coral-500 text-white px-4 py-2 rounded-full font-semibold shadow-coral-lg transform rotate-3 animate-in animate-in-3">
               Adventure awaits! ✨
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
 
-          {/* Right: Stacked Rotated Headline */}
+          {/* Right: Stacked Rotated Headline — server-rendered for SEO */}
           <div className="order-1 lg:order-2 text-center lg:text-left">
-            {/* Stacked headline */}
-            <div className="mb-8 space-y-1">
+            {/* H1 visible in server HTML for crawlers — animate-in on inner spans only */}
+            <h1 className="mb-8 space-y-1" aria-label="Where should we ski?">
               {HEADLINE_WORDS.map((word, index) => (
-                <motion.div
+                <span
                   key={word.text}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1, duration: 0.6 }}
-                  className="block"
+                  className={`block animate-in animate-in-${index + 1}`}
                 >
                   <span
                     className={`
@@ -94,28 +76,17 @@ export function HeroSpielplatz() {
                   >
                     {word.text}
                   </span>
-                </motion.div>
+                </span>
               ))}
-            </div>
+            </h1>
 
-            {/* Tagline */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.6 }}
-              className="text-lg sm:text-xl text-dark-600 max-w-md mx-auto lg:mx-0 mb-10"
-            >
-              The fun way to find your next family adventure ✨
-            </motion.p>
+            <p className="text-lg sm:text-xl text-dark-600 max-w-md mx-auto lg:mx-0 mb-10 animate-in animate-in-3">
+              The fun way to find your next family ski adventure
+            </p>
 
-            {/* Age Selector */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.7, duration: 0.6 }}
-            >
+            <div className="animate-in animate-in-4">
               <AgeSelector />
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

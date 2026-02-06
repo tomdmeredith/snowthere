@@ -316,7 +316,7 @@ export async function generateStaticParams() {
   }))
 }
 
-export const revalidate = 43200 // Revalidate every 12 hours (ISR) - pipeline triggers on-demand when content changes
+export const revalidate = 21600 // Revalidate every 6 hours (ISR) - pipeline triggers on-demand when content changes
 
 export default async function ResortPage({ params }: Props) {
   const resort = await getResort(params.country, params.slug)
