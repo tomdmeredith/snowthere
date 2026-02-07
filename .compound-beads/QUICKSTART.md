@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-> Compound Beads v3.0 | Last Updated: 2026-02-06
+> Compound Beads v3.0 | Last Updated: 2026-02-07
 
-**Round 20 COMMITTED + EXPERT REVIEWED.** All code committed (b5c3e8f content, 0c7121b type safety + security). All 7 expert reviewers STRONG APPROVE / APPROVE. Migrations 042+043 applied. Backfills not yet run (~$9.29).
+**Round 20 COMPLETE + Pipeline Bug Fix deployed.** All code on origin/main. Migrations 042+043 applied. Backfills done. Pipeline fix (f3e892c) deployed to Railway — next cron run will auto-retry 5 failed resorts.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -14,25 +14,16 @@
 
 **Stats**: ~75 resorts, 10 guides, 14 countries, 6 collection pages, 96 static pages
 
-**Round 20 Changes (committed b5c3e8f)**:
-- Strong-tag-first entity extraction (eliminates ~$0.03/resort Claude calls)
-- Airport links → Skyscanner flight search URLs via IATA code extraction
-- Quick Takes: 40-65 word single paragraph (was 80-120 word 4-part)
-- Taglines: fact-based calibration + forbidden pattern regex blocklist
-- Three-layer hybrid scoring: structural 30% + content LLM 50% + review 20%
-- Dollar sign always shown on resort cards (fallback $$ when NULL)
-- Internal resort links injected into guide prose
-- 3 new backfill scripts: costs, quick_takes, hybrid_scores
-
-**Type Safety + Security (committed 0c7121b)**:
-- Zero `as any` casts (was ~15) — proper types for Supabase joins
-- `sanitizeHTML()` on all `dangerouslySetInnerHTML` paths
-- `sanitizeJSON()` on all JSON-LD `<script>` blocks (7 pages)
-- 8 missing fields added to `database.types.ts` (migrations 042+043)
+**Pipeline Bug Fix (f3e892c, Feb 7)**:
+- `runner.py`: Local `from datetime import datetime, timezone` shadowed module-level → moved `timezone` to module-level
+- `discovery_agent.py` + `quality_agent.py`: `check_budget()` called with no args → replaced with `settings.daily_budget_limit - get_daily_spend()`
+- 5 failed resorts (Snowbasin, Stratton, Taos, Big White, Las Leñas) will auto-retry next cron
 
 **Next Steps**:
-- Run backfills: costs → links --clear-cache → quick_takes → taglines → hybrid_scores (~$9.29)
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
+- Apply migration 036 to cloud Supabase (GDPR data_requests table)
+- Re-run quick takes backfill for 31 resorts that exceeded 65-word limit
+- Homepage redesign (deferred from R14)
 
 **Pipeline**: Active on Railway (snowthere-agents)
 - Resorts: ~6/day, entity linking (10-20 links/resort)

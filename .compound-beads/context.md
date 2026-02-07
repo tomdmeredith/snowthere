@@ -1,13 +1,13 @@
 # Snowthere Context
 
-> Last synced: 2026-02-06 (Round 20 + Type Safety/Security)
+> Last synced: 2026-02-07 (Pipeline Bug Fix)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
 
 ## Current State
 
-**Round 20 COMMITTED + EXPERT REVIEWED.** All code committed (b5c3e8f + 0c7121b). All 7 expert reviewers STRONG APPROVE / APPROVE. Migrations 042+043 applied. Backfills pending (~$9.29).
+**Round 20 COMPLETE + Pipeline Bug Fix deployed (f3e892c).** All code on origin/main. All 7 expert reviewers STRONG APPROVE / APPROVE. Migrations 042+043 applied. **Backfills DONE** (Feb 7): 247 entity links across 66 resorts, 44/75 quick takes updated, 75/75 taglines recalibrated, 75/75 hybrid scores computed. Pipeline fix live on Railway — 5 failed resorts will auto-retry next cron.
 
 - **Resorts:** ~75 published with entity links, pipeline adds ~6/day
 - **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
@@ -82,9 +82,32 @@
 b5c3e8f feat: Round 20 — Content quality & linking overhaul
 ```
 
+### Backfills COMPLETE (Feb 7)
+
+| Script | Result |
+|--------|--------|
+| Costs | 0 needed (all resorts had cost data) |
+| Links (`--clear-cache`) | 247 entity links across 66 resorts, 2,325 stale cache entries cleared |
+| Quick Takes | 44/75 updated (31 failed: mostly 1-8 words over 65-word limit, 3 had "legendary") |
+| Taglines | 75/75 updated (quality evaluator JSON parse errors fell back to 0.50 defaults) |
+| Hybrid Scores | 75/75 scored (range 6.0-9.1, all high confidence) |
+
+**Top hybrid scores:** Serfaus-Fiss-Ladis 9.1, Les Gets 8.1, Aspen Snowmass 8.0, Lake Louise 8.0, Saas-Fee 7.9
+
+### Pipeline Bug Fix (f3e892c, Feb 7)
+
+Feb 7 daily cron: 0 published, 5 failed (Snowbasin, Stratton, Taos, Big White, Las Leñas). Two bugs:
+
+1. **runner.py:** Local `from datetime import datetime, timezone` at line 1309 shadowed module-level import → `UnboundLocalError` at line 553 before the local import executed. Fix: moved `timezone` to module-level import, deleted local.
+2. **discovery_agent.py + quality_agent.py:** Called `check_budget()` with no args (expects `required_usd: float` → `bool`). Fix: replaced with `settings.daily_budget_limit - get_daily_spend()` (3 call sites).
+
+Both bugs introduced in Round 20 commit (b5c3e8f). Fix pushed to origin/main, Railway auto-deployed.
+
 ### Pending
-- Run backfills: costs → links --clear-cache → quick_takes → taglines → hybrid_scores (~$9.29)
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
+- Apply migration 036 to cloud Supabase (GDPR data_requests table)
+- Re-run quick takes for 31 resorts over word limit (consider relaxing to 70 words)
+- Homepage redesign (deferred from R14)
 
 **Arc:**
 - Started believing: Content quality improvements and type safety are separate concerns
@@ -833,7 +856,8 @@ _(no active task)_
 ## Pending Manual Work
 
 - ~~Commit type safety + security hardening fixes~~ → DONE (0c7121b)
-- **Run backfills** (~$9.29): costs → links --clear-cache → quick_takes → taglines → hybrid_scores
+- ~~Run backfills~~ → **DONE** (Feb 7): 247 links, 44 quick takes, 75 taglines, 75 hybrid scores
+- ~~Pipeline bug fix~~ → **DONE** (f3e892c): datetime scope + check_budget signature
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
 - Run migration 032_comprehensive_affiliate_programs.sql on production
 - Apply migration 036 to cloud Supabase (data_requests table for GDPR form)
@@ -855,10 +879,10 @@ _(no active task)_
 ## Recent Commits
 
 ```
-0c7121b fix: Type safety + security hardening across frontend
+f3e892c fix: Pipeline crash — datetime scope + check_budget signature
+4fcf231 fix: Type safety + security hardening across frontend
 b5c3e8f feat: Round 20 — Content quality & linking overhaul
 cae670a feat: Round 19 — SEO fixes, programmatic pages, country content system
 ea1fd95 docs: Update compound beads context for Pipeline Improvements session
 1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
-82a3951 fix: Exclude major cities from entity extraction
 ```

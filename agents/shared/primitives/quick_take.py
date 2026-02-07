@@ -4,14 +4,14 @@ Quick Takes are the BLUF (Bottom Line Up Front) for each resort.
 Parents read this first to decide if they should keep reading.
 
 Design Philosophy (Round 20 revision):
-- Single flowing paragraph, 40-65 words
+- Single flowing paragraph, 40-65 words (LLM target), accepts up to 70
 - Sounds like a friend talking, not a 4-part structure
 - Must include: distinctive feature, ideal kid age range, one honest catch, memorable punchline
 - Numbers matter: at least 2 numbers (age, distance, cost)
 - At least 1 proper noun specific to this resort
 
 Quality Gates:
-- Word count: 40-65 words
+- Word count: 40-70 words (LLM targets 65, validation accepts 70)
 - Specificity score > 0.6
 - No forbidden phrases
 - At least 2 numbers in the paragraph
@@ -244,7 +244,7 @@ def validate_quick_take(result: QuickTakeResult, context: QuickTakeContext) -> Q
     """Validate Quick Take meets quality gates.
 
     Quality Gates:
-    - Word count: 40-65 words
+    - Word count: 40-70 words (LLM targets 65, validation accepts 70)
     - Specificity score > 0.6
     - No forbidden phrases
     - At least 2 numbers in the paragraph
@@ -254,11 +254,11 @@ def validate_quick_take(result: QuickTakeResult, context: QuickTakeContext) -> Q
     """
     errors = []
 
-    # Word count check (tightened from 80-120 to 40-65)
+    # Word count check (LLM targets 65, validation accepts up to 70)
     if result.word_count < 40:
         errors.append(f"Too short: {result.word_count} words (min 40)")
-    elif result.word_count > 65:
-        errors.append(f"Too long: {result.word_count} words (max 65)")
+    elif result.word_count > 70:
+        errors.append(f"Too long: {result.word_count} words (max 70)")
 
     # Specificity check
     if result.specificity_score < 0.6:

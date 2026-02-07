@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Backfill Quick Takes for all published resorts with the new constraint-based format.
 
-Regenerates Quick Takes using the 40-65 word single paragraph format
+Regenerates Quick Takes using the 40-65 word target (accepts up to 70) single paragraph format
 (Round 20) replacing the old 80-120 word Editorial Verdict Model.
 
 Usage:
