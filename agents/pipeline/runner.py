@@ -22,7 +22,7 @@ import asyncio
 import logging
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
@@ -1306,7 +1306,6 @@ async def run_resort_pipeline(
             research_data["family_metrics"]["family_overall_score"] = composite.family_score
             research_data["family_metrics"]["score_confidence"] = composite.confidence
             research_data["family_metrics"]["score_reasoning"] = composite.reasoning
-            from datetime import datetime, timezone
             research_data["family_metrics"]["scored_at"] = datetime.now(timezone.utc).isoformat()
             print(f"  Composite score: {composite.family_score} (confidence: {composite.confidence})")
 

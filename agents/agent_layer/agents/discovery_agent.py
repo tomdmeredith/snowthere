@@ -60,9 +60,10 @@ from shared.primitives.discovery import (
 from shared.primitives import (
     log_reasoning,
     log_cost,
-    check_budget,
+    get_daily_spend,
     queue_task,
 )
+from shared.config import settings
 from shared.supabase_client import get_supabase_client
 
 
@@ -180,13 +181,13 @@ class DiscoveryAgent(BaseAgent):
         min_search_volume = config.get("min_search_volume", 100)
 
         # Check budget
-        budget = check_budget()
+        remaining = settings.daily_budget_limit - get_daily_spend()
         estimated_cost = len(seed_keywords) * 0.10  # ~$0.10 per keyword batch
 
-        if budget.get("remaining", 0) < estimated_cost:
+        if remaining < estimated_cost:
             return AgentPlan(
                 steps=["Skip keyword research - insufficient budget"],
-                reasoning=f"Budget ${budget.get('remaining', 0):.2f} < estimated ${estimated_cost:.2f}",
+                reasoning=f"Budget ${remaining:.2f} < estimated ${estimated_cost:.2f}",
                 estimated_cost=0.0,
                 confidence=1.0,
                 primitives_needed=[],
@@ -328,11 +329,11 @@ Minimal cost - mostly random selection + light verification."""
         max_api_cost = config.get("max_api_cost", 5.0)
 
         # Check budget
-        budget = check_budget()
-        if budget.get("remaining", 0) < max_api_cost:
+        remaining = settings.daily_budget_limit - get_daily_spend()
+        if remaining < max_api_cost:
             return AgentPlan(
                 steps=["Skip full discovery - insufficient budget"],
-                reasoning=f"Budget ${budget.get('remaining', 0):.2f} < max_cost ${max_api_cost:.2f}",
+                reasoning=f"Budget ${remaining:.2f} < max_cost ${max_api_cost:.2f}",
                 estimated_cost=0.0,
                 confidence=1.0,
                 primitives_needed=[],

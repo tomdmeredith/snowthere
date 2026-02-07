@@ -58,11 +58,12 @@ from shared.primitives.quality import (
 )
 from shared.primitives import (
     log_reasoning,
-    check_budget,
+    get_daily_spend,
     queue_task,
     assess_data_quality,
     make_decision,
 )
+from shared.config import settings
 from shared.supabase_client import get_supabase_client
 
 
@@ -169,11 +170,11 @@ No LLM calls - this is cost-free monitoring."""
         prioritize_countries = config.get("prioritize_countries", [])
 
         # Check budget availability
-        budget = check_budget()
-        if budget.get("remaining", 0) < max_cost:
+        remaining = settings.daily_budget_limit - get_daily_spend()
+        if remaining < max_cost:
             return AgentPlan(
                 steps=["Skip deep audit - insufficient budget"],
-                reasoning=f"Budget remaining ${budget.get('remaining', 0):.2f} is less than max_cost ${max_cost:.2f}",
+                reasoning=f"Budget remaining ${remaining:.2f} is less than max_cost ${max_cost:.2f}",
                 estimated_cost=0.0,
                 confidence=1.0,
                 primitives_needed=[],
