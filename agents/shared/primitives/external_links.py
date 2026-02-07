@@ -1169,23 +1169,44 @@ async def inject_external_links(
                 is_maps_search_fallback=choice.is_maps_search_fallback,
             )
 
-            # Inject link at first mention (case-insensitive, word boundary)
-            # Use regex to find first mention not already in a link
-            pattern = rf'(?<!["\'>])(?<!/)\b({re.escape(entity.name)})\b(?![^<]*</a>)'
-            match = re.search(pattern, modified_content, re.IGNORECASE)
+            # Inject link at first mention (case-insensitive)
+            # Two-pass strategy: most entities are inside <strong> tags (Round 20+),
+            # but some appear as plain text.
+            safe_url = html.escape(link_url, quote=True)
+            escaped_name = re.escape(entity.name)
+            injected = False
+
+            # Pass 1: Match entity wrapped in <strong> tags
+            strong_pattern = rf'<strong>({escaped_name})</strong>(?![^<]*</a>)'
+            match = re.search(strong_pattern, modified_content, re.IGNORECASE)
 
             if match:
-                # Replace first occurrence only
                 original_text = match.group(1)
-                safe_url = html.escape(link_url, quote=True)
-                link_html_with_original = f'<a href="{safe_url}" rel="{rel_attr}" target="_blank">{original_text}</a>'
-
+                link_html_with_original = f'<a href="{safe_url}" rel="{rel_attr}" target="_blank"><strong>{original_text}</strong></a>'
+                # Replace the full <strong>...</strong> span
                 modified_content = (
-                    modified_content[:match.start(1)]
+                    modified_content[:match.start()]
                     + link_html_with_original
-                    + modified_content[match.end(1):]
+                    + modified_content[match.end():]
                 )
+                injected = True
 
+            # Pass 2: Fall back to plain text match (not inside tags or attributes)
+            if not injected:
+                plain_pattern = rf'(?<!["\'/])(?<!<)\b({escaped_name})\b(?![^<]*</a>)'
+                match = re.search(plain_pattern, modified_content, re.IGNORECASE)
+
+                if match:
+                    original_text = match.group(1)
+                    link_html_with_original = f'<a href="{safe_url}" rel="{rel_attr}" target="_blank">{original_text}</a>'
+                    modified_content = (
+                        modified_content[:match.start(1)]
+                        + link_html_with_original
+                        + modified_content[match.end(1):]
+                    )
+                    injected = True
+
+            if injected:
                 injected_links.append(
                     InjectedLink(
                         entity_name=entity.name,
