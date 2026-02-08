@@ -35,7 +35,7 @@ async def write_section(
     client = get_claude_client()
 
     section_prompts = {
-        "quick_take": """Write a single flowing paragraph of 40-65 words about {resort_name} for families.
+        "quick_take": """Write a single flowing paragraph of 50-90 words about {resort_name} for families.
 Include: the resort's most distinctive feature, the ideal kid age range, one honest catch, and a memorable punchline.
 Reference the {family_score}/10 family score.
 No bullet points in the paragraph. Sound like a friend talking, not a travel brochure.
@@ -191,7 +191,7 @@ Format as JSON array:
   ...
 ]
 
-Answers should be concise (2-4 sentences) but helpful. Use the instagram mom voice.
+Answers should be concise (2-4 sentences) but helpful. Use the {profile.name} voice.
 """
 
     message = client.messages.create(

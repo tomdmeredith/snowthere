@@ -116,15 +116,16 @@ Evaluate for VOICE:
 
 ## Example Issues
 
-- "Opening 'Here's the thing about Zermatt...' is performative"
-- "'AMAZING for families!!' - excessive enthusiasm"
+- "'Here's the thing about Zermatt...' followed by generic praise instead of surprising insight"
+- "'AMAZING for families!!' - excessive enthusiasm without substance"
 - "'Blue runs' mentioned without explaining what that means"
 - "Quick Take reads like marketing copy, not helpful verdict"
 - "Section uses 'utilize' and 'facilitate' - corporate tone"
+- "Every paragraph opens with a conversational pattern (overused, not earned)"
 
 ## Example Suggestions
 
-- "Remove 'Here's the thing' opener - start with the substance"
+- "If using 'Here's the thing', follow with a specific, surprising insight (not generic praise)"
 - "Replace 'AMAZING!!' with specific benefit: 'works well for ages 5+ because...'"
 - "Add brief explanation: 'blue runs (intermediate terrain, manageable slopes)'"
 - "Rewrite Quick Take as clear verdict: 'Zermatt works for families who...'"

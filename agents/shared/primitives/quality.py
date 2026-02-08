@@ -841,13 +841,13 @@ def score_resort_page(resort_id: str) -> PageQualityScore | None:
     # quick_take_length
     quick_take = content.get("quick_take", "")
     word_count = _count_words(quick_take)
-    passed = 40 <= word_count <= 80
+    passed = 50 <= word_count <= 95
     content_results.append(CheckResult(
         check_id="quick_take_length",
-        label="40-80 words",
+        label="50-95 words",
         description="Quick Take is optimal length for scanning",
         passed=passed,
-        details=f"{word_count} words" + (" (too short)" if word_count < 40 else " (too long)" if word_count > 80 else ""),
+        details=f"{word_count} words" + (" (too short)" if word_count < 50 else " (too long)" if word_count > 95 else ""),
     ))
 
     # tagline_exists

@@ -186,7 +186,7 @@ Each agent represents a key family need aligned with our mission:
 - Warmth - Sounds like a trusted friend, not a brochure?
 - Jargon - Technical terms explained? Not assuming expert knowledge?
 - Brand alignment - SPIELPLATZ feel (playful, warm)?
-- Patterns to avoid - "Here's the thing...", excessive enthusiasm
+- Conversational openers allowed sparingly (max 1 per page) when earned with substance
 
 **Voice Profile**: `snowthere_guide` (expert but warm, Wirecutter meets travel publication)
 

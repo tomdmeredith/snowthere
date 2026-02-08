@@ -32,7 +32,7 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Honest tension. Acknowledge real tradeoffs, don't sugarcoat",
         "Rhythmic variety. Mix short punchy sentences with longer flowing ones",
     ],
-    # Personality toolkit — use naturally, not every sentence
+    # Personality toolkit -- use naturally, not every sentence
     patterns=[
         "Pro tip: [only when genuinely non-obvious and actionable]",
         "Locals know: [only for true insider knowledge most visitors miss]",
