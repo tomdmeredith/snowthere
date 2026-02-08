@@ -16,7 +16,7 @@
 - **Static Pages:** 96 (build passes, zero TypeScript errors)
 - **Entity Links:** Strong-tag-first extraction, Skyscanner flight URLs, context-aware destinations
 - **Scoring:** Three-layer hybrid: structural 30% + content LLM 50% + review 20%
-- **Quick Takes:** 40-65 word single paragraph format (fact-based, not 4-part editorial)
+- **Quick Takes:** 50-90 word single paragraph format (fact-based, validation accepts up to 95)
 - **Type Safety:** Zero `as any` casts, 8 migration fields in database.types.ts
 - **Security:** `sanitizeHTML()` on all dangerouslySetInnerHTML, `sanitizeJSON()` on all JSON-LD
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
@@ -36,7 +36,7 @@
 
 1. **Strong-tag-first entity extraction** — Eliminates ~$0.03/resort Claude calls by parsing `<strong>` tags before falling back to LLM extraction
 2. **Airport links → Skyscanner** — IATA code extraction from content, flight search URLs generated automatically
-3. **Quick Takes reformatted** — 40-65 word single paragraph (was 80-120 word 4-part editorial model)
+3. **Quick Takes reformatted** — 50-90 word single paragraph (was 80-120 word 4-part editorial model, validation accepts up to 95)
 4. **Taglines calibrated** — Fact-based generation + forbidden pattern regex blocklist (blocks "hidden gem", "world-class", etc.)
 5. **Three-layer hybrid scoring** — structural 30% + content LLM 50% + review 20%, completeness multiplier removed
 6. **Dollar sign always shown** — Resort cards show $$ fallback when `estimated_family_daily` is NULL
@@ -750,7 +750,7 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 - ~~Kitzbühel 404~~ — Fixed in R14 (Unicode normalization + ASCII slug)
 - **MCP parity at ~40%** — 58 of ~340 primitive functions exposed; 22 modules missing → R17
 - **Runner monolith** — `run_resort_pipeline()` is 1,627 lines, no partial re-run → R18
-- ~~Quick Take length occasionally exceeds 120 word limit~~ — Reformatted to 40-65 word single paragraph in R20
+- ~~Quick Take length occasionally exceeds 120 word limit~~ — Reformatted to 50-90 word single paragraph (R20 initial, R21 voice rebalancing)
 - ~~Quick Take score discrepancy~~ — Three-layer hybrid scoring replaces single-score model in R20
 - Affiliate programs: migration 032 created but manual network signups pending
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)

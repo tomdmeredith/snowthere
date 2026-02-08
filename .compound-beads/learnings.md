@@ -524,7 +524,7 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Default browser 404 | Branded 404 with actionable recovery CTAs | 16 |
 | `as any` for Supabase join types | Define intermediate interfaces handling both object and array returns | 20 |
 | Flat link priority (affiliate > direct > maps for all) | Context-aware priority per entity type (hotel→book, restaurant→maps) | LS |
-| 80-120 word 4-part Quick Takes | 40-65 word single paragraph (more scannable) | 20 |
+| 80-120 word 4-part Quick Takes | 50-90 word single paragraph (more scannable, accepts up to 95) | 20/21 |
 | `'use client'` on components with H1 | Server component for all critical SEO elements | 19 |
 | Missing `generateStaticParams()` on dynamic routes | Always add for proper static generation | 19 |
 | LLM extraction with generic confidence guidance | Concrete confidence examples (e.g., "Kandahar Lodge → 0.9") | PI |
@@ -616,7 +616,7 @@ Approaches tried and abandoned. Don't revisit these.
 | Shrinking extraction schema to match DB | Lost family-relevant budget data (lesson costs, rental prices) | Expanded DB schema to match what families actually need | R5.2 |
 | `robots.txt/route.ts` alongside `robots.ts` | Route handler silently overrode the comprehensive version | Single `robots.ts` file | R12 |
 | `as any` casts for Supabase joins (~15 instances) | Silently bypassed all type checking, hiding real data shape bugs | Intermediate interfaces with `as unknown as T` | R20 |
-| 4-part Editorial Verdict Model for Quick Takes (80-120 words) | Too long for scanning, parents want quick verdict not structured essay | 40-65 word single paragraph with specific facts | R20 |
+| 4-part Editorial Verdict Model for Quick Takes (80-120 words) | Too long for scanning, parents want quick verdict not structured essay | 50-90 word single paragraph with specific facts (accepts up to 95) | R20/21 |
 | Completeness multiplier in structural score | Double-penalized with data_completeness gate — low completeness resorts penalized twice | Removed multiplier, kept separate data_completeness gate | R20 |
 | Universal link priority (affiliate > direct > maps) | Doesn't match user intent — parent wanting restaurant directions gets booking page | Per-entity-type priority table matching user action | LS |
 | Full refresh for every stale resort (~$3/resort) | Most resort data doesn't change — re-researching is waste | Light refresh (~$0.50) for costs, links, images only | PI |
