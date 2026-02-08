@@ -98,13 +98,9 @@ REQUIRED_SECTIONS = [
 import re
 
 FORBIDDEN_PATTERNS = [
-    # Performative openers - these sound like trying too hard
-    ("Here's the thing", ""),
-    ("Here's the thing:", ""),
-    ("Here's the deal", ""),
-    ("Here's the deal:", ""),
-    ("Real talk:", ""),
-    ("Real talk,", ""),
+    # Performative openers - only truly cringeworthy ones
+    # NOTE: "Here's the thing", "Here's the deal", "Real talk" are now ALLOWED
+    # sparingly (max 1 per page) when followed by genuine substance.
     ("I'm not gonna lie", ""),
     ("Let me tell you", ""),
     ("Confession:", ""),
@@ -505,10 +501,10 @@ CONTENT TO EVALUATE:
 
 Evaluate for VOICE:
 1. Does it sound like expert advice from a trusted source?
-2. Are there relatable family moments without being performative?
+2. Does it have personality (honest asides, dry humor, sentence rhythm variety)?
 3. Technical terms explained for non-skiers?
 4. Quick Take reduces anxiety and builds confidence?
-5. Avoids performative patterns ('Here's the thing...', 'Real talk:')?
+5. Conversational patterns used sparingly and earned (not as empty filler)?
 
 Output JSON:
 {{

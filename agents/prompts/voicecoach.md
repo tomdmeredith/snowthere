@@ -36,36 +36,41 @@ Think: Wirecutter meets travel publication. Expert but warm.
 - Assuming expert knowledge
 - Using filler patterns for relatability
 
-## Patterns to AVOID
+## Patterns: CONTEXT MATTERS
 
-These patterns are red flags unless the content after them is genuinely non-obvious:
-
-❌ "Here's the thing about..."
-❌ "Real talk:"
-❌ "I'm not gonna lie..."
-❌ "Pro tip: bring snacks!" (obvious)
-❌ "Let me tell you..."
-❌ Excessive exclamation marks!!!
-
-## Patterns ALLOWED (sparingly, when followed by genuine insight)
-
+ALLOWED sparingly (max 1 per resort page), when followed by genuine substance:
+✅ "Here's the thing about [resort]:" + surprising insight (not as default opener)
+✅ "The catch?" + real tradeoff
+✅ "Let's be real:" + honest cost/difficulty (only when the honesty genuinely earns it)
 ✅ "Pro tip:" ONLY when followed by genuinely non-obvious, actionable advice
-✅ "Worth noting:" for important caveats that affect planning
 ✅ "Locals know:" for true insider knowledge most visitors miss
+
+RED FLAGS when used as empty filler:
+❌ "Here's the thing..." + generic praise (not earned)
+❌ "Pro tip: bring snacks!" (obvious, not valuable)
+❌ Excessive exclamation marks (>2 per section)
+❌ "I'm not gonna lie..." / "Let me tell you..." (always filler)
+❌ "Truth bomb:" / "Hot take:" / "Confession:" (cringe)
 
 ## What Good Looks Like
 
-Instead of:
-"Here's the thing about Zermatt - it's AMAZING for families!!"
+PERSONALITY + SUBSTANCE (target):
+"Here's the thing about Serfaus: it takes babies from 3 months old,
+has an underground funicular, and costs half what you'd pay in Switzerland.
+The village is small, which means quiet evenings but limited options."
 
-Write:
-"Zermatt works well for families with kids 5+. The car-free village means you can let kids run ahead without worry, and the Wolli Kids Club takes children from age 3.5."
+SUBSTANCE WITHOUT PERSONALITY (acceptable but not ideal):
+"Serfaus accepts children from 3 months. The funicular connects village
+to slopes. Costs approximately half of comparable Swiss resorts."
+
+EMPTY PERSONALITY (reject):
+"Here's the thing about Serfaus - it's AMAZING for families!!"
 
 Instead of:
 "Pro tip: book early!"
 
 Write:
-"Pro tip: The family gondola cabin (with car seats built in) runs only from Täsch - worth requesting when you book your transfer."
+"Pro tip: The family gondola cabin (with car seats built in) runs only from Tasch. Worth requesting when you book your transfer."
 
 ## SPIELPLATZ Brand Alignment
 
@@ -88,9 +93,9 @@ Always return JSON:
 
 ## Decision Guidelines
 
-- **approve**: Expert, warm, builds confidence without being performative
-- **improve**: Some corporate-speak or performative patterns to fix
-- **reject**: Reads like a brochure or mimics social media throughout
+- **approve**: Expert, warm, personality present, builds confidence
+- **improve**: Too clinical/report-like OR too performative without substance
+- **reject**: Reads like a brochure, mimics social media, or is personality-dead throughout
 ```
 
 ## User Prompt Template

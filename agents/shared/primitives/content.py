@@ -40,7 +40,9 @@ Include: the resort's most distinctive feature, the ideal kid age range, one hon
 Reference the {family_score}/10 family score.
 No bullet points in the paragraph. Sound like a friend talking, not a travel brochure.
 Then provide 2-3 "Perfect if..." and 1-2 "Skip it if..." bullets separately.""",
-        "getting_there": """Write the "Getting There" section for {resort_name} in {country}.
+        "getting_there": """Write like you're giving a friend the travel logistics: direct, practical, with personality.
+
+Write the "Getting There" section for {resort_name} in {country}.
 Include:
 - Nearest major airports with typical drive times. ALWAYS include the 3-letter IATA code in parentheses after the airport name, e.g., <strong>Zurich Airport (ZRH)</strong>, <strong>Innsbruck Airport (INN)</strong>
 - Whether to rent a car or use shuttles
@@ -50,7 +52,9 @@ Include:
 
 Be practical and specific.
 Use <strong> tags around business/service names AND airport names on first mention.""",
-        "where_to_stay": """Write the "Where to Stay" section for {resort_name}.
+        "where_to_stay": """Be opinionated. Recommend clear winners, not just list options. Have a take.
+
+Write the "Where to Stay" section for {resort_name}.
 Include:
 - Name at least 3 specific hotels, lodges, or apartment complexes by their actual name
 - Ski-in/ski-out options (if available)
@@ -60,7 +64,9 @@ Include:
 
 Focus on practical advice for families, not luxury seekers.
 Use <strong> tags around hotel/property names on first mention.""",
-        "lift_tickets": """Write the "Lift Tickets & Passes" section for {resort_name}.
+        "lift_tickets": """Lead with the honest cost picture, don't bury sticker shock. Then show how to make it work.
+
+Write the "Lift Tickets & Passes" section for {resort_name}.
 Include:
 - Current lift ticket prices (adult/child/family if available)
 - Multi-day discount patterns
@@ -69,7 +75,9 @@ Include:
 - Best value tips
 
 Use specific prices from the research where available.""",
-        "on_mountain": """Write the "On the Mountain" section for {resort_name}.
+        "on_mountain": """Help parents visualize their family's actual day on this mountain, not a terrain inventory.
+
+Write the "On the Mountain" section for {resort_name}.
 Include:
 - Overview of terrain for different skill levels
 - Best areas for beginners/kids
@@ -80,7 +88,9 @@ Include:
 
 Focus on family-relevant details, not expert terrain.
 Use <strong> tags around business names on first mention.""",
-        "off_mountain": """Write the "Off the Mountain" section for {resort_name}.
+        "off_mountain": """This is where personality shines: apres-ski, village life, the stuff kids remember.
+
+Write the "Off the Mountain" section for {resort_name}.
 Include:
 - Non-ski activities for families (name specific providers if known)
 - Name specific restaurants with kid-friendly options (e.g., "Chez Vrony", "The Red Lion")
@@ -90,7 +100,9 @@ Include:
 
 Help families plan their non-ski time.
 Use <strong> tags around business names on first mention.""",
-        "parent_reviews_summary": """Write a "What Parents Say" summary for {resort_name}.
+        "parent_reviews_summary": """Synthesize like a friend summarizing what they've heard. Honest, with direct quotes for impact.
+
+Write a "What Parents Say" summary for {resort_name}.
 Based on the review snippets provided, synthesize the key themes:
 - What parents consistently love
 - Common concerns or complaints
@@ -103,35 +115,32 @@ Use direct quotes where impactful. Be honest about both positives and negatives.
     prompt_template = section_prompts.get(section_name, "Write helpful content about {resort_name}.")
     formatted_prompt = prompt_template.format(**context)
 
-    system_prompt = f"""You are writing content for Snowthere, a family ski resort guide.
+    system_prompt = f"""You are writing for Snowthere, a family ski resort guide.
 
-VOICE PROFILE: {profile.name}
+# YOUR VOICE
 {profile.description}
+
+You sound like a smart, well-traveled friend who's done this trip and respects
+your reader's time. You have personality: honest asides, dry humor, real tension
+about tradeoffs. You're not a brochure. You're not clinical. People enjoy reading you.
+
+PERSONALITY TOOLKIT (use naturally, not every sentence):
+{chr(10).join(f'- {p}' for p in profile.patterns)}
 
 TONE:
 {chr(10).join(f'- {t}' for t in profile.tone)}
 
-PATTERNS TO USE:
-{chr(10).join(f'- {p}' for p in profile.patterns)}
-
-AVOID:
-{chr(10).join(f'- {a}' for a in profile.avoid)}
-
-ALWAYS INCLUDE:
+# CONTENT STANDARDS
 {chr(10).join(f'- {i}' for i in profile.include)}
 
-CRITICAL BOLDING RULE:
-Every business, hotel, restaurant, ski school, rental shop, grocery store, and airport mentioned by name MUST be wrapped in <strong> tags on first mention.
-Do NOT bold generic terms like "the resort", "ski school" (generic), or "the village".
-Only bold SPECIFIC named businesses (e.g., <strong>Hotel Schweizerhof</strong>, <strong>Intersport Bründl</strong>).
+NEVER:
+{chr(10).join(f'- {a}' for a in profile.avoid)}
 
-Format your response as HTML that will be rendered on the website. Use:
-- <p> for paragraphs
-- <strong> for named businesses/entities on first mention
-- <ul>/<li> for lists
-- <h3> for sub-sections if needed
-
-Do NOT include the section title (like "Quick Take" or "Getting There") - that's added by the template.
+# FORMATTING (secondary to voice)
+- Wrap named businesses in <strong> tags on first mention (hotels, restaurants,
+  ski schools, airports, NOT generic terms like "the resort" or "ski school")
+- Use <p>, <ul>/<li>, <h3> for structure
+- Do NOT include the section title, it's added by the template
 """
 
     message = client.messages.create(

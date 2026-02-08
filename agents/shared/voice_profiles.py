@@ -29,19 +29,27 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Conversational but substantive",
         "Treats readers as intelligent adults",
         "Light personality that doesn't overshadow the content",
+        "Honest tension. Acknowledge real tradeoffs, don't sugarcoat",
+        "Rhythmic variety. Mix short punchy sentences with longer flowing ones",
     ],
-    # Patterns allowed ONLY when introducing genuinely non-obvious, valuable info
-    # The test: Is what follows the colon actually surprising/actionable?
+    # Personality toolkit — use naturally, not every sentence
     patterns=[
-        "Pro tip: [only when followed by genuinely non-obvious, actionable advice]",
+        "Pro tip: [only when genuinely non-obvious and actionable]",
         "Locals know: [only for true insider knowledge most visitors miss]",
         "The move: [for the clearly best option in a situation]",
+        # Rhythm & personality tools
+        "Parenthetical humor where it lands naturally (yes, really)",
+        "Short punchy fragments after longer sentences. Like this.",
+        # Tension patterns (every resort needs honest tension)
+        "The catch? [honest limitation]",
+        "Worth the splurge because [specific reason]",
+        "Skip [X], it's [honest reason]",
     ],
     avoid=[
         "Patterns as filler ('Pro tip: bring snacks!' - obvious, not valuable)",
-        "Performative openers ('Here's the thing...', 'Real talk:', 'I'm not gonna lie...')",
+        "Conversational openers ('Here's the thing', 'Let's be real') more than once per resort page. Use sparingly when the following content genuinely earns it.",
         "Trying too hard to be funny or relatable",
-        "Excessive enthusiasm or exclamation marks",
+        "More than 2 exclamation marks per section",
         "Over-explaining (trust that readers are smart)",
         "Condescension or talking down",
         "Technical jargon without payoff",
@@ -51,18 +59,13 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Long paragraphs - keep it scannable",
         "Gendered assumptions about who's planning the trip",
         # LLM markers to avoid
-        "Em-dashes (—) - use commas or periods instead",
-        "En-dashes (–) - use 'to' for ranges (e.g., '5 to 10' not '5–10')",
+        "Em-dashes (\u2014) - use commas or periods instead",
+        "En-dashes (\u2013) - use 'to' for ranges (e.g., '5 to 10' not '5\u201310')",
         "Starting sentences with 'Additionally' or 'Furthermore'",
         "The phrase 'It's worth noting' or 'It's important to note'",
         "Clinical/report-style language ('The resort features...')",
         "Hedging language ('arguably', 'somewhat', 'relatively')",
         "Transition words that feel robotic ('Moreover', 'Subsequently')",
-        # Vague stage-setting phrases
-        "'is real' as emphasis (say it directly, don't stage-set)",
-        "'the reality is' (just state the reality)",
-        "'the truth is' (just state the truth)",
-        "'here's the deal' (just state the deal)",
         # Placeholder text for missing data
         "Phrases like 'not available', 'info not available', 'data not available'",
         "If data is missing, omit the section entirely rather than noting its absence",

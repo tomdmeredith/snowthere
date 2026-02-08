@@ -3,15 +3,16 @@
 Quick Takes are the BLUF (Bottom Line Up Front) for each resort.
 Parents read this first to decide if they should keep reading.
 
-Design Philosophy (Round 20 revision):
-- Single flowing paragraph, 40-65 words (LLM target), accepts up to 70
-- Sounds like a friend talking, not a 4-part structure
+Design Philosophy (Round 21 voice rebalancing):
+- Single flowing paragraph, 50-90 words (LLM target), accepts up to 95
+- Sounds like a smart friend's take, not a compliance checklist
 - Must include: distinctive feature, ideal kid age range, one honest catch, memorable punchline
 - Numbers matter: at least 2 numbers (age, distance, cost)
 - At least 1 proper noun specific to this resort
+- Personality encouraged: parenthetical asides, short punchy fragments, honest tension
 
 Quality Gates:
-- Word count: 40-70 words (LLM targets 65, validation accepts 70)
+- Word count: 50-95 words (LLM targets 50-90, validation accepts 95)
 - Specificity score > 0.6
 - No forbidden phrases
 - At least 2 numbers in the paragraph
@@ -34,12 +35,8 @@ from ..config import settings
 # =============================================================================
 
 FORBIDDEN_PHRASES = [
-    # Generic openers
-    "here's the thing",
-    "let's be real",
+    # Generic openers (truly empty filler only)
     "let me tell you",
-    "the truth is",
-    "honestly",
     "to be honest",
     # Empty superlatives
     "world-class",
@@ -244,7 +241,7 @@ def validate_quick_take(result: QuickTakeResult, context: QuickTakeContext) -> Q
     """Validate Quick Take meets quality gates.
 
     Quality Gates:
-    - Word count: 40-70 words (LLM targets 65, validation accepts 70)
+    - Word count: 50-95 words (LLM targets 50-90, validation accepts 95)
     - Specificity score > 0.6
     - No forbidden phrases
     - At least 2 numbers in the paragraph
@@ -254,11 +251,11 @@ def validate_quick_take(result: QuickTakeResult, context: QuickTakeContext) -> Q
     """
     errors = []
 
-    # Word count check (LLM targets 65, validation accepts up to 70)
-    if result.word_count < 40:
-        errors.append(f"Too short: {result.word_count} words (min 40)")
-    elif result.word_count > 70:
-        errors.append(f"Too long: {result.word_count} words (max 70)")
+    # Word count check (LLM targets 50-90, validation accepts up to 95)
+    if result.word_count < 50:
+        errors.append(f"Too short: {result.word_count} words (min 50)")
+    elif result.word_count > 95:
+        errors.append(f"Too long: {result.word_count} words (max 95)")
 
     # Specificity check
     if result.specificity_score < 0.6:
@@ -338,7 +335,7 @@ EDITORIAL INPUTS:
 
 {context_section}
 
-WRITE A SINGLE FLOWING PARAGRAPH of 40-65 words that includes:
+WRITE A SINGLE FLOWING PARAGRAPH of 50-90 words that includes:
 1. The resort's most distinctive feature
 2. The ideal kid age range
 3. One honest catch
@@ -346,13 +343,13 @@ WRITE A SINGLE FLOWING PARAGRAPH of 40-65 words that includes:
 
 No bullet points. No section breaks. One paragraph that flows like a friend talking.
 
-CALIBRATION EXAMPLES (match this quality):
+CALIBRATION EXAMPLES (match this voice and quality):
 
-"Zermatt is car-free, which means your kids can wander cobblestone streets while you carry nothing but hot chocolate. Ski school starts at age 4, and every chairlift has Matterhorn views. Best for families with kids 5 to 12 who will remember this trip forever. It is expensive, and that is not a typo."
+"Here's the thing about Serfaus: it takes babies from 3 months old in its Murmli childcare center, has an underground funicular to the slopes, and costs roughly half what you'd pay in Switzerland. Best for families with toddlers to age 8. The village is small, which means quiet evenings but limited restaurant options."
 
-"Serfaus takes kids from 3 months old in its Murmli childcare center, has an underground funicular to the slopes, and costs roughly half what you would pay in Switzerland. Best for families with toddlers to age 8. The village is small, which means quiet evenings but limited restaurant options."
+"Park City is family skiing on easy mode: 7,300 acres, 35 minutes from Salt Lake City airport, no winding mountain roads. Your 5-year-old will be fine here. Your teenager will actually have fun. The catch? It's not cheap. Like, at all."
 
-"Breckenridge puts 187 trails and a real mining town 35 minutes from Denver, with ski school from age 3. Altitude sickness hits some kids hard above 9,600 feet. Best for families who want a walkable town with dining options beyond hotel buffets."
+"Zermatt is car-free, which means your kids can wander cobblestone streets while you carry nothing but hot chocolate. Ski school starts at age 4, every chairlift has Matterhorn views, and the village genuinely feels magical. Best for ages 5 to 12. Budget warning: this is Swiss pricing, and it shows."
 
 Then provide:
 - 3-4 "Perfect if..." bullets (specific conditions, not generic)
@@ -370,16 +367,20 @@ Return as JSON:
 
 Your job: Help parents decide in 30 seconds if this resort is right for THEIR family.
 
-Voice: {voice_profile} - Sound like a friend at school pickup, not a travel brochure.
+Voice: {voice_profile} - Sound like a smart friend's honest take, not a travel brochure or a compliance checklist.
+
+Personality mechanics encouraged: parenthetical asides, short punchy fragments, honest
+tension ("The catch?"). Conversational openers like "Here's the thing" are allowed sparingly
+(max 1 per page) when the content genuinely earns it.
 
 Critical rules:
-1. SINGLE PARAGRAPH only, 40-65 words
+1. SINGLE PARAGRAPH only, 50-90 words
 2. Must contain at least 2 specific numbers (ages, costs, distances, percentages)
 3. Must contain at least 1 proper noun specific to this resort
 4. Must include one honest catch or downside
 5. NEVER use generic superlatives (amazing, stunning, incredible)
-6. NEVER start with "Here's the thing" or similar phrases
-7. NEVER use "hidden gem", "best-kept secret", "paradise"
+6. NEVER use "hidden gem", "best-kept secret", "paradise"
+7. Mix sentence lengths: short punchy ones and longer flowing ones
 
 Your Quick Takes should make parents feel confident they understand what they're getting into.
 """
