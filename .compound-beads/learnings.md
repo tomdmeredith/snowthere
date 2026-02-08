@@ -14,7 +14,7 @@ Knowledge extracted across all rounds with Arc narratives.
 **Technical:**
 - Strong-tag-first entity extraction: parse `<strong>` tags from HTML content before falling back to LLM extraction — eliminates ~$0.03/resort Claude API call
 - IATA code extraction from content enables automatic Skyscanner flight search URL generation (no API call needed)
-- Quick Takes at 40-65 words (single paragraph) outperform 80-120 word 4-part editorial model for scannability
+- Quick Takes at 50-90 words (single paragraph, validation accepts up to 95) outperform 80-120 word 4-part editorial model for scannability
 - Tagline forbidden pattern regex blocklist prevents "hidden gem", "world-class", "winter wonderland" etc. — more effective than prompt instructions alone
 - Three-layer hybrid scoring (structural 30% + content LLM 50% + review 20%) provides balanced quality signal
 - Completeness multiplier on structural score caused double-penalty with data_completeness gate — removed

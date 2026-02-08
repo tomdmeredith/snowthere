@@ -645,7 +645,7 @@ def batch_issues_for_fix(
 
 PERFECT_PAGE_CHECKLIST = {
     "content": [
-        ("quick_take_length", "40-80 words", "Quick Take is optimal length for scanning"),
+        ("quick_take_length", "50-95 words", "Quick Take is optimal length for scanning"),
         ("tagline_exists", "Has unique tagline", "Resort has a distinctive 8-12 word tagline"),
         ("no_em_dashes", "No em/en-dashes", "Uses commas/periods instead of dashes"),
         ("no_llm_markers", "No LLM markers", "No 'Additionally', 'Furthermore', 'It's worth noting'"),
