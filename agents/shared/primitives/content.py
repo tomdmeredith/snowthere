@@ -40,19 +40,19 @@ Include: the resort's most distinctive feature, the ideal kid age range, one hon
 Reference the {family_score}/10 family score.
 No bullet points in the paragraph. Sound like a friend talking, not a travel brochure.
 Then provide 2-3 "Perfect if..." and 1-2 "Skip it if..." bullets separately.""",
-        "getting_there": """Write like you're giving a friend the travel logistics: direct, practical, with personality.
+        "getting_there": """Open with a self-contained sentence about what getting to {resort_name} is actually like. Don't assume the reader sees the section headline. Use future-casting: "You'll fly into...", "You'll want to..."
 
 Write the "Getting There" section for {resort_name} in {country}.
 Include:
 - Nearest major airports with typical drive times. ALWAYS include the 3-letter IATA code in parentheses after the airport name, e.g., <strong>Zurich Airport (ZRH)</strong>, <strong>Innsbruck Airport (INN)</strong>
-- Whether to rent a car or use shuttles
+- Whether to rent a car or use shuttles. Use "from...to" for time ranges and "Expect to pay" before transfer costs
 - Name specific transfer companies or shuttle services if known (e.g., "Four Seasons Travel", "Resort Express")
 - Any tricky navigation tips (mountain roads, winter conditions)
 - Pro tips for making travel easier with kids
 
-Be practical and specific.
+Write as if talking to a friend planning their trip. Use "you'll" frequently.
 Use <strong> tags around business/service names AND airport names on first mention.""",
-        "where_to_stay": """Be opinionated. Recommend clear winners, not just list options. Have a take.
+        "where_to_stay": """Open with a self-contained sentence about the lodging situation at {resort_name}. Don't assume the reader sees the headline. Use "There's a [property] that..." to introduce standout options with personality.
 
 Write the "Where to Stay" section for {resort_name}.
 Include:
@@ -61,55 +61,63 @@ Include:
 - Budget-friendly picks (name the property)
 - Mid-range family favorites (name the property)
 - Best options for families with young kids (proximity to lifts, amenities)
+- Use "Expect to pay" before nightly rates. Compare to reference points when possible
 
+Use future-casting: "You'll be [distance] from the lifts", "Your kids will love the [feature]".
 Focus on practical advice for families, not luxury seekers.
 Use <strong> tags around hotel/property names on first mention.""",
-        "lift_tickets": """Lead with the honest cost picture, don't bury sticker shock. Then show how to make it work.
+        "lift_tickets": """Open with a self-contained sentence about lift ticket pricing at {resort_name}. Don't assume the reader sees the headline. Compare to a well-known reference point so the reader immediately knows if this is cheap or expensive.
 
 Write the "Lift Tickets & Passes" section for {resort_name}.
 Include:
+- Use "Expect to pay" before ALL prices (e.g., "Expect to pay around €55 for an adult day pass")
 - Current lift ticket prices (adult/child/family if available)
-- Multi-day discount patterns
+- Multi-day discount patterns with "from...to" ranges
 - Any applicable passes (Epic, Ikon, regional passes)
 - Kids ski free details if applicable
 - Best value tips
 
+IMPORTANT: Double-check that child prices make sense (typically 50-70% of adult price). If child price looks suspiciously low (under €10/$10), it's likely an age number, not a price. Omit it.
 Use specific prices from the research where available.""",
-        "on_mountain": """Help parents visualize their family's actual day on this mountain, not a terrain inventory.
+        "on_mountain": """Open with a self-contained sentence about what skiing at {resort_name} is actually like for families. Don't assume the reader sees the headline. Help parents visualize their family's actual day using future-casting.
 
 Write the "On the Mountain" section for {resort_name}.
 Include:
-- Overview of terrain for different skill levels
-- Best areas for beginners/kids
-- Name specific ski schools by name (e.g., "Ski School Alpendorf", "Burton Learn to Ride")
-- Name specific rental shops if known (e.g., "Intersport Bründl", "Christy Sports")
-- Name specific on-mountain lunch spots or restaurants (e.g., "Panorama Alm", "Mid-Mountain Lodge")
+- "You'll find..." to introduce terrain variety
+- Best areas for beginners/kids with "Your kids will..." predictions
+- Name specific ski schools by name. Use "There's a [school] that [what makes it special]" to introduce them
+- Name specific rental shops if known
+- Name specific on-mountain lunch spots. Use "think [dish], [dish], and [dish]" for food descriptions
 - Any must-know tips about the mountain
+- Foreign names followed by English translation in parentheses on first use
 
 Focus on family-relevant details, not expert terrain.
 Use <strong> tags around business names on first mention.""",
-        "off_mountain": """This is where personality shines: apres-ski, village life, the stuff kids remember.
+        "off_mountain": """Open with a self-contained sentence about what {resort_name}'s town/village is actually like when you're off the slopes. Don't assume the reader sees the headline. This is where personality shines: apres-ski, village life, the stuff kids remember.
 
 Write the "Off the Mountain" section for {resort_name}.
 Include:
-- Non-ski activities for families (name specific providers if known)
-- Name specific restaurants with kid-friendly options (e.g., "Chez Vrony", "The Red Lion")
-- Evening entertainment
+- Non-ski activities introduced with "There's a [activity] that..." or "You'll find..."
+- Name specific restaurants. Use "think [dish], [dish], and [dish]" for menu descriptions
+- Evening entertainment — what will your family actually do after skiing?
 - Name specific grocery stores (e.g., "SPAR", "Coop", "Billa") for self-catering families
+- Use "Expect to pay" before meal/activity prices
+- Foreign activity names with English translation in parentheses (e.g., Rodelbahn (toboggan run))
 - Village walkability
 
-Help families plan their non-ski time.
+Help families envision their non-ski time. Use "you'll" and "your kids will" frequently.
 Use <strong> tags around business names on first mention.""",
-        "parent_reviews_summary": """Synthesize like a friend summarizing what they've heard. Honest, with direct quotes for impact.
+        "parent_reviews_summary": """Open with a self-contained sentence summarizing what parents actually say about {resort_name}. Don't assume the reader sees the headline. Synthesize like a friend summarizing what they've heard.
 
 Write a "What Parents Say" summary for {resort_name}.
 Based on the review snippets provided, synthesize the key themes:
-- What parents consistently love
-- Common concerns or complaints
+- What parents consistently love — use "You'll hear..." to introduce common praise
+- Common concerns or complaints — be honest
 - Specific tips from experienced families
 - Overall sentiment
 
-Use direct quotes where impactful. Be honest about both positives and negatives.""",
+Use direct quotes where impactful. Be honest about both positives and negatives.
+Use future-casting: "You'll notice...", "Your kids will...".""",
     }
 
     prompt_template = section_prompts.get(section_name, "Write helpful content about {resort_name}.")
@@ -124,7 +132,7 @@ You sound like a smart, well-traveled friend who's done this trip and respects
 your reader's time. You have personality: honest asides, dry humor, real tension
 about tradeoffs. You're not a brochure. You're not clinical. People enjoy reading you.
 
-PERSONALITY TOOLKIT (use naturally, not every sentence):
+PERSONALITY TOOLKIT (every paragraph needs at least one opinion, comparison, or honest take):
 {chr(10).join(f'- {p}' for p in profile.patterns)}
 
 TONE:
@@ -135,12 +143,39 @@ TONE:
 
 NEVER:
 {chr(10).join(f'- {a}' for a in profile.avoid)}
+- Em-dashes (\u2014) or en-dashes (\u2013) anywhere. Use commas, periods, or "to" for ranges. Non-negotiable.
 
 # FORMATTING (secondary to voice)
 - Wrap named businesses in <strong> tags on first mention (hotels, restaurants,
   ski schools, airports, NOT generic terms like "the resort" or "ski school")
 - Use <p>, <ul>/<li>, <h3> for structure
 - Do NOT include the section title, it's added by the template
+
+# PROSE QUALITY
+- Every sentence must read naturally aloud. Don't drop articles (a, the, an) or transitions.
+- Vary sentence length: long, short. Long, long, short. Never three long sentences in a row.
+- The short sentence carries the verdict or the emotion. Full sentences carry the evidence.
+- One pressure-release moment per section: a parenthetical aside, a vivid detail, or a deadpan observation.
+- This should flow like a well-edited magazine piece, not a corporate email or telegram.
+
+# SELF-CONTAINED PARAGRAPHS
+- Every paragraph MUST make sense without reading the section headline.
+- Start key paragraphs with the resort's full name, not "it" or "the resort".
+- Use "There's a [noun] that [detail]" to introduce amenities and businesses.
+- Use "think [example], [example], and [example]" before food or activity lists.
+- Add parenthetical context for rare/notable details (the only one in the Alps, open since 1927).
+- Translate foreign terms on first use: Rodelbahn (toboggan run), Kinderskischule (kids' ski school).
+
+# FUTURE-CASTING (help readers envision themselves there)
+- Use "You'll [verb]..." to put the reader in the scene ("You'll fly into Munich...")
+- Use "Your kids will [experience]" for predictions ("Your kids will love the magic carpet")
+- Use "Expect to pay [amount] for [thing]" before ALL prices, never bare numbers
+- Use "from [X] to [Y]" for ranges of time, cost, or distance
+
+# STRUCTURE
+- Lead every section with your TAKE, not a description. Open with what matters, back it with evidence.
+- Compare prices and features to reference points ("that's half what Vail charges", "cheaper than most Austrian resorts").
+- Fewer sub-headers, more flowing narrative. This is a friend's advice, not a wiki article.
 """
 
     message = client.messages.create(

@@ -342,7 +342,8 @@ def parse_prices_from_text(text: str, default_currency: str = "EUR") -> dict[str
         matches = re.findall(pattern, text_lower)
         for match in matches:
             price = float(match)
-            if price < 300:  # Child tickets should be cheaper
+            # Floor at 10 to avoid capturing age numbers (e.g. "children 6-15" → 6)
+            if 10 < price < 300:
                 if "lift_child_daily" not in costs:
                     costs["lift_child_daily"] = price
                 break

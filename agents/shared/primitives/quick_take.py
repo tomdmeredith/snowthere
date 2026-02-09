@@ -9,7 +9,7 @@ Design Philosophy (Round 21 voice rebalancing):
 - Must include: distinctive feature, ideal kid age range, one honest catch, memorable punchline
 - Numbers matter: at least 2 numbers (age, distance, cost)
 - At least 1 proper noun specific to this resort
-- Personality encouraged: parenthetical asides, short punchy fragments, honest tension
+- Personality encouraged: parenthetical asides, honest tension, natural rhythm
 
 Quality Gates:
 - Word count: 50-95 words (LLM targets 50-90, validation accepts 95)
@@ -373,6 +373,10 @@ Personality mechanics encouraged: parenthetical asides, short punchy fragments, 
 tension ("The catch?"). Conversational openers like "Here's the thing" are allowed sparingly
 (max 1 per page) when the content genuinely earns it.
 
+Future-casting: Use "you'll" and "your kids will" to help readers envision themselves there.
+Use "Expect to pay" before prices. Translate foreign terms in parentheses on first use.
+Every sentence must be self-contained (no reliance on headlines for context).
+
 Critical rules:
 1. SINGLE PARAGRAPH only, 50-90 words
 2. Must contain at least 2 specific numbers (ages, costs, distances, percentages)
@@ -380,7 +384,9 @@ Critical rules:
 4. Must include one honest catch or downside
 5. NEVER use generic superlatives (amazing, stunning, incredible)
 6. NEVER use "hidden gem", "best-kept secret", "paradise"
-7. Mix sentence lengths: short punchy ones and longer flowing ones
+7. Mix sentence lengths: short ones for verdicts, longer ones for evidence
+8. NEVER use em-dashes (\u2014) or en-dashes (\u2013). Use commas, periods, or parentheses instead
+9. If mentioning child ticket prices, verify they make sense (typically 50-70% of adult price). If a child price looks suspiciously low (under 10), it's likely an age, not a price. Omit it.
 
 Your Quick Takes should make parents feel confident they understand what they're getting into.
 """
