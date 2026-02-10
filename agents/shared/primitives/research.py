@@ -23,7 +23,7 @@ Design Decision: We use Brave instead of SerpAPI because:
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from typing import Any
 
 import httpx
@@ -47,6 +47,139 @@ API_COSTS = {
 
 # Brave Search API base URL
 BRAVE_SEARCH_URL = "https://api.search.brave.com/res/v1/web/search"
+
+
+@dataclass
+class SearchLanguageConfig:
+    """Language configuration for a country's search queries."""
+    code: str           # ISO 639-1 (e.g., "de", "fr")
+    name: str           # Human-readable (e.g., "German")
+    has_local_queries: bool  # Whether to run local-language queries
+    local_domains: list[str] = field(default_factory=list)
+
+
+COUNTRY_LANGUAGE_MAP: dict[str, SearchLanguageConfig] = {
+    "austria": SearchLanguageConfig("de", "German", True, [".at"]),
+    "germany": SearchLanguageConfig("de", "German", True, [".de"]),
+    "switzerland": SearchLanguageConfig("de", "German", True, [".ch"]),
+    "france": SearchLanguageConfig("fr", "French", True, [".fr"]),
+    "italy": SearchLanguageConfig("it", "Italian", True, [".it"]),
+    "spain": SearchLanguageConfig("es", "Spanish", True, [".es"]),
+    "andorra": SearchLanguageConfig("es", "Spanish", True, [".ad"]),
+    "japan": SearchLanguageConfig("ja", "Japanese", True, [".jp"]),
+    "norway": SearchLanguageConfig("no", "Norwegian", True, [".no"]),
+    "sweden": SearchLanguageConfig("sv", "Swedish", True, [".se"]),
+    "finland": SearchLanguageConfig("fi", "Finnish", True, [".fi"]),
+    "argentina": SearchLanguageConfig("es", "Spanish", True, [".ar"]),
+    "chile": SearchLanguageConfig("es", "Spanish", True, [".cl"]),
+    # English-primary countries — no local queries needed
+    "united states": SearchLanguageConfig("en", "English", False),
+    "canada": SearchLanguageConfig("en", "English", False),
+    "united kingdom": SearchLanguageConfig("en", "English", False),
+    "australia": SearchLanguageConfig("en", "English", False),
+    "new zealand": SearchLanguageConfig("en", "English", False),
+}
+
+
+def resolve_search_languages(country: str) -> SearchLanguageConfig:
+    """Resolve country to search language config. Deterministic, $0."""
+    return COUNTRY_LANGUAGE_MAP.get(
+        country.lower(),
+        SearchLanguageConfig("en", "English", False),
+    )
+
+
+async def generate_local_queries(
+    resort_name: str,
+    country: str,
+    language: str,
+) -> dict[str, str]:
+    """Generate local-language search queries using Claude Haiku. ~$0.001/call.
+
+    Agent-native approach: Claude knows ski terminology in all languages natively.
+    No static dictionary needed. Handles dialects, regional terms, and edge cases.
+
+    Args:
+        resort_name: Resort name (kept as-is, already local)
+        country: Country for regional context
+        language: Target language name (e.g., "German", "French")
+
+    Returns:
+        Dict with query_type -> local-language query string
+    """
+    import json
+    import anthropic
+
+    start_time = time.time()
+    valid_keys = {"official", "ski_school", "lodging"}
+
+    def _call_haiku() -> str:
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            system="You generate search queries in the specified language for ski resort research. Return ONLY valid JSON, no markdown.",
+            messages=[{
+                "role": "user",
+                "content": f"""Generate 3 search queries in {language} to find family ski information about {resort_name} in {country}.
+
+The queries should find:
+1. Official resort info, lift ticket prices, and ski pass costs
+2. Ski school for children, childcare facilities, and lesson prices
+3. Family-friendly hotels, lodging prices, and accommodation options
+
+Return as JSON:
+{{"official": "query in {language}", "ski_school": "query in {language}", "lodging": "query in {language}"}}"""
+            }],
+        )
+        return message.content[0].text
+
+    try:
+        response_text = await asyncio.to_thread(_call_haiku)
+
+        if "```" in response_text:
+            response_text = response_text.split("```json")[-1].split("```")[0] if "```json" in response_text else response_text.split("```")[1].split("```")[0]
+
+        queries = json.loads(response_text.strip())
+
+        # Validate: only accept expected keys with string values
+        queries = {k: v for k, v in queries.items() if k in valid_keys and isinstance(v, str)}
+        if not queries:
+            logger.warning(f"No valid query keys in Haiku response for {resort_name}")
+            return {}
+
+        return queries
+    except Exception as e:
+        logger.warning(f"Failed to generate local queries for {resort_name} in {language}: {e}")
+        return {}
+    finally:
+        latency_ms = int((time.time() - start_time) * 1000)
+        log_cost("anthropic_haiku", 0.001, None, {
+            "purpose": "local_query_generation",
+            "resort": resort_name,
+            "language": language,
+            "latency_ms": latency_ms,
+        })
+
+
+def merge_multilingual_results(
+    english_results: list["SearchResult"],
+    local_results: list["SearchResult"],
+) -> list["SearchResult"]:
+    """Merge English and local-language results, deduplicating by URL. $0 cost."""
+    seen_urls: set[str] = set()
+    merged = []
+    # English results first (higher baseline quality for extraction)
+    for r in english_results:
+        if r.url not in seen_urls:
+            seen_urls.add(r.url)
+            merged.append(r)
+    # Then local results (unique URLs only)
+    for r in local_results:
+        if r.url not in seen_urls:
+            seen_urls.add(r.url)
+            merged.append(r)
+    return merged
 
 
 @dataclass
@@ -172,6 +305,7 @@ async def brave_search(
     query: str,
     num_results: int = 10,
     country: str = "US",
+    search_lang: str = "en",
     max_retries: int = 3,
     resort_name: str | None = None,
     resort_country: str | None = None,
@@ -190,6 +324,7 @@ async def brave_search(
         query: Search query
         num_results: Number of results to return
         country: Country code for search localization
+        search_lang: ISO 639-1 language code for search results (default "en")
         max_retries: Number of retries on rate limit
         resort_name: Optional resort name for caching
         resort_country: Optional resort country for caching
@@ -223,7 +358,7 @@ async def brave_search(
         "q": query,
         "count": num_results,
         "country": country,
-        "search_lang": "en",
+        "search_lang": search_lang,
         "safesearch": "moderate",
     }
 
@@ -499,6 +634,38 @@ async def search_resort_info(
         resort_name=resort_name, country=country, query_type="ski_school_cost"
     ))
 
+    # --- Multilingual enrichment ---
+    lang_config = resolve_search_languages(country)
+    local_query_map = {}
+    if lang_config.has_local_queries:
+        # LLM generates queries natively in the target language (~$0.001)
+        local_query_map = await generate_local_queries(resort_name, country, lang_config.name)
+
+    if local_query_map:
+        local_country_code = lang_config.local_domains[0].replace(".", "").upper() if lang_config.local_domains else "US"
+
+        # Route: Brave for official (supports search_lang), Tavily for ski school + lodging
+        if "official" in local_query_map:
+            tasks.append(brave_search(
+                local_query_map["official"], num_results=5,
+                country=local_country_code,
+                search_lang=lang_config.code,
+                resort_name=resort_name, resort_country=country,
+                query_type="local_official",
+            ))
+        if "ski_school" in local_query_map:
+            tasks.append(tavily_search(
+                local_query_map["ski_school"], max_results=5,
+                resort_name=resort_name, country=country,
+                query_type="local_ski_school",
+            ))
+        if "lodging" in local_query_map:
+            tasks.append(tavily_search(
+                local_query_map["lodging"], max_results=5,
+                resort_name=resort_name, country=country,
+                query_type="local_lodging",
+            ))
+
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Organize results
@@ -514,6 +681,32 @@ async def search_resort_info(
         "ski_school_cost": results[6] if not isinstance(results[6], Exception) else {"results": []},
         "errors": [str(r) for r in results if isinstance(r, Exception)],
     }
+
+    # Merge local-language results into existing categories
+    num_english_tasks = 7  # Fixed English queries
+    local_task_types = []  # Track which local queries were added, in order
+    if local_query_map:
+        if "official" in local_query_map:
+            local_task_types.append("official_info")
+        if "ski_school" in local_query_map:
+            local_task_types.append("ski_school")
+        if "lodging" in local_query_map:
+            local_task_types.append("lodging")
+
+    for i, category in enumerate(local_task_types):
+        idx = num_english_tasks + i
+        if idx < len(results) and not isinstance(results[idx], Exception):
+            local_result = results[idx]
+            # Brave returns list[SearchResult], Tavily returns dict with "results" key
+            local_items = local_result.get("results", []) if isinstance(local_result, dict) else local_result
+            existing = organized.get(category, [])
+            existing_items = existing.get("results", []) if isinstance(existing, dict) else existing
+            merged = merge_multilingual_results(existing_items, local_items)
+            # Preserve original structure (dict for Tavily, list for Brave/Exa)
+            if isinstance(existing, dict):
+                organized[category] = {**existing, "results": merged}
+            else:
+                organized[category] = merged
 
     # Flatten sources for approval panel
     organized["sources"] = flatten_sources(organized)

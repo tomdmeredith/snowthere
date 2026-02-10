@@ -784,6 +784,11 @@ async def extract_resort_data(
 RESORT: {resort_name}, {country}
 
 RESEARCH DATA:
+Research data may include content in multiple languages (German, French, Italian, Spanish, Japanese, etc.).
+You can read ALL of these natively. Extract data from every source regardless of language.
+Prefer prices and facility details from official-language sources when they conflict with English sources,
+as local-language sources are more likely to have current, accurate information.
+
 {json.dumps(raw_research, indent=2, default=str)[:8000]}
 
 TARGET SCHEMA:

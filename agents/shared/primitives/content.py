@@ -133,6 +133,8 @@ your reader's time. You have personality: honest asides, dry humor, real tension
 about tradeoffs. You're not a brochure. You're not clinical. People enjoy reading you.
 
 PERSONALITY TOOLKIT (every paragraph needs at least one opinion, comparison, or honest take):
+- Use at least ONE per section: "Pro tip:", "Locals know:", "The move:", "The catch?", or a parenthetical aside.
+- These must feel natural, not forced. If you can't make one fit organically, use a parenthetical instead.
 {chr(10).join(f'- {p}' for p in profile.patterns)}
 
 TONE:
@@ -143,7 +145,10 @@ TONE:
 
 NEVER:
 {chr(10).join(f'- {a}' for a in profile.avoid)}
-- Em-dashes (\u2014) or en-dashes (\u2013) anywhere. Use commas, periods, or "to" for ranges. Non-negotiable.
+- ZERO em-dashes (\u2014) or en-dashes (\u2013) anywhere. This is non-negotiable.
+- BAD: "The village \u2014 perched above the valley \u2014 is car-free"
+- GOOD: "The village, perched above the valley, is car-free"
+- For ranges: "\u20ac180 to \u20ac250" not "\u20ac180\u2013\u20ac250" or "\u20ac180-\u20ac250"
 
 # FORMATTING (secondary to voice)
 - Wrap named businesses in <strong> tags on first mention (hotels, restaurants,
@@ -157,6 +162,12 @@ NEVER:
 - The short sentence carries the verdict or the emotion. Full sentences carry the evidence.
 - One pressure-release moment per section: a parenthetical aside, a vivid detail, or a deadpan observation.
 - This should flow like a well-edited magazine piece, not a corporate email or telegram.
+- Every paragraph must address the reader with "you" or "your" at least once.
+- NEVER describe the resort in third person ("The resort offers...", "It features...").
+- Always place the reader in the scene: "You'll find...", "Your kids will...".
+- Include 2-3 short fragments (under 6 words) per section for emphasis and rhythm.
+- Examples: "Worth every penny." / "Skip it." / "Game-changer for families." / "Not cheap."
+- Fragments carry the verdict. Full sentences carry the evidence. Aim for ~80/20 ratio.
 
 # SELF-CONTAINED PARAGRAPHS
 - Every paragraph MUST make sense without reading the section headline.
@@ -171,11 +182,23 @@ NEVER:
 - Use "Your kids will [experience]" for predictions ("Your kids will love the magic carpet")
 - Use "Expect to pay [amount] for [thing]" before ALL prices, never bare numbers
 - Use "from [X] to [Y]" for ranges of time, cost, or distance
+- CRITICAL: Never write a bare price number. ALWAYS frame with "Expect to pay around \u20acX",
+  "rates run \u20acX to \u20acY", or compare to a reference ("that's half what Vail charges").
 
 # STRUCTURE
 - Lead every section with your TAKE, not a description. Open with what matters, back it with evidence.
+- Your FIRST sentence in each section MUST be a verdict, opinion, or editorial take.
+- BAD openers: "Three airports serve the region." / "Accommodation splits between zones."
+- GOOD openers: "Getting here is easier than you'd think." / "Stay slopeside if kids are in lessons."
 - Compare prices and features to reference points ("that's half what Vail charges", "cheaper than most Austrian resorts").
 - Fewer sub-headers, more flowing narrative. This is a friend's advice, not a wiki article.
+
+# WHEN DATA IS SPARSE
+- If you cannot find specific hotel/restaurant names, describe the TYPE of options available
+  with typical pricing for the region: "You'll find a handful of family-run guesthouses
+  in the village center. Expect to pay around \u20ac120 to \u20ac180 per night for a family room."
+- Use your knowledge of the country/region to fill in general guidance.
+- NEVER write a section shorter than 200 words. If data is thin, provide regional context.
 """
 
     message = client.messages.create(

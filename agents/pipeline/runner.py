@@ -20,6 +20,7 @@ Design Decisions:
 
 import asyncio
 import logging
+import re
 import sys
 import time
 from datetime import datetime, timezone
@@ -354,8 +355,6 @@ def calculate_content_word_count(content: dict[str, Any]) -> int:
     Returns:
         Total word count across all text sections
     """
-    import re
-
     def strip_html_and_count(html: str) -> int:
         """Strip HTML tags and count words."""
         if not html:
@@ -1187,8 +1186,6 @@ async def run_resort_pipeline(
     # =========================================================================
     # STAGE 4: Database Storage
     # =========================================================================
-    import sys  # For stderr logging
-
     try:
         log_reasoning(
             task_id=None,
@@ -1232,6 +1229,41 @@ async def run_resort_pipeline(
         # Calculate word count for SEO thin content detection
         content["word_count"] = calculate_content_word_count(content)
         print(f"  Content word count: {content['word_count']}")
+
+        # =====================================================================
+        # THIN CONTENT QUALITY GATE
+        # Prevents publishing pages with insufficient content depth.
+        # Total < 1200 words or any section < 150 words → review status.
+        # =====================================================================
+        thin_sections = []
+        for section_name in ["getting_there", "where_to_stay", "lift_tickets", "on_mountain", "off_mountain", "parent_reviews_summary"]:
+            section_html = content.get(section_name, "")
+            if isinstance(section_html, str) and section_html:
+                plain = re.sub(r'<[^>]+>', ' ', section_html)
+                words = len(plain.split())
+                if words < 150:
+                    thin_sections.append(f"{section_name}: {words}w")
+
+        if content["word_count"] < 1200 or thin_sections:
+            logger.warning(f"Thin content for {resort_name}: {content['word_count']} total words, thin sections: {thin_sections}")
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="thin_content_detected",
+                reasoning=f"Thin content gate triggered for {resort_name}: {content['word_count']} total words, thin sections: {thin_sections}",
+                metadata={"total_words": content["word_count"], "thin_sections": thin_sections},
+            )
+            result["stages"]["thin_content_gate"] = {
+                "status": "failed",
+                "total_words": content["word_count"],
+                "thin_sections": thin_sections,
+            }
+            result["publish_blocked"] = True
+            result["publish_blocked_reason"] = f"Thin content: {content['word_count']} words, thin sections: {thin_sections}"
+            auto_publish = False
+            print(f"🚫 Thin Content Gate: {content['word_count']} words (min 1200), thin sections: {thin_sections}")
+        else:
+            result["stages"]["thin_content_gate"] = {"status": "passed", "total_words": content["word_count"]}
 
         # Update content - verify write succeeded
         content_result = update_resort_content(resort_id, content)

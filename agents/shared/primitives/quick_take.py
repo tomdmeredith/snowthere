@@ -377,6 +377,10 @@ Future-casting: Use "you'll" and "your kids will" to help readers envision thems
 Use "Expect to pay" before prices. Translate foreign terms in parentheses on first use.
 Every sentence must be self-contained (no reliance on headlines for context).
 
+Your Quick Take MUST open with an editorial verdict or opinion, not a factual description.
+BAD: "Located in the Spanish Pyrenees, Baqueira-Beret offers 160km of pistes."
+GOOD: "Baqueira-Beret is Spain's best-kept family ski secret, and the prices prove it."
+
 Critical rules:
 1. SINGLE PARAGRAPH only, 50-90 words
 2. Must contain at least 2 specific numbers (ages, costs, distances, percentages)

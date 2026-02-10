@@ -289,28 +289,28 @@ CONTEXT:
 - Season context: {seasonal_context}
 - New resort guides published: {len(new_resorts)}
 
-VOICE: Instagram mom meets ski enthusiast - warm, practical, encouraging
+VOICE: Smart, expert friend who respects your time. Warm but not performative. Wirecutter meets Morning Brew.
 
 REQUIREMENTS:
 - Exactly 40-60 words
-- Personal, conversational tone
+- Expert but warm tone (not performative or first-person 'I')
 - Reference something timely (season, weather, upcoming holidays)
 - End with a hook to keep reading
 
 EXAMPLES OF GOOD COLD OPENS:
-- "Spring break is calling, and I've got your answer to 'where should we ski?' This week, we're exploring Europe's hidden family gems..."
-- "Those 5am wakeups for first tracks? Worth it when your 6-year-old yells 'AGAIN!' at the bottom. Here's this week's inspiration..."
+- "Spring break is three weeks out. If you haven't booked yet, these European resorts still have availability and cost half what Colorado charges..."
+- "Your 6-year-old just survived a full day in ski school without crying. That calls for a celebration (and maybe a planning session for next year)..."
 
 Return ONLY the cold open text, no quotes or labels."""
 
-    system = "You are a ski mom writing to other parents. Be warm, relatable, and encouraging."
+    system = "You write for Snowthere, a family ski resort guide. Sound like a smart, well-traveled friend who respects the reader's time. Expert but warm, with dry wit and honest takes. Use 'you/your', not first-person 'I'. No em-dashes."
 
     try:
         response = _call_claude(prompt, system=system, max_tokens=200)
         return response.strip().strip('"')
     except Exception as e:
         logger.error(f"Cold open generation failed: {e}")
-        return f"Another week of family ski adventures! Here's what's new at Snowthere this {month}."
+        return f"New family ski intel this {month}. Here's what the Snowthere team has been researching."
 
 
 def generate_trending_section(
@@ -323,7 +323,7 @@ def generate_trending_section(
     Teases what's coming to build anticipation.
     """
     if not candidates and not new_resorts:
-        return "More resort guides are on the way! We're researching the best family destinations worldwide."
+        return "More resort guides are in the works. New ones drop weekly."
 
     prompt = f"""Write a "What's Coming" section for our ski family newsletter.
 
@@ -339,7 +339,7 @@ REQUIREMENTS:
 - Mention 2-3 specific resorts by name
 - End with a tease that keeps them subscribed
 
-VOICE: Excited friend sharing insider knowledge
+VOICE: Smart friend sharing what's coming next. Confident, specific, not breathless.
 
 Return ONLY the section text."""
 
@@ -348,7 +348,7 @@ Return ONLY the section text."""
         return response.strip()
     except Exception as e:
         logger.error(f"Trending section generation failed: {e}")
-        return "We're researching new family-friendly resorts every week. Stay tuned!"
+        return "More resort guides are in the works. New ones drop weekly."
 
 
 def generate_parent_hack(recent_guides: list[dict]) -> str:
@@ -379,7 +379,7 @@ Return ONLY the hack text."""
         return response.strip()
     except Exception as e:
         logger.error(f"Parent hack generation failed: {e}")
-        return "Pro tip: Pack hand warmers in your kids' pockets - they're a game changer for cold days on the mountain."
+        return "Pro tip: Pack hand warmers in your kids' pockets. They turn a cold chairlift ride from miserable to manageable."
 
 
 def _get_seasonal_context(date: datetime) -> str:
@@ -842,7 +842,7 @@ async def send_newsletter(issue_id: str) -> NewsletterSendResult:
 def _format_resorts_section(resorts: list[dict]) -> str:
     """Format new resorts as HTML for newsletter."""
     if not resorts:
-        return "<p>No new resorts this week - but we're working on it!</p>"
+        return "<p>No new resorts this week. More guides are in progress.</p>"
 
     html = "<ul style='padding-left: 20px;'>"
     for resort in resorts:
