@@ -1,30 +1,151 @@
 # Snowthere Context
 
-> Last synced: 2026-02-07 (Pipeline Bug Fix)
+> Last synced: 2026-02-10 (Round 22 — MEO + Voice De-Mandating)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
 
 ## Current State
 
-**Round 20 COMPLETE + Pipeline Bug Fix deployed (f3e892c).** All code on origin/main. All 7 expert reviewers STRONG APPROVE / APPROVE. Migrations 042+043 applied. **Backfills DONE** (Feb 7): 247 entity links across 66 resorts, 44/75 quick takes updated, 75/75 taglines recalibrated, 75/75 hybrid scores computed. Pipeline fix live on Railway — 5 failed resorts will auto-retry next cron.
+**Round 22 COMPLETE (ad373c6).** MEO optimization + voice de-mandating deployed. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS (Python, Pattern Consistency, Simplicity, Architecture, UI Browser x2, Python Round 2). Build passes, 96+ static pages.
 
-- **Resorts:** ~75 published with entity links, pipeline adds ~6/day
-- **Guides:** 10 published (all with Nano Banana Pro featured images), autonomous generation Mon/Thu
+- **Resorts:** ~90 published with entity links, pipeline adds ~6/day
+- **Guides:** 15 total (10 published, 5 drafts), autonomous generation Mon/Thu
 - **Countries:** 14 with country pages + intro content
 - **Collections:** 6 programmatic SEO pages (best-for-beginners, best-for-toddlers, etc.)
-- **Static Pages:** 96 (build passes, zero TypeScript errors)
+- **Static Pages:** 96+ (build passes, zero TypeScript errors)
+- **Voice:** Snowthere Guide ("Morning Brew for family ski trips") — probabilistic personality, no mandated ratios
+- **MEO:** Link-predictive titles, question-based headings (2/6 with entity names), anti-repetition, source citations
 - **Entity Links:** Strong-tag-first extraction, Skyscanner flight URLs, context-aware destinations
 - **Scoring:** Three-layer hybrid: structural 30% + content LLM 50% + review 20%
 - **Quick Takes:** 50-90 word single paragraph format (fact-based, validation accepts up to 95)
 - **Type Safety:** Zero `as any` casts, 8 migration fields in database.types.ts
 - **Security:** `sanitizeHTML()` on all dangerouslySetInnerHTML, `sanitizeJSON()` on all JSON-LD
 - **Newsletter:** Weekly system deployed (Thursdays 6am PT)
-- **SEO:** HeroSpielplatz now server component (H1 visible), country pages have generateStaticParams, ISR 6h
-- **Rich Results:** WebSite + Organization schema (homepage), ItemList schema (/resorts, /guides)
-- **Sitemap:** Image sitemap extension, legal pages added
+- **SEO:** HeroSpielplatz server component, country pages have generateStaticParams, ISR 6h
+- **Bing Webmaster Tools:** Connected, 124 URLs indexed, 0 errors, AI Performance baseline 0 citations
+- **Content Freshness:** Date display includes day (e.g., "Feb 7, 2026") for freshness signal
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway
 - **Migrations:** 042 + 043 applied to cloud Supabase (Feb 6)
+
+---
+
+## Round 22: MEO Optimization + Voice De-Mandating (2026-02-10) ✅
+
+**Goal:** Optimize content for AI search engines (Exa, ChatGPT, Perplexity, Google AI Overviews) and de-mandate prescriptive voice rules that were creating formulaic content.
+
+### Research Findings
+
+- **Exa:** Trained on LINK PREDICTION ("which URL follows this text"), not text similarity
+- **Princeton GEO (peer-reviewed, 10K queries):** Quotations +41%, Statistics +33%, Fluency +29%, Citing sources +28%, Keyword stuffing -9%
+- **Content freshness:** 3.2x more AI citations for content updated within 30 days
+- **Tables/lists:** 2.5x more cited than prose (already doing well)
+- **Bing:** ChatGPT + Perplexity both start with Bing's index — confirmed connected (124 URLs indexed)
+
+### Voice De-Mandating — COMMITTED (ad373c6)
+
+1. **content.py system prompt rewrite** — Replaced prescriptive rules ("Use at least ONE per section", "Every paragraph must have you/your", "~80/20 ratio") with probabilistic personality guidance ("emerge NATURALLY", "Let rhythm emerge", "internalize these, don't mechanically apply")
+2. **Anti-repetition block** — Dedicated system prompt section preventing repeated facts/numbers/adjectives across sections
+3. **"Content that gets cited" MEO framing** — Lead with quotable take, self-contained paragraphs, named entities for embeddings, source attribution, price contextualization
+4. **voice_profiles.py** — Removed ratio mandate, simplified opener rule, added 2 anti-repetition avoid entries
+
+### Frontend MEO Changes — COMMITTED (ad373c6)
+
+5. **Link-predictive titles** — `"Family Ski Guide: {Name} with Kids"` (was `"{Name} Family Ski Guide"`) — matches how people describe links when sharing
+6. **Question-based headings** — All 6 section headings converted to questions, 2 of 6 include resort name for RAG chunk independence without keyword stuffing
+7. **TOC sidebar labels** — Updated to short question format ("Getting There?", "Lift Ticket Costs?", etc.)
+8. **Content freshness dates** — Both LastUpdated.tsx and QuickScoreSummary.tsx now show day (e.g., "Feb 7, 2026" not "Feb 2026")
+9. **generate_seo_meta() fallback** — Aligned with link-predictive title format
+
+### Guide Voice Alignment — COMMITTED (ad373c6)
+
+10. **guides.py voice** — Updated from "warm, practical, encouraging. Like a helpful ski mom friend" to "smart, practical, encouraging. Like a well-traveled friend who respects your time" + MEO principles (lead with take, cite sources, no repetition)
+11. **guides.py system prompt** — "Be smart, practical, and specific. Lead with your take, not a description."
+
+### Expert Review — ALL APPROVE/PASS
+
+| Reviewer | Verdict |
+|----------|---------|
+| Python (Kieran) | APPROVE (consistency gap with approval.py noted as follow-up) |
+| Pattern Consistency | APPROVE (pipeline production path CLEAN, stale defaults functionally OK via alias) |
+| Code Simplicity | APPROVE (triple-layer reinforcement is intentional belt-and-suspenders) |
+| Architecture | APPROVE (selective 2/6 entity naming well-calibrated, title format aligned) |
+| UI Browser Test | PASS (question headings, TOC labels, date format verified on St. Anton + Les Gets) |
+| Python Round 2 | PASS (SEO title + QuickScoreSummary fixes correct) |
+| UI Retest | PASS ("Updated Jan 23, 2026" confirmed, all headings intact) |
+
+### Key Commits
+```
+ad373c6 feat: MEO optimization + voice de-mandating + question-based headings
+```
+
+### Section Heading Changes
+
+| Old | New | Entity Name? |
+|-----|-----|--------------|
+| Getting There | How Do You Get to {resort.name}? | Yes |
+| Where to Stay | Where Should Your Family Stay? | No |
+| Lift Tickets & Passes | How Much Do Lift Tickets Cost at {resort.name}? | Yes |
+| On the Mountain | What's the Skiing Like for Families? | No |
+| Off the Mountain | What Can You Do Off the Slopes? | No |
+| What Parents Say | What Do Other Parents Think? | No |
+
+### Follow-up Items (not blockers)
+
+- approval.py VoiceCoach evaluator still says "warmth" (functionally OK, voice profile injection handles it)
+- MCP server descriptions still reference `instagram_mom` (functionally OK via alias)
+- Default params in content.py/approval.py still use `instagram_mom` (functionally equivalent)
+- Stored SEO titles in DB use old format — new resorts will get link-predictive format automatically
+
+**Arc:**
+- Started believing: Prescriptive voice rules (80/20 ratio, mandatory patterns per section) produce consistent quality
+- Ended believing: Prescriptive rules produce formulaic content — probabilistic personality guidance with anti-repetition lets the LLM internalize voice rather than mechanically satisfy checklists
+- Transformation: From mandating voice patterns to trusting the model with personality guidance, and from traditional SEO to Meaning Engine Optimization for AI citation
+
+---
+
+## Round 21: Voice Rebalancing — Wirecutter + Personality (2026-02-08) ✅
+
+**Goal:** Rebalance voice from "Instagram mom" to "Morning Brew for family ski trips" — smart, witty, efficient. Add future-casting, self-contained paragraph rules, child price floor, multilingual research, thin content gate.
+
+### Voice Rebalancing — COMMITTED (fd92739, 5f1806e, 53d3503)
+
+1. **Voice identity shift** — From "Instagram mom" (performative encouragement) to "Morning Brew meets ski trip planning" (smart, witty, efficient)
+2. **SNOWTHERE_GUIDE profile** — New tone items: "Smart and clear", "Confident expertise without being preachy", "Honest tension", "Rhythmic variety", "Future-casting"
+3. **Personality toolkit** — "Pro tip:", "Locals know:", "The move:", parenthetical humor, tension patterns, future-casting patterns
+4. **Avoid list expanded** — Em-dash ban (non-negotiable), dropped articles, section openers as descriptions, bare prices, cold inventory lists, third-person detachment
+5. **Include list expanded** — BLUF, self-contained paragraphs, future-casting, price context, foreign term translation, resort full name usage, credibility through counting
+6. **Child price floor** — `max(child_price, adult_price * 0.5)` prevents $0 child prices
+7. **Self-contained paragraph rule** — Every paragraph must make sense without reading the headline
+
+### Multilingual Research + Thin Content Gate — COMMITTED (7b7dbd9)
+
+8. **Multilingual research queries** — Resort research now searches in local language (German, French, Japanese, etc.) using Claude for translation
+9. **Thin content gate** — Sections with < 200 words rejected, resort with < 3 substantial sections flagged for manual review
+10. **Voice prompt hardening** — Section prompts now include explicit voice guidance with concrete examples
+
+### Expert Review — ALL PASS
+
+| Reviewer | Verdict |
+|----------|---------|
+| Python (Kieran) x3 rounds | APPROVE |
+| Pattern Consistency x3 rounds | APPROVE |
+| Code Simplicity x3 rounds | APPROVE |
+
+### Key Commits
+```
+7b7dbd9 feat: Voice prompt hardening + multilingual research + thin content gate
+53d3503 fix: Child price floor + voice future-casting + self-contained paragraphs
+5f1806e fix: Resolve voice rebalancing consistency issues from expert review
+fd92739 feat: Voice rebalancing — Wirecutter + personality (Level B)
+e34007a fix: Update PERFECT_PAGE_CHECKLIST and learnings.md stale word counts
+a0fea02 docs: Update compound-beads docs with current Quick Take word ranges
+```
+
+**Arc:**
+- Started believing: The Instagram mom voice was the right voice for family ski content
+- Ended believing: A Morning Brew / Wirecutter style (smart, practical, witty) serves families better than performative enthusiasm — parents are intelligent adults doing research
+- Transformation: From performative encouragement to respectful intelligence — the voice shift from "Instagram mom" to "smart friend who respects your time"
 
 ---
 
@@ -879,10 +1000,12 @@ _(no active task)_
 ## Recent Commits
 
 ```
+ad373c6 feat: MEO optimization + voice de-mandating + question-based headings
+7b7dbd9 feat: Voice prompt hardening + multilingual research + thin content gate
+53d3503 fix: Child price floor + voice future-casting + self-contained paragraphs
+5f1806e fix: Resolve voice rebalancing consistency issues from expert review
+fd92739 feat: Voice rebalancing — Wirecutter + personality (Level B)
 f3e892c fix: Pipeline crash — datetime scope + check_budget signature
 4fcf231 fix: Type safety + security hardening across frontend
 b5c3e8f feat: Round 20 — Content quality & linking overhaul
-cae670a feat: Round 19 — SEO fixes, programmatic pages, country content system
-ea1fd95 docs: Update compound beads context for Pipeline Improvements session
-1e218e2 fix: Serialize metadata in log_reasoning to handle dataclasses
 ```

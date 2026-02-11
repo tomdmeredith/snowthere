@@ -4,6 +4,64 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Round 22: MEO Optimization + Voice De-Mandating
+
+**Arc:**
+- **Started believing**: Prescriptive voice rules (80/20 ratio, mandatory patterns per section) produce consistent quality
+- **Ended believing**: Prescriptive rules produce formulaic content — probabilistic personality guidance with anti-repetition lets the LLM internalize voice rather than mechanically satisfy checklists
+- **Transformation**: From mandating voice patterns to trusting the model with personality guidance, and from traditional SEO to Meaning Engine Optimization for AI citation
+
+**Technical:**
+- Exa is trained on LINK PREDICTION ("which URL follows this text"), not text similarity — titles should match how people describe links when sharing
+- Princeton GEO study (peer-reviewed, 10K queries): Quotations +41%, Statistics +33%, Fluency +29%, Citing sources +28%, Keyword stuffing -9%
+- Content updated within 30 days gets 3.2x more AI citations — date freshness signals matter
+- Selective entity names in headings (2 of 6) balances RAG chunk independence vs keyword stuffing penalty
+- Question-based headings match how people query AI systems ("How do I get to Serfaus?")
+- Self-contained paragraphs survive AI extraction independently — each paragraph must make sense without the headline
+- Probabilistic voice guidance ("emerge NATURALLY, never forced") produces more varied, natural content than prescriptive rules ("Use at least ONE per section")
+- Triple-layer instruction reinforcement (voice profile + system prompt + section prompts) is intentional belt-and-suspenders for LLM compliance, not duplication
+- `generate_seo_meta()` fallback titles must match frontend title format — otherwise stored SEO meta creates split-brain title strategy
+- `month: 'short', day: 'numeric', year: 'numeric'` for compact date displays (sidebar), `month: 'long'` for full displays
+
+**Process:**
+- Deep research before implementation: Exa, ChatGPT, Perplexity architecture research informed every MEO decision
+- Browser-based UI testing catches rendering issues invisible in code (QuickScoreSummary had a second date display needing update)
+- Multiple date format components need synchronized updates — search for all date formatting in the codebase
+- Expert review panels (7 reviewers) catch consistency gaps across files (approval.py, MCP server still reference old voice)
+
+**Key Insight:**
+LLMs work better with internalized personality ("you write like a smart friend who respects time") than with mechanical checklists ("use at least one Pro tip per section, maintain 80/20 fragment ratio"). The former produces varied, natural content; the latter produces formulaic content where every resort reads the same.
+
+---
+
+## Round 21: Voice Rebalancing — Wirecutter + Personality
+
+**Arc:**
+- **Started believing**: The Instagram mom voice was the right voice for family ski content
+- **Ended believing**: A Morning Brew / Wirecutter style (smart, practical, witty) serves families better than performative enthusiasm — parents are intelligent adults doing research
+- **Transformation**: From performative encouragement to respectful intelligence — the voice shift from "Instagram mom" to "smart friend who respects your time"
+
+**Technical:**
+- Voice identity shift from "Instagram mom" to "Morning Brew for family ski trips" — smart, witty, efficient
+- Future-casting ("You'll find...", "Your kids will...") helps readers envision themselves at the resort
+- Self-contained paragraph rule: every paragraph must make sense without reading the section headline — critical for AI extraction
+- Child price floor `max(child_price, adult_price * 0.5)` prevents $0 child prices from data gaps
+- Multilingual research queries (searching in German/French/Japanese) improve data quality for international resorts
+- Thin content gate (< 200 words per section, < 3 substantial sections per resort) catches under-researched content
+- Em-dash ban is non-negotiable — LLMs default to em-dashes; explicit prohibition needed at every prompt level
+- "Dropping articles" (a, the, an) is a common LLM failure mode when told to be "efficient" — must explicitly require natural prose
+
+**Process:**
+- Voice profiles define WHO you're writing as, system prompts define HOW to write — keep them separate
+- Multiple rounds of expert review (3 rounds for voice changes) catches subtle inconsistencies
+- Legacy aliases (`instagram_mom` → `SNOWTHERE_GUIDE`) maintain backward compatibility during transition
+- Voice calibration needs concrete examples, not just descriptions — show the LLM what good looks like
+
+**Key Insight:**
+"Instagram mom" was gendered and performative. "Smart friend who respects your time" is gender-neutral and substantive. Parents researching ski trips are intelligent adults — they want intel, not encouragement. The voice should inform, not perform.
+
+---
+
 ## Round 20: Content Quality & Linking Overhaul + Type Safety
 
 **Arc:**
@@ -577,6 +635,16 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Programmatic collection pages from DB queries | Data-driven pages (best-for-beginners, etc.) create crawlable entry points | 19 |
 | `html.escape(url, quote=True)` before href interpolation | Defense-in-depth against XSS via crafted URLs in entity links | LS |
 | Expert review panel (7 reviewers) | Security, TypeScript, Python, simplicity, performance catch different issues | 20 |
+| Probabilistic personality guidance over prescriptive rules | LLM internalizes voice personality, produces varied natural content instead of formulaic | R22 |
+| Link-predictive title format | Matches Exa's link prediction model — "which URL follows this text" | R22 |
+| Question-based headings with selective entity names | 2/6 entity names balances RAG independence vs keyword stuffing (-9%) | R22 |
+| Anti-repetition as explicit system prompt section | Dedicated block prevents LLMs from restating facts across sections | R22 |
+| Source attribution in content | "According to..." improves AI citation rate by +28% (Princeton GEO) | R22 |
+| Content freshness date with day | Precise dates signal 30-day freshness threshold for 3.2x more citations | R22 |
+| Deep MEO research before implementation | Understanding how Exa/ChatGPT/Perplexity work informed every optimization | R22 |
+| Future-casting ("You'll find...", "Your kids will...") | Readers envision themselves at the resort — engagement and specificity | R21 |
+| Self-contained paragraphs | Each paragraph makes sense independently — critical for AI extraction | R21 |
+| Multilingual research queries | Searching in local language improves data quality for international resorts | R21 |
 
 ---
 
@@ -599,6 +667,10 @@ Concrete rules distilled from past failures. Never repeat these.
 | Never omit `generateStaticParams()` from dynamic routes | Without it, Next.js won't pre-render pages at build time, hurting crawl efficiency | R19 |
 | Never use `dangerouslySetInnerHTML` without `sanitizeHTML()` | All DB content may contain malicious HTML — sanitize at every render point | R20 |
 | Never inject JSON-LD without `sanitizeJSON()` | Crafted data could contain `</script>` and break out of JSON-LD block | R20 |
+| Never mandate specific pattern frequencies in LLM prompts | "Use at least ONE Pro tip per section" produces mechanical, predictable content | R22 |
+| Never mandate specific sentence structure ratios | "80/20 fragment ratio" and "2-3 fragments per section" produce staccato, formulaic prose | R22 |
+| Never have multiple date format components without syncing them all | QuickScoreSummary.tsx had a second date display that was missed on first pass | R22 |
+| Never let `generate_seo_meta()` fallback diverge from frontend title format | Split-brain title strategy: some pages use old format, some new | R22 |
 
 ---
 
@@ -620,6 +692,11 @@ Approaches tried and abandoned. Don't revisit these.
 | Completeness multiplier in structural score | Double-penalized with data_completeness gate — low completeness resorts penalized twice | Removed multiplier, kept separate data_completeness gate | R20 |
 | Universal link priority (affiliate > direct > maps) | Doesn't match user intent — parent wanting restaurant directions gets booking page | Per-entity-type priority table matching user action | LS |
 | Full refresh for every stale resort (~$3/resort) | Most resort data doesn't change — re-researching is waste | Light refresh (~$0.50) for costs, links, images only | PI |
+| Prescriptive voice rules ("80/20 ratio", "at least ONE per section") | LLM mechanically satisfies checklists, producing formulaic content | Probabilistic personality guidance ("emerge NATURALLY, don't force a ratio") | R22 |
+| Generic section headings ("Getting There") | Headings lose context when AI extracts as independent chunks | Question-based headings with selective entity names for RAG chunk independence | R22 |
+| "{Resort Name} Family Ski Guide" title format | Doesn't match how people describe links when sharing | "Family Ski Guide: {Name} with Kids" (link-predictive, matches Exa's model) | R22 |
+| Date showing only month+year ("Feb 2026") | Ambiguous freshness signal, doesn't satisfy 30-day freshness criteria | Include day ("Feb 7, 2026") for precise freshness signal | R22 |
+| Performative "Instagram mom" voice | Gendered, patronizing; parents want intel, not encouragement | "Smart friend who respects your time" — gender-neutral, substantive | R21 |
 
 ---
 

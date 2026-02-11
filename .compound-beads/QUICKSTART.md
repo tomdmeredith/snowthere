@@ -1,28 +1,33 @@
 # Snowthere Quick Start
 
-> Compound Beads v3.0 | Last Updated: 2026-02-07
+> Compound Beads v3.0 | Last Updated: 2026-02-10
 
-**Round 20 COMPLETE + Pipeline Bug Fix deployed.** All code on origin/main. Migrations 042+043 applied. Backfills done. Pipeline fix (f3e892c) deployed to Railway — next cron run will auto-retry 5 failed resorts.
+**Round 22 COMPLETE (ad373c6).** MEO + voice de-mandating deployed. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS. Build passes, 96+ static pages.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
 **Guiding Principles**:
 - Agent-native (atomic primitives, composable, full parity)
 - Store atoms, compute molecules (deterministic formulas from data)
-- SEO/GEO optimized (Schema.org, llms.txt, AI crawler whitelist)
+- MEO optimized (link-predictive titles, question headings, anti-repetition, source citations)
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
-**Stats**: ~75 resorts, 10 guides, 14 countries, 6 collection pages, 96 static pages
+**Stats**: ~90 resorts, 15 guides (10 published), 14 countries, 6 collection pages, 96+ static pages
 
-**Pipeline Bug Fix (f3e892c, Feb 7)**:
-- `runner.py`: Local `from datetime import datetime, timezone` shadowed module-level → moved `timezone` to module-level
-- `discovery_agent.py` + `quality_agent.py`: `check_budget()` called with no args → replaced with `settings.daily_budget_limit - get_daily_spend()`
-- 5 failed resorts (Snowbasin, Stratton, Taos, Big White, Las Leñas) will auto-retry next cron
+**Round 22 — MEO + Voice De-Mandating (ad373c6)**:
+- content.py: Probabilistic voice guidance replaces prescriptive rules (no more 80/20 ratio, mandatory patterns)
+- page.tsx: Link-predictive titles ("Family Ski Guide: {Name} with Kids"), 6 question-based headings
+- Anti-repetition block + "content that gets cited" MEO framing + source citation guidance
+- Date displays now include day for content freshness signal
+- Based on Princeton GEO study + Exa link prediction model research
+
+**Round 21 — Voice Rebalancing (7b7dbd9)**:
+- Voice shifted from "Instagram mom" to "Morning Brew for family ski trips" (smart, witty, efficient)
+- Future-casting, self-contained paragraphs, honest tension, rhythmic variety
+- Multilingual research queries, thin content gate, child price floor
 
 **Next Steps**:
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
-- Apply migration 036 to cloud Supabase (GDPR data_requests table)
-- Re-run quick takes backfill for 31 resorts that exceeded 65-word limit
 - Homepage redesign (deferred from R14)
 
 **Pipeline**: Active on Railway (snowthere-agents)
@@ -30,11 +35,13 @@
 - Light refresh for stale resorts (~$0.50 vs ~$3)
 - Guides: Mon/Thu, 3-agent expert panel
 - Newsletter: Thursday 6am PT
+- Bing: 124 URLs indexed, AI Performance tracking
 
 **Infrastructure**:
-- Vercel: www.snowthere.com (ISR, 96 static pages)
+- Vercel: www.snowthere.com (ISR, 96+ static pages)
 - Railway: snowthere-agents (daily cron)
 - Supabase: Snowthere, AWS us-east-2, 30+ tables
+- Bing Webmaster Tools: Connected, 124 URLs indexed
 
 **Planned Rounds**:
 - **R17: Agent-Native Parity** — Expose remaining primitives as MCP tools
