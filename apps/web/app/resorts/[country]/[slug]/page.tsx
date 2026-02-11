@@ -105,13 +105,13 @@ async function getResort(country: string, slug: string): Promise<ResortWithDetai
     family_metrics: resortData.family_metrics,
     content: resortData.content,
     costs: resortData.costs,
-    calendar: resortData.calendar || [],
-    passes: (resortData.passes || []).map((p) => ({
+    calendar: Array.isArray(resortData.calendar) ? resortData.calendar : [],
+    passes: (Array.isArray(resortData.passes) ? resortData.passes : []).map((p) => ({
       ...p.pass,
       access_type: p.access_type,
     })),
-    images: resortData.images || [],
-    links: resortData.links || [],
+    images: Array.isArray(resortData.images) ? resortData.images : [],
+    links: Array.isArray(resortData.links) ? resortData.links : [],
   }
 
   return transformedResort
@@ -343,7 +343,8 @@ export default async function ResortPage({ params }: Props) {
   const content = resort.content
   const metrics = resort.family_metrics
   const costs = resort.costs
-  const faqs = content?.faqs as { question: string; answer: string }[] | null
+  const rawFaqs = content?.faqs
+  const faqs = Array.isArray(rawFaqs) ? rawFaqs as { question: string; answer: string }[] : null
 
   // Pre-process content sections with resort links (auto-link mentions of other resorts)
   // SEO best practice: Each resort is linked only once per page (first mention wins)
@@ -605,8 +606,8 @@ export default async function ResortPage({ params }: Props) {
               <div className="animate-in animate-in-2">
                 <QuickTake
                   content={content.quick_take}
-                  perfectIf={metrics?.perfect_if || []}
-                  skipIf={metrics?.skip_if || []}
+                  perfectIf={Array.isArray(metrics?.perfect_if) ? metrics.perfect_if : []}
+                  skipIf={Array.isArray(metrics?.skip_if) ? metrics.skip_if : []}
                 />
               </div>
             )}
