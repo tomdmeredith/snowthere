@@ -819,10 +819,12 @@ DESCRIPTION: {description}
 
 {f"RESEARCH DATA: {json.dumps(research_data, indent=2)[:2000]}" if research_data else ""}
 
-VOICE: Snowthere - warm, practical, encouraging. Like a helpful ski mom friend.
-- Use "you" and "your family"
-- Be specific, not generic
-- Include real tips and numbers when possible
+VOICE: Snowthere - smart, practical, encouraging. Like a well-traveled friend who respects your time.
+- Write in second person ("you", "your family")
+- Lead with your take, not a description. First sentence should be independently quotable.
+- Be specific: real numbers, real names, real tips
+- Cite sources when known ("According to...", "Based on 2025-26 pricing")
+- Never repeat information across sections
 
 FORMAT REQUIREMENTS FOR {section_type.upper()}:
 
@@ -901,7 +903,7 @@ FORMAT REQUIREMENTS FOR {section_type.upper()}:
 - Use <p>, <strong>, <ul>/<li> as needed
 - Practical, actionable content"""
 
-    system = "You are writing content for Snowthere. Be warm, practical, and specific. Return valid JSON only."
+    system = "You are writing content for Snowthere. Be smart, practical, and specific. Lead with your take, not a description. Return valid JSON only."
 
     try:
         response = _call_claude(prompt, system=system, max_tokens=1500)

@@ -128,77 +128,70 @@ Use future-casting: "You'll notice...", "Your kids will...".""",
 # YOUR VOICE
 {profile.description}
 
-You sound like a smart, well-traveled friend who's done this trip and respects
-your reader's time. You have personality: honest asides, dry humor, real tension
+You write like a smart, well-traveled friend who's done this trip and respects
+the reader's time. You have personality: honest asides, dry humor, real tension
 about tradeoffs. You're not a brochure. You're not clinical. People enjoy reading you.
 
-PERSONALITY TOOLKIT (every paragraph needs at least one opinion, comparison, or honest take):
-- Use at least ONE per section: "Pro tip:", "Locals know:", "The move:", "The catch?", or a parenthetical aside.
-- These must feel natural, not forced. If you can't make one fit organically, use a parenthetical instead.
+# PERSONALITY (internalize these, don't mechanically apply)
+Your writing personality includes honest asides ("Pro tip:", "Locals know:",
+parenthetical humor) that emerge NATURALLY, never forced, never formulaic.
+Use them when they genuinely add value, not as decoration.
+
+PERSONALITY TOOLKIT:
 {chr(10).join(f'- {p}' for p in profile.patterns)}
 
 TONE:
 {chr(10).join(f'- {t}' for t in profile.tone)}
 
-# CONTENT STANDARDS
+CONTENT STANDARDS:
 {chr(10).join(f'- {i}' for i in profile.include)}
 
 NEVER:
 {chr(10).join(f'- {a}' for a in profile.avoid)}
 - ZERO em-dashes (\u2014) or en-dashes (\u2013) anywhere. This is non-negotiable.
-- BAD: "The village \u2014 perched above the valley \u2014 is car-free"
-- GOOD: "The village, perched above the valley, is car-free"
 - For ranges: "\u20ac180 to \u20ac250" not "\u20ac180\u2013\u20ac250" or "\u20ac180-\u20ac250"
 
-# FORMATTING (secondary to voice)
+# CONTENT THAT GETS CITED
+- Lead every section with your TAKE, not a description. Your first sentence
+  should be the thing someone would quote when sharing this page.
+- Every paragraph should be self-contained, make sense without the headline.
+  AI systems extract paragraphs independently.
+- Use the resort's full name (not "it") in key paragraphs. Named entities
+  anchor AI embeddings.
+- Include specific numbers with context: "Expect to pay around \u20ac180 per night"
+  not just "\u20ac180." Never write a bare price number.
+- Cite sources when possible: "According to the tourism office" or "Based on
+  2025-26 season pricing." Source attribution improves citation rates.
+- Compare prices to reference points ("that's half what Vail charges").
 - Wrap named businesses in <strong> tags on first mention (hotels, restaurants,
-  ski schools, airports, NOT generic terms like "the resort" or "ski school")
-- Use <p>, <ul>/<li>, <h3> for structure
-- Do NOT include the section title, it's added by the template
+  ski schools, airports, NOT generic terms like "the resort" or "ski school").
+- Translate foreign terms on first use: Rodelbahn (toboggan run).
+
+# ANTI-REPETITION
+- NEVER repeat the same fact, number, or observation twice on the page.
+  If you've mentioned the access road, don't mention it again.
+- Vary your vocabulary: don't use the same adjective in consecutive paragraphs.
+- Each section should introduce NEW information, not rephrase earlier sections.
 
 # PROSE QUALITY
-- Every sentence must read naturally aloud. Don't drop articles (a, the, an) or transitions.
-- Vary sentence length: long, short. Long, long, short. Never three long sentences in a row.
-- The short sentence carries the verdict or the emotion. Full sentences carry the evidence.
+- Every sentence must read naturally aloud. Don't drop articles (a, the, an).
+- Vary sentence length naturally. Long sentences carry evidence.
+  Short ones carry verdicts. Let rhythm emerge, don't force a ratio.
+- Write in second person ("you'll find", "your kids will"), readers
+  should see themselves in the scene.
+- One honest tension/tradeoff per section minimum. Don't sugarcoat.
 - One pressure-release moment per section: a parenthetical aside, a vivid detail, or a deadpan observation.
-- This should flow like a well-edited magazine piece, not a corporate email or telegram.
-- Every paragraph must address the reader with "you" or "your" at least once.
-- NEVER describe the resort in third person ("The resort offers...", "It features...").
-- Always place the reader in the scene: "You'll find...", "Your kids will...".
-- Include 2-3 short fragments (under 6 words) per section for emphasis and rhythm.
-- Examples: "Worth every penny." / "Skip it." / "Game-changer for families." / "Not cheap."
-- Fragments carry the verdict. Full sentences carry the evidence. Aim for ~80/20 ratio.
+- This should flow like a well-edited magazine piece, not a corporate email.
 
-# SELF-CONTAINED PARAGRAPHS
-- Every paragraph MUST make sense without reading the section headline.
-- Start key paragraphs with the resort's full name, not "it" or "the resort".
-- Use "There's a [noun] that [detail]" to introduce amenities and businesses.
-- Use "think [example], [example], and [example]" before food or activity lists.
-- Add parenthetical context for rare/notable details (the only one in the Alps, open since 1927).
-- Translate foreign terms on first use: Rodelbahn (toboggan run), Kinderskischule (kids' ski school).
-
-# FUTURE-CASTING (help readers envision themselves there)
-- Use "You'll [verb]..." to put the reader in the scene ("You'll fly into Munich...")
-- Use "Your kids will [experience]" for predictions ("Your kids will love the magic carpet")
-- Use "Expect to pay [amount] for [thing]" before ALL prices, never bare numbers
-- Use "from [X] to [Y]" for ranges of time, cost, or distance
-- CRITICAL: Never write a bare price number. ALWAYS frame with "Expect to pay around \u20acX",
-  "rates run \u20acX to \u20acY", or compare to a reference ("that's half what Vail charges").
-
-# STRUCTURE
-- Lead every section with your TAKE, not a description. Open with what matters, back it with evidence.
-- Your FIRST sentence in each section MUST be a verdict, opinion, or editorial take.
-- BAD openers: "Three airports serve the region." / "Accommodation splits between zones."
-- GOOD openers: "Getting here is easier than you'd think." / "Stay slopeside if kids are in lessons."
-- Compare prices and features to reference points ("that's half what Vail charges", "cheaper than most Austrian resorts").
+# FORMATTING
+- Use <p>, <ul>/<li>, <h3> for structure
+- Do NOT include the section title, it's added by the template
 - Fewer sub-headers, more flowing narrative. This is a friend's advice, not a wiki article.
 
 # WHEN DATA IS SPARSE
-- If you cannot find specific hotel/restaurant names, describe the TYPE of options available
-  with typical pricing for the region: "You'll find a handful of family-run guesthouses
-  in the village center. Expect to pay around \u20ac120 to \u20ac180 per night for a family room."
-- Use your knowledge of the country/region to fill in general guidance.
-- NEVER write a section shorter than 200 words. If data is thin, provide regional context.
+- Describe the TYPE of options with regional pricing context.
+- Use country/region knowledge to fill gaps with honest guidance.
+- Never write a section shorter than 200 words. If data is thin, provide regional context.
 """
 
     message = client.messages.create(
@@ -349,7 +342,7 @@ Quick Take: {quick_take[:500]}
 
 Format as JSON: {{"title": "...", "description": "..."}}
 
-Title: 50-60 chars, include "Family Ski Guide"
+Title: 50-60 chars, format "Family Ski Guide: [Resort] with Kids | Snowthere"
 Description: 150-160 chars, focus on family value prop""",
             }
         ],
@@ -367,7 +360,7 @@ Description: 150-160 chars, focus on family value prop""",
         return json.loads(response_text.strip())
     except json.JSONDecodeError:
         return {
-            "title": f"{resort_name} Family Ski Guide | Snowthere",
+            "title": f"Family Ski Guide: {resort_name} with Kids | Snowthere",
             "description": f"Complete family guide to skiing at {resort_name}. Kid-friendly terrain, costs, and honest parent reviews.",
         }
 

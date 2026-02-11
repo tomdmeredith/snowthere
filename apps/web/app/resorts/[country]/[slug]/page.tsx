@@ -229,7 +229,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Build rich title with family score if available
   const familyScore = metrics?.family_overall_score
   const scoreLabel = familyScore ? ` (${familyScore}/10 Family Score)` : ''
-  const title = seoMeta?.title || `${resort.name} Family Ski Guide${scoreLabel} | Snowthere`
+  const title = seoMeta?.title || `Family Ski Guide: ${resort.name} with Kids${scoreLabel} | Snowthere`
 
   // Build rich description with age range and key details
   const ageRange =
@@ -287,7 +287,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
     openGraph: {
       type: 'article',
-      title: `${resort.name} Family Ski Guide | Snowthere`,
+      title: `Family Ski Guide: ${resort.name} with Kids | Snowthere`,
       description,
       url: canonicalUrl,
       siteName: 'Snowthere',
@@ -639,7 +639,7 @@ export default async function ResortPage({ params }: Props) {
               <section id="getting-there">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>✈️</span>
-                  <span>Getting There</span>
+                  <span>How Do You Get to {resort.name}?</span>
                 </h2>
                 <ContentRenderer html={linkedContent.getting_there} />
               </section>
@@ -650,7 +650,7 @@ export default async function ResortPage({ params }: Props) {
               <section id="where-to-stay">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>🏠</span>
-                  <span>Where to Stay</span>
+                  <span>Where Should Your Family Stay?</span>
                 </h2>
                 <ContentRenderer html={linkedContent.where_to_stay} />
               </section>
@@ -661,7 +661,7 @@ export default async function ResortPage({ params }: Props) {
               <section id="lift-tickets">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>🎟️</span>
-                  <span>Lift Tickets & Passes</span>
+                  <span>How Much Do Lift Tickets Cost at {resort.name}?</span>
                 </h2>
                 <ContentRenderer html={linkedContent.lift_tickets} />
                 {resort.passes.length > 0 && (
@@ -695,7 +695,7 @@ export default async function ResortPage({ params }: Props) {
               <section id="on-mountain">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>⛷️</span>
-                  <span>On the Mountain</span>
+                  <span>What&apos;s the Skiing Like for Families?</span>
                 </h2>
                 <ContentRenderer html={linkedContent.on_mountain} />
               </section>
@@ -715,7 +715,7 @@ export default async function ResortPage({ params }: Props) {
               <section id="off-mountain">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>☕</span>
-                  <span>Off the Mountain</span>
+                  <span>What Can You Do Off the Slopes?</span>
                 </h2>
                 <ContentRenderer html={linkedContent.off_mountain} />
               </section>
@@ -731,7 +731,7 @@ export default async function ResortPage({ params }: Props) {
               <section id="reviews">
                 <h2 className="font-display text-3xl font-bold text-dark-800 flex items-center gap-3 mb-8">
                   <span>💬</span>
-                  <span>What Parents Say</span>
+                  <span>What Do Other Parents Think?</span>
                 </h2>
                 <ContentRenderer html={linkedContent.parent_reviews_summary} />
               </section>
@@ -805,7 +805,7 @@ export default async function ResortPage({ params }: Props) {
                       className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
                       <Plane className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      Getting There
+                      Getting There?
                     </a>
                   )}
                   {content?.where_to_stay && (
@@ -814,7 +814,7 @@ export default async function ResortPage({ params }: Props) {
                       className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
                       <Home className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      Where to Stay
+                      Where to Stay?
                     </a>
                   )}
                   {content?.lift_tickets && (
@@ -823,7 +823,7 @@ export default async function ResortPage({ params }: Props) {
                       className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
                       <Ticket className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      Lift Tickets
+                      Lift Ticket Costs?
                     </a>
                   )}
                   {content?.on_mountain && (
@@ -832,7 +832,7 @@ export default async function ResortPage({ params }: Props) {
                       className="flex items-center gap-3 text-sm text-dark-600 hover:text-coral-500 hover:bg-coral-50 transition-all duration-300 py-2.5 px-3 rounded-xl group"
                     >
                       <Mountain className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                      On the Mountain
+                      Skiing for Families?
                     </a>
                   )}
                   <a

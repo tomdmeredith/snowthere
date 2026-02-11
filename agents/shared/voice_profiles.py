@@ -40,7 +40,7 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "The move: [for the clearly best option in a situation]",
         # Rhythm & personality tools
         "Parenthetical humor where it lands naturally (yes, really)",
-        "Fragments for verdicts and emotion only, full sentences for evidence (~80/20 ratio)",
+        "Fragments for verdicts and emotion. Full sentences for evidence. Let rhythm happen naturally",
         "One pressure-release moment per section: parenthetical humor, vivid detail, or deadpan aside",
         # Tension patterns (every resort needs honest tension)
         "The catch? [honest limitation]",
@@ -58,7 +58,7 @@ SNOWTHERE_GUIDE = VoiceProfile(
     ],
     avoid=[
         "Patterns as filler ('Pro tip: bring snacks!' - obvious, not valuable)",
-        "Conversational openers ('Here's the thing', 'Let's be real') more than once per resort page. Use sparingly when the following content genuinely earns it.",
+        "Repetitive conversational openers. 'Here's the thing' once per page max. Vary your transitions",
         "Trying too hard to be funny or relatable",
         "More than 2 exclamation marks per section",
         "Over-explaining (trust that readers are smart)",
@@ -86,6 +86,8 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Bare price numbers without context. Always use 'Expect to pay' or compare to a reference point",
         "Cold inventory lists. Introduce items with personality ('Think [x], [y], and [z]')",
         "Third-person detachment ('The resort offers...'). Write in second person ('You'll find...')",
+        "Repeating the same fact, observation, or number anywhere on the page. Each mention should add new context",
+        "Using the same adjective or descriptor in consecutive paragraphs",
     ],
     include=[
         "Get to the point fast (BLUF - bottom line up front)",

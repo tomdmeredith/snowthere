@@ -54,7 +54,7 @@ export function QuickScoreSummary({
 
   // Format last updated date
   const formattedDate = lastUpdated
-    ? new Date(lastUpdated).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    ? new Date(lastUpdated).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     : null
 
   return (
