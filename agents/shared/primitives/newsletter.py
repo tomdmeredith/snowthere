@@ -289,7 +289,7 @@ CONTEXT:
 - Season context: {seasonal_context}
 - New resort guides published: {len(new_resorts)}
 
-VOICE: Smart, expert friend who respects your time. Warm but not performative. Wirecutter meets Morning Brew.
+VOICE: Smart, expert friend who respects your time. Wirecutter meets Morning Brew.
 
 REQUIREMENTS:
 - Exactly 40-60 words
@@ -303,7 +303,7 @@ EXAMPLES OF GOOD COLD OPENS:
 
 Return ONLY the cold open text, no quotes or labels."""
 
-    system = "You write for Snowthere, a family ski resort guide. Sound like a smart, well-traveled friend who respects the reader's time. Expert but warm, with dry wit and honest takes. Use 'you/your', not first-person 'I'. No em-dashes."
+    system = "You write for Snowthere, a family ski resort guide. Sound like a smart, well-traveled friend who respects the reader's time. Expert with dry wit and honest takes. Use 'you/your', not first-person 'I'. No em-dashes."
 
     try:
         response = _call_claude(prompt, system=system, max_tokens=200)
@@ -361,6 +361,8 @@ def generate_parent_hack(recent_guides: list[dict]) -> str:
 
 RECENT RESORT GUIDES:
 {json.dumps(recent_guides[:3], indent=2, default=str)}
+
+VOICE: Smart, specific, practical.
 
 REQUIREMENTS:
 - Single actionable tip families can use

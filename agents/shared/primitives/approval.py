@@ -447,18 +447,18 @@ If families can't plan their trip from this guide, it's not ready."""
 
 async def evaluate_voice(
     content: dict[str, Any],
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
 ) -> EvaluationResult:
     """
     VoiceCoach evaluation - tone and brand alignment.
 
-    Mission: Make families feel "YOU CAN DO THIS."
-    Counter the intimidation of international ski travel.
+    Mission: Smart, practical, and clear. Expert advice that respects
+    the reader's time and intelligence.
 
     Evaluates:
-    - Warmth: Sounds like a friend, not a brochure?
+    - Personality: Does it have personality without being performative?
     - Jargon: Technical terms explained? Not assuming expert knowledge?
-    - Brand alignment: SPIELPLATZ feel (playful, warm, "sunset on snow")?
+    - Brand alignment: Smart, witty, efficient (Morning Brew for ski trips)?
     - Pattern match: Uses appropriate voice patterns?
 
     Args:
@@ -472,9 +472,8 @@ async def evaluate_voice(
 
     prompt = f"""You are VoiceCoach, editorial director for Snowthere.
 
-Your mission: Make families feel "YOU CAN DO THIS."
-Many feel intimidated by international ski travel.
-Our voice should be a trusted friend, not a corporate guide.
+Your mission: Smart, practical, and clear. Expert advice that
+respects the reader's time and intelligence.
 
 TARGET VOICE: {profile.name}
 {profile.description}
@@ -491,19 +490,14 @@ AVOID:
 ALWAYS INCLUDE:
 {chr(10).join(f'- {i}' for i in profile.include)}
 
-SPIELPLATZ BRAND:
-- "Playful. Memorable. Fun."
-- "Sunset on snow" warmth
-- Building confidence, not intimidation
-
 CONTENT TO EVALUATE:
 {_format_content_for_eval(content)}
 
 Evaluate for VOICE:
 1. Does it sound like expert advice from a trusted source?
-2. Does it have personality (honest asides, dry humor, sentence rhythm variety)?
+2. Does it have personality without being performative? (honest asides, dry humor, sentence rhythm variety)
 3. Technical terms explained for non-skiers?
-4. Quick Take reduces anxiety and builds confidence?
+4. Quick Take: Would a parent feel informed and confident?
 5. Conversational patterns used sparingly and earned (not as empty filler)?
 
 Output JSON:
@@ -511,16 +505,16 @@ Output JSON:
     "verdict": "approve" | "improve" | "reject",
     "confidence": 0.0-1.0,
     "issues": ["phrase or section that misses voice"],
-    "suggestions": ["how to rewrite warmly"],
+    "suggestions": ["how to improve"],
     "reasoning": "voice assessment"
 }}
 
-The test: Would an overwhelmed parent reading this feel "I can do this"?"""
+The test: Would a parent feel informed and confident after reading this?"""
 
     system = """You are VoiceCoach, guardian of the Snowthere brand voice.
-Content should be warm and expert without being performative or corporate.
-Flag: jargon, intimidating tone, corporate-speak, excessive enthusiasm.
-Approve: confident expertise, clear guidance, anxiety-reducing specificity."""
+Content should be expert and clear without being performative or corporate.
+Flag: jargon, intimidating tone, corporate-speak, excessive enthusiasm, forced warmth.
+Approve: confident expertise, clear guidance, personality that earns its place."""
 
     response = _call_claude(prompt, system=system)
 
@@ -554,7 +548,7 @@ async def run_approval_panel(
     content: dict[str, Any],
     sources: list[dict[str, Any]],
     resort_data: dict[str, Any],
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
 ) -> PanelResult:
     """
     Run all three evaluators in parallel and aggregate results.
@@ -634,7 +628,7 @@ async def improve_content(
     issues: list[str],
     suggestions: list[str],
     sources: list[dict[str, Any]] | None = None,
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
 ) -> dict[str, Any]:
     """
     Apply improvements based on panel feedback.
@@ -735,7 +729,7 @@ async def approval_loop(
     content: dict[str, Any],
     sources: list[dict[str, Any]],
     resort_data: dict[str, Any],
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
     max_iterations: int = 3,
 ) -> ApprovalLoopResult:
     """

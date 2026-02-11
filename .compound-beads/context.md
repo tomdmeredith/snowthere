@@ -7,13 +7,13 @@
 
 ## Current State
 
-**Round 22 COMPLETE (ad373c6).** MEO optimization + voice de-mandating deployed. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS (Python, Pattern Consistency, Simplicity, Architecture, UI Browser x2, Python Round 2). Build passes, 96+ static pages.
+**Round 22 COMPLETE (ad373c6 + a7edaaa).** MEO optimization + voice de-mandating deployed + Vercel build fix. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS. Vercel deployment LIVE, 151 static pages.
 
 - **Resorts:** ~90 published with entity links, pipeline adds ~6/day
 - **Guides:** 15 total (10 published, 5 drafts), autonomous generation Mon/Thu
 - **Countries:** 14 with country pages + intro content
 - **Collections:** 6 programmatic SEO pages (best-for-beginners, best-for-toddlers, etc.)
-- **Static Pages:** 96+ (build passes, zero TypeScript errors)
+- **Static Pages:** 151 on Vercel (build passes, zero TypeScript errors)
 - **Voice:** Snowthere Guide ("Morning Brew for family ski trips") — probabilistic personality, no mandated ratios
 - **MEO:** Link-predictive titles, question-based headings (2/6 with entity names), anti-repetition, source citations
 - **Entity Links:** Strong-tag-first extraction, Skyscanner flight URLs, context-aware destinations
@@ -74,8 +74,14 @@
 | Python Round 2 | PASS (SEO title + QuickScoreSummary fixes correct) |
 | UI Retest | PASS ("Updated Jan 23, 2026" confirmed, all headings intact) |
 
+### Vercel Build Fix — COMMITTED (a7edaaa)
+
+12. **Array.isArray() guards** — Garmisch-Partenkirchen had a JSONB field stored as a non-array truthy value, causing `g.map is not a function` during Vercel prerendering. The `|| []` fallback only catches null/undefined, not strings/objects. Fix: replaced 7 `|| []` guards with `Array.isArray()` across `page.tsx` (faqs, calendar, passes, images, links, perfect_if, skip_if).
+13. **4 consecutive Vercel deployments were failing** — commits `53d3503`, `7b7dbd9`, `ad373c6`, `0c79dd5` all crashed on the same resort. Production was stuck on `a0fea02` (Feb 8). Now fixed, all MEO changes live.
+
 ### Key Commits
 ```
+a7edaaa fix: Add Array.isArray() guards to prevent Vercel build failure
 ad373c6 feat: MEO optimization + voice de-mandating + question-based headings
 ```
 
@@ -1000,6 +1006,7 @@ _(no active task)_
 ## Recent Commits
 
 ```
+a7edaaa fix: Add Array.isArray() guards to prevent Vercel build failure
 ad373c6 feat: MEO optimization + voice de-mandating + question-based headings
 7b7dbd9 feat: Voice prompt hardening + multilingual research + thin content gate
 53d3503 fix: Child price floor + voice future-casting + self-contained paragraphs

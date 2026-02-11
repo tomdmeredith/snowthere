@@ -2,7 +2,7 @@
 
 > Compound Beads v3.0 | Last Updated: 2026-02-10
 
-**Round 22 COMPLETE (ad373c6).** MEO + voice de-mandating deployed. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS. Build passes, 96+ static pages.
+**Round 22 COMPLETE (ad373c6 + a7edaaa).** MEO + voice de-mandating deployed + Vercel build fix. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS. Build passes, 151 static pages on Vercel.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -12,7 +12,7 @@
 - MEO optimized (link-predictive titles, question headings, anti-repetition, source citations)
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
-**Stats**: ~90 resorts, 15 guides (10 published), 14 countries, 6 collection pages, 96+ static pages
+**Stats**: ~90 resorts, 15 guides (10 published), 14 countries, 6 collection pages, 151 static pages
 
 **Round 22 — MEO + Voice De-Mandating (ad373c6)**:
 - content.py: Probabilistic voice guidance replaces prescriptive rules (no more 80/20 ratio, mandatory patterns)
@@ -20,6 +20,7 @@
 - Anti-repetition block + "content that gets cited" MEO framing + source citation guidance
 - Date displays now include day for content freshness signal
 - Based on Princeton GEO study + Exa link prediction model research
+- Vercel build fix (a7edaaa): Array.isArray() guards for JSONB data — Garmisch-Partenkirchen had non-array value crashing `.map()`
 
 **Round 21 — Voice Rebalancing (7b7dbd9)**:
 - Voice shifted from "Instagram mom" to "Morning Brew for family ski trips" (smart, witty, efficient)

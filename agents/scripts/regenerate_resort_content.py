@@ -1,14 +1,19 @@
 #!/usr/bin/env python3
-"""Regenerate all content sections for a single resort using stored data.
+"""Regenerate content sections for resorts using stored data.
 
 Uses existing Supabase data as input (no new research API calls), then runs
 the full content-generation pipeline with current voice prompts. Useful for
 validating voice/prompt changes end-to-end.
 
-Usage:
+Single resort:
     python scripts/regenerate_resort_content.py --resort "Garmisch-Partenkirchen"
     python scripts/regenerate_resort_content.py --resort "Garmisch-Partenkirchen" --write
     python scripts/regenerate_resort_content.py --resort "Serfaus-Fiss-Ladis" --sections quick_take,getting_there
+
+Batch mode (all published resorts, oldest first):
+    python scripts/regenerate_resort_content.py --batch --batch-limit 5
+    python scripts/regenerate_resort_content.py --batch --batch-limit 10 --write
+    python scripts/regenerate_resort_content.py --batch --batch-limit 10 --batch-offset 10 --write
 
 Cost: ~$0.50-$1.00 per resort (Opus for content, Sonnet for extraction, Haiku for atoms).
 """
@@ -39,6 +44,8 @@ from shared.primitives.database import (
     update_resort_family_metrics,
     get_recent_portfolio_taglines,
 )
+from shared.primitives.system import get_daily_spend
+from shared.config import settings
 
 
 CONTENT_SECTIONS = [
@@ -473,12 +480,85 @@ async def regenerate(
         print(f"  After:  {after_path}")
 
 
+async def batch_regenerate(
+    limit: int = 10,
+    offset: int = 0,
+    write: bool = False,
+    sections_filter: list[str] | None = None,
+):
+    """Regenerate content for multiple published resorts, oldest first."""
+    client = get_supabase_client()
+
+    resorts = (
+        client.table("resorts")
+        .select("name, slug, updated_at")
+        .eq("status", "published")
+        .order("updated_at", desc=False)
+        .range(offset, offset + limit - 1)
+        .execute()
+    )
+
+    if not resorts.data:
+        print("No published resorts found.")
+        return
+
+    total = len(resorts.data)
+    print(f"\n{'='*70}")
+    print(f"BATCH CONTENT REGENERATION")
+    print(f"{'='*70}")
+    print(f"Resorts: {total} (offset={offset}, limit={limit})")
+    print(f"Mode: {'WRITE' if write else 'DRY RUN'}")
+    if sections_filter:
+        print(f"Sections: {', '.join(sections_filter)}")
+    print(f"{'='*70}\n")
+
+    succeeded, failed, skipped = 0, 0, 0
+
+    for i, resort in enumerate(resorts.data):
+        # Budget guard: ~$1.50 per resort, leave $2 buffer
+        try:
+            spend = get_daily_spend()
+            budget = getattr(settings, "daily_budget_limit", 50.0)
+            if spend + 1.5 > budget:
+                print(f"\nBudget limit reached (${spend:.2f}/${budget:.2f}).")
+                print(f"Resume with: --batch-offset {offset + i}")
+                break
+        except Exception:
+            pass  # Budget check is best-effort
+
+        print(f"\n[{i + 1}/{total}] {resort['name']} (updated: {resort.get('updated_at', 'N/A')[:10]})")
+
+        try:
+            await regenerate(
+                resort["name"],
+                write=write,
+                sections_filter=sections_filter,
+            )
+            succeeded += 1
+        except Exception as e:
+            print(f"FAILED: {resort['name']}: {e}")
+            failed += 1
+
+        # Rate limit courtesy between resorts
+        if i < total - 1:
+            print("  Waiting 5s...")
+            await asyncio.sleep(5)
+
+    print(f"\n{'='*70}")
+    print(f"BATCH COMPLETE")
+    print(f"{'='*70}")
+    print(f"Succeeded: {succeeded}")
+    print(f"Failed: {failed}")
+    if offset + limit < 200:  # rough upper bound
+        print(f"Next run: --batch-offset {offset + succeeded + failed}")
+
+
 def main():
     parser = argparse.ArgumentParser(
-        description="Regenerate all content for a resort using current voice prompts"
+        description="Regenerate content for resorts using current voice prompts"
     )
     parser.add_argument(
-        "--resort", required=True, help='Resort name (e.g., "Garmisch-Partenkirchen")'
+        "--resort", help='Resort name (e.g., "Garmisch-Partenkirchen")'
     )
     parser.add_argument(
         "--write", action="store_true", help="Write results back to Supabase (default: dry run)"
@@ -489,14 +569,37 @@ def main():
              "Options: quick_take,getting_there,where_to_stay,lift_tickets,"
              "on_mountain,off_mountain,parent_reviews_summary,faqs,seo_meta,tagline",
     )
+    parser.add_argument(
+        "--batch", action="store_true",
+        help="Batch mode: regenerate all published resorts (oldest first)",
+    )
+    parser.add_argument(
+        "--batch-limit", type=int, default=10,
+        help="Max resorts per batch run (default: 10)",
+    )
+    parser.add_argument(
+        "--batch-offset", type=int, default=0,
+        help="Skip first N resorts (for resuming batch runs)",
+    )
 
     args = parser.parse_args()
+
+    if not args.resort and not args.batch:
+        parser.error("Either --resort or --batch is required")
 
     sections_filter = None
     if args.sections:
         sections_filter = [s.strip() for s in args.sections.split(",")]
 
-    asyncio.run(regenerate(args.resort, write=args.write, sections_filter=sections_filter))
+    if args.batch:
+        asyncio.run(batch_regenerate(
+            limit=args.batch_limit,
+            offset=args.batch_offset,
+            write=args.write,
+            sections_filter=sections_filter,
+        ))
+    else:
+        asyncio.run(regenerate(args.resort, write=args.write, sections_filter=sections_filter))
 
 
 if __name__ == "__main__":
