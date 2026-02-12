@@ -45,6 +45,7 @@ from shared.primitives.database import (
     get_recent_portfolio_taglines,
 )
 from shared.primitives.system import get_daily_spend
+from shared.primitives.style import apply_deterministic_style
 from shared.config import settings
 
 
@@ -459,6 +460,9 @@ async def regenerate(
             k: v for k, v in new_content.items()
             if not k.startswith("_")
         }
+
+        # Apply deterministic style fixes before writing
+        content_update = apply_deterministic_style(content_update)
 
         update_resort_content(resort_id, content_update)
         print(f"  Updated resort_content for {resort['name']}")

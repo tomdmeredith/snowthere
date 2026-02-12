@@ -794,17 +794,55 @@ async def scrape_url(url: str, timeout: int = 30) -> str | None:
             return None
 
 
+# Country code mapping for Nominatim disambiguation
+COUNTRY_CODES: dict[str, str] = {
+    "austria": "at", "france": "fr", "italy": "it", "germany": "de",
+    "switzerland": "ch", "united states": "us", "usa": "us", "canada": "ca",
+    "japan": "jp", "andorra": "ad", "spain": "es", "norway": "no",
+    "sweden": "se", "finland": "fi", "australia": "au", "new zealand": "nz",
+    "chile": "cl", "argentina": "ar", "united kingdom": "gb",
+}
+
+# Approximate country bounding boxes (lat_min, lat_max, lon_min, lon_max)
+COUNTRY_BOUNDS: dict[str, tuple[float, float, float, float]] = {
+    "us": (24.0, 72.0, -180.0, -66.0),
+    "ca": (41.0, 84.0, -141.0, -52.0),
+    "at": (46.3, 49.0, 9.5, 17.2),
+    "fr": (41.3, 51.1, -5.1, 9.6),
+    "ch": (45.8, 47.8, 5.9, 10.5),
+    "it": (35.5, 47.1, 6.6, 18.5),
+    "de": (47.3, 55.1, 5.9, 15.0),
+    "jp": (24.0, 46.0, 122.9, 153.9),
+    "no": (57.9, 71.2, 4.6, 31.1),
+    "se": (55.3, 69.1, 11.1, 24.2),
+    "fi": (59.8, 70.1, 20.5, 31.6),
+    "es": (36.0, 43.8, -9.3, 3.3),
+    "ad": (42.4, 42.7, 1.4, 1.8),
+    "au": (-44.0, -10.0, 113.0, 154.0),
+    "nz": (-47.3, -34.4, 166.4, 178.6),
+    "cl": (-56.0, -17.5, -75.6, -66.9),
+    "ar": (-55.0, -21.8, -73.6, -53.6),
+}
+
+
+def _coords_in_country(lat: float, lon: float, country_code: str) -> bool:
+    """Check if coordinates fall within a country's bounding box."""
+    bounds = COUNTRY_BOUNDS.get(country_code)
+    if not bounds:
+        return True  # No bounds data, accept
+    lat_min, lat_max, lon_min, lon_max = bounds
+    return lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
+
+
 async def extract_coordinates(
     resort_name: str,
     country: str,
 ) -> tuple[float, float] | None:
-    """Extract coordinates for a ski resort using Nominatim (OpenStreetMap).
+    """Extract coordinates for a ski resort using Nominatim + Google Geocoding fallback.
 
-    This is free and requires no API key. Used to improve Google Places
-    search accuracy and trail map lookups.
-
-    Uses a fallback strategy with multiple query formats since "ski resort"
-    in the query often returns no results.
+    Round 24: Added countrycodes parameter to Nominatim for disambiguation
+    (fixes "Alta" returning Iowa/Norway instead of Utah), plus country bounding
+    box validation, plus Google Geocoding API fallback.
 
     Args:
         resort_name: Name of the ski resort
@@ -813,36 +851,84 @@ async def extract_coordinates(
     Returns:
         Tuple of (latitude, longitude) or None if not found
     """
-    # Try multiple query formats (more specific to less specific)
+    country_code = COUNTRY_CODES.get(country.lower())
+
+    # ---- Nominatim (free, primary) ----
     queries = [
-        f"{resort_name}, {country}",           # Most reliable
-        f"{resort_name} {country}",            # No comma
-        resort_name,                            # Just the name
-        f"{resort_name} ski resort, {country}", # Original (sometimes works)
+        f"{resort_name} ski area, {country}",
+        f"{resort_name} ski resort, {country}",
+        f"{resort_name}, {country}",
+        f"{resort_name} {country}",
     ]
 
     async with httpx.AsyncClient(timeout=30) as client:
         for query in queries:
-            # Respect Nominatim rate limit (1 request/second)
-            await asyncio.sleep(1.1)
+            await asyncio.sleep(1.1)  # Nominatim rate limit
 
             try:
+                params: dict[str, Any] = {
+                    "q": query,
+                    "format": "json",
+                    "limit": 3,  # Get multiple results for validation
+                }
+                if country_code:
+                    params["countrycodes"] = country_code
+
                 response = await client.get(
                     "https://nominatim.openstreetmap.org/search",
-                    params={
-                        "q": query,
-                        "format": "json",
-                        "limit": 1,
-                    },
+                    params=params,
                     headers={"User-Agent": "Snowthere/1.0 (family-ski-directory)"},
                 )
                 response.raise_for_status()
                 data = response.json()
 
                 if data:
-                    return (float(data[0]["lat"]), float(data[0]["lon"]))
+                    # Check each result against country bounds
+                    for result in data:
+                        lat = float(result["lat"])
+                        lon = float(result["lon"])
+                        if country_code and _coords_in_country(lat, lon, country_code):
+                            logger.info(f"[research] Nominatim coords for {resort_name}: ({lat}, {lon})")
+                            return (lat, lon)
+                    # If no result passed bounds check, use first result anyway
+                    lat = float(data[0]["lat"])
+                    lon = float(data[0]["lon"])
+                    logger.info(f"[research] Nominatim coords for {resort_name} (no bounds match): ({lat}, {lon})")
+                    return (lat, lon)
 
             except (httpx.HTTPError, KeyError, IndexError, ValueError):
                 continue
+
+    # ---- Google Geocoding API (fallback) ----
+    from ..config import settings
+    if settings.google_api_key:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                params = {
+                    "address": f"{resort_name}, {country}",
+                    "key": settings.google_api_key,
+                }
+                response = await client.get(
+                    "https://maps.googleapis.com/maps/api/geocode/json",
+                    params=params,
+                )
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get("status") == "OK" and data.get("results"):
+                    location = data["results"][0]["geometry"]["location"]
+                    lat = float(location["lat"])
+                    lon = float(location["lng"])
+
+                    # Validate against bounds
+                    if country_code and not _coords_in_country(lat, lon, country_code):
+                        logger.warning(f"[research] Google coords for {resort_name} outside {country} bounds")
+                        return None
+
+                    logger.info(f"[research] Google Geocoding coords for {resort_name}: ({lat}, {lon})")
+                    return (lat, lon)
+
+        except Exception as e:
+            logger.warning(f"[research] Google Geocoding failed for {resort_name}: {e}")
 
     return None

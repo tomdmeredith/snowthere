@@ -98,6 +98,10 @@ REQUIRED_SECTIONS = [
 import re
 
 FORBIDDEN_PATTERNS = [
+    # Em-dash / en-dash safety net (Round 24)
+    # These should be caught by style.py deterministic layer, but this is defense-in-depth
+    (" — ", ", "),    # Em-dash with spaces → comma (most common pattern)
+    (" – ", ", "),    # En-dash with spaces → comma
     # Performative openers - only truly cringeworthy ones
     # NOTE: "Here's the thing", "Here's the deal", "Real talk" are now ALLOWED
     # sparingly (max 1 per page) when followed by genuine substance.

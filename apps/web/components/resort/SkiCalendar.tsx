@@ -1,5 +1,6 @@
 import { SkiQualityCalendar } from '@/lib/database.types'
 import { Snowflake, Users, Star, CalendarHeart } from 'lucide-react'
+import { SnowConditionsChart } from './SnowConditionsChart'
 
 interface SkiCalendarProps {
   calendar: SkiQualityCalendar[]
@@ -132,6 +133,9 @@ export function SkiCalendar({ calendar }: SkiCalendarProps) {
           </p>
         </div>
       </div>
+
+      {/* Visual Bar Chart */}
+      <SnowConditionsChart calendar={calendar} />
 
       {/* Month Cards for Mobile - Design-5 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-5">

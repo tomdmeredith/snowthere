@@ -175,10 +175,19 @@ from .intelligence import (
 from .costs import (
     # Data classes
     CostResult,
+    PriceValidation,
     # Core acquisition
     acquire_resort_costs,
     get_cached_pricing,
     cache_pricing_result,
+    # Pricing discovery + interpretation (Round 24)
+    discover_official_pricing_url,
+    scrape_and_interpret_pricing,
+    corroborate_pricing,
+    # Validation (Round 24)
+    validate_price,
+    validate_costs,
+    LIFT_TICKET_RANGES,
     # Individual strategies
     get_pass_network_pricing,
     search_targeted_pricing,
@@ -406,6 +415,15 @@ from .expert_panel import (
     apply_voice_cleanup,
 )
 
+# Style primitives (3-layer style editing)
+from .style import (
+    apply_deterministic_style,
+    replace_em_dashes_contextually,
+    apply_em_dash_fix,
+    apply_style_edit,
+    apply_full_style_edit,
+)
+
 # Scoring primitives (Deterministic family score calculation)
 from .scoring import (
     # Data classes
@@ -567,10 +585,19 @@ __all__ = [
     "LinkCurationResult",
     # Cost acquisition - Data classes
     "CostResult",
+    "PriceValidation",
     # Cost acquisition - Core
     "acquire_resort_costs",
     "get_cached_pricing",
     "cache_pricing_result",
+    # Cost acquisition - Discovery + interpretation (Round 24)
+    "discover_official_pricing_url",
+    "scrape_and_interpret_pricing",
+    "corroborate_pricing",
+    # Cost acquisition - Validation (Round 24)
+    "validate_price",
+    "validate_costs",
+    "LIFT_TICKET_RANGES",
     # Cost acquisition - Strategies
     "get_pass_network_pricing",
     "search_targeted_pricing",
@@ -752,6 +779,12 @@ __all__ = [
     "check_forbidden_phrases",
     "validate_quick_take",
     "FORBIDDEN_PHRASES",
+    # Style (Round 24 - 3-layer style editing)
+    "apply_deterministic_style",
+    "replace_em_dashes_contextually",
+    "apply_em_dash_fix",
+    "apply_style_edit",
+    "apply_full_style_edit",
     # Scoring (Round 9 - Deterministic formula)
     "ScoreBreakdown",
     "calculate_family_score",

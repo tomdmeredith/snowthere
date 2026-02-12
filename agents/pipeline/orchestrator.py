@@ -982,9 +982,26 @@ async def run_daily_pipeline(
                 task_id=run_id,
             )
 
-            # Mark discovery candidate as rejected on error
+            # Mark discovery candidate based on error type
+            # Rate limits and transient errors → back to pending for retry
+            # Permanent errors → rejected
             if candidate_id:
-                mark_discovery_candidate_processed(candidate_id, status="rejected")
+                error_str = str(e).lower()
+                is_retryable = any(term in error_str for term in [
+                    "429", "rate limit", "timeout", "connection",
+                    "503", "502", "overloaded",
+                ])
+                if is_retryable:
+                    mark_discovery_candidate_processed(candidate_id, status="pending")
+                    log_reasoning(
+                        task_id=None,
+                        agent_name="orchestrator",
+                        action="candidate_retryable_error",
+                        reasoning=f"Retryable error for {resort_name}, resetting to pending: {e}",
+                        metadata={"candidate_id": candidate_id},
+                    )
+                else:
+                    mark_discovery_candidate_processed(candidate_id, status="rejected")
 
             results.append({
                 "resort": resort_name,

@@ -87,6 +87,8 @@ from shared.primitives import (
     approval_loop,
     format_loop_summary,
 )
+# Style editing (Round 24 - deterministic post-processing)
+from shared.primitives.style import apply_deterministic_style
 
 from .decision_maker import handle_error
 
@@ -1264,6 +1266,9 @@ async def run_resort_pipeline(
             print(f"🚫 Thin Content Gate: {content['word_count']} words (min 1200), thin sections: {thin_sections}")
         else:
             result["stages"]["thin_content_gate"] = {"status": "passed", "total_words": content["word_count"]}
+
+        # Apply deterministic style fixes (em-dash removal, forbidden phrases, exclamation capping)
+        content = apply_deterministic_style(content)
 
         # Update content - verify write succeeded
         content_result = update_resort_content(resort_id, content)
