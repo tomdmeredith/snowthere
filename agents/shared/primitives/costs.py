@@ -41,24 +41,25 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 LIFT_TICKET_RANGES: dict[str, tuple[float, float]] = {
-    "united states": (60, 300),
-    "usa": (60, 300),
-    "canada": (70, 250),
-    "austria": (30, 80),
-    "france": (30, 75),
-    "switzerland": (45, 100),
-    "italy": (25, 70),
-    "germany": (25, 65),
-    "andorra": (25, 60),
-    "spain": (25, 60),
-    "japan": (3000, 8000),
-    "norway": (300, 800),
-    "sweden": (300, 700),
-    "finland": (25, 65),
-    "australia": (80, 200),
-    "new zealand": (80, 180),
-    "chile": (20000, 60000),
-    "argentina": (10000, 50000),
+    "united states": (60, 450),   # USD — Vail/Deer Valley can be $400+
+    "usa": (60, 450),
+    "canada": (70, 420),          # CAD — Whistler ~CAD$400
+    "austria": (30, 90),          # EUR — Lech/Sölden can be €85
+    "france": (30, 80),           # EUR
+    "switzerland": (45, 110),     # CHF
+    "italy": (25, 85),            # EUR — Dolomites premium resorts €70-80
+    "germany": (25, 75),          # EUR — Garmisch at €69
+    "andorra": (25, 80),          # EUR — Grandvalira €55-65 but day rates can be higher
+    "spain": (25, 60),            # EUR
+    "japan": (3000, 11000),       # JPY — Hakuba multi-area passes ¥10,000+
+    "norway": (300, 900),         # NOK
+    "sweden": (300, 850),         # SEK — Åre at 800 SEK
+    "finland": (25, 65),          # EUR
+    "australia": (80, 250),       # AUD — Thredbo AUD$209
+    "new zealand": (80, 300),     # NZD — Queenstown area NZD$270
+    "chile": (20000, 100000),     # CLP — Valle Nevado CLP$89,000
+    "argentina": (10000, 50000),  # ARS
+    "bulgaria": (30, 80),         # EUR/BGN
 }
 
 # Currency mappings by country

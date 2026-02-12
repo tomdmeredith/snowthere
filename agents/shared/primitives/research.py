@@ -794,6 +794,24 @@ async def scrape_url(url: str, timeout: int = 30) -> str | None:
             return None
 
 
+# Known coordinates for resorts that Nominatim consistently misidentifies
+# (e.g., "Beaver Creek" → Montana town instead of Colorado ski resort)
+# These are verified ski resort base area coordinates.
+KNOWN_COORDINATES: dict[str, tuple[float, float]] = {
+    "beaver creek": (39.6042, -106.5165),
+    "breckenridge": (39.4817, -106.0384),
+    "cerro catedral": (-41.1645, -71.4429),
+    "deer valley": (40.6374, -111.4783),
+    "heavenly": (38.9353, -119.9400),
+    "jackson hole": (43.5877, -110.8279),
+    "northstar": (39.2746, -120.1210),
+    "smugglers notch": (44.5853, -72.7928),
+    "st. anton": (47.1297, 10.2685),
+    "winter park": (39.8841, -105.7625),
+    "baqueira-beret": (42.6980, 0.9349),
+}
+
+
 # Country code mapping for Nominatim disambiguation
 COUNTRY_CODES: dict[str, str] = {
     "austria": "at", "france": "fr", "italy": "it", "germany": "de",
@@ -834,15 +852,26 @@ def _coords_in_country(lat: float, lon: float, country_code: str) -> bool:
     return lat_min <= lat <= lat_max and lon_min <= lon <= lon_max
 
 
+def _is_ski_related(result: dict) -> bool:
+    """Check if a Nominatim result looks like a ski resort (not a generic town)."""
+    display = result.get("display_name", "").lower()
+    osm_type = result.get("type", "").lower()
+    osm_class = result.get("class", "").lower()
+    ski_keywords = {"ski", "piste", "winter sport", "alpine", "resort", "mountain"}
+    return any(kw in display or kw in osm_type or kw in osm_class for kw in ski_keywords)
+
+
 async def extract_coordinates(
     resort_name: str,
     country: str,
 ) -> tuple[float, float] | None:
-    """Extract coordinates for a ski resort using Nominatim + Google Geocoding fallback.
+    """Extract coordinates for a ski resort using Google Geocoding + Nominatim fallback.
 
-    Round 24: Added countrycodes parameter to Nominatim for disambiguation
-    (fixes "Alta" returning Iowa/Norway instead of Utah), plus country bounding
-    box validation, plus Google Geocoding API fallback.
+    Google Geocoding is the primary source because it handles ski resort disambiguation
+    much better than Nominatim (e.g., "Beaver Creek ski resort" → Colorado, not Montana).
+    Nominatim as free fallback if Google is unavailable.
+
+    Cost: ~$0.005/request (Google Geocoding), free for Nominatim.
 
     Args:
         resort_name: Name of the ski resort
@@ -851,9 +880,51 @@ async def extract_coordinates(
     Returns:
         Tuple of (latitude, longitude) or None if not found
     """
+    # Phase 0: Known coordinates (verified, instant, free)
+    known = KNOWN_COORDINATES.get(resort_name.lower())
+    if known:
+        logger.info(f"[research] Known coords for {resort_name}: ({known[0]}, {known[1]})")
+        return known
+
     country_code = COUNTRY_CODES.get(country.lower())
 
-    # ---- Nominatim (free, primary) ----
+    # Phase 1: Google Geocoding (primary — much better disambiguation)
+    from ..config import settings
+    if settings.google_api_key:
+        google_queries = [
+            f"{resort_name} ski resort, {country}",
+            f"{resort_name} ski area, {country}",
+        ]
+        for gq in google_queries:
+            try:
+                async with httpx.AsyncClient(timeout=10) as client:
+                    params = {
+                        "address": gq,
+                        "key": settings.google_api_key,
+                    }
+                    response = await client.get(
+                        "https://maps.googleapis.com/maps/api/geocode/json",
+                        params=params,
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+
+                    if data.get("status") == "OK" and data.get("results"):
+                        location = data["results"][0]["geometry"]["location"]
+                        lat = float(location["lat"])
+                        lon = float(location["lng"])
+
+                        if country_code and not _coords_in_country(lat, lon, country_code):
+                            logger.warning(f"[research] Google coords for {resort_name} outside {country} bounds")
+                            continue
+
+                        logger.info(f"[research] Google Geocoding coords for {resort_name}: ({lat}, {lon})")
+                        return (lat, lon)
+
+            except Exception as e:
+                logger.warning(f"[research] Google Geocoding failed for {resort_name}: {e}")
+
+    # Phase 2: Nominatim (free fallback)
     queries = [
         f"{resort_name} ski area, {country}",
         f"{resort_name} ski resort, {country}",
@@ -869,7 +940,8 @@ async def extract_coordinates(
                 params: dict[str, Any] = {
                     "q": query,
                     "format": "json",
-                    "limit": 3,  # Get multiple results for validation
+                    "limit": 5,
+                    "addressdetails": 1,
                 }
                 if country_code:
                     params["countrycodes"] = country_code
@@ -883,52 +955,24 @@ async def extract_coordinates(
                 data = response.json()
 
                 if data:
-                    # Check each result against country bounds
+                    # Prefer ski-related results
                     for result in data:
                         lat = float(result["lat"])
                         lon = float(result["lon"])
-                        if country_code and _coords_in_country(lat, lon, country_code):
+                        in_country = not country_code or _coords_in_country(lat, lon, country_code)
+                        if in_country and _is_ski_related(result):
+                            logger.info(f"[research] Nominatim ski coords for {resort_name}: ({lat}, {lon})")
+                            return (lat, lon)
+
+                    # Accept first in-country result
+                    for result in data:
+                        lat = float(result["lat"])
+                        lon = float(result["lon"])
+                        if not country_code or _coords_in_country(lat, lon, country_code):
                             logger.info(f"[research] Nominatim coords for {resort_name}: ({lat}, {lon})")
                             return (lat, lon)
-                    # If no result passed bounds check, use first result anyway
-                    lat = float(data[0]["lat"])
-                    lon = float(data[0]["lon"])
-                    logger.info(f"[research] Nominatim coords for {resort_name} (no bounds match): ({lat}, {lon})")
-                    return (lat, lon)
 
             except (httpx.HTTPError, KeyError, IndexError, ValueError):
                 continue
-
-    # ---- Google Geocoding API (fallback) ----
-    from ..config import settings
-    if settings.google_api_key:
-        try:
-            async with httpx.AsyncClient(timeout=10) as client:
-                params = {
-                    "address": f"{resort_name}, {country}",
-                    "key": settings.google_api_key,
-                }
-                response = await client.get(
-                    "https://maps.googleapis.com/maps/api/geocode/json",
-                    params=params,
-                )
-                response.raise_for_status()
-                data = response.json()
-
-                if data.get("status") == "OK" and data.get("results"):
-                    location = data["results"][0]["geometry"]["location"]
-                    lat = float(location["lat"])
-                    lon = float(location["lng"])
-
-                    # Validate against bounds
-                    if country_code and not _coords_in_country(lat, lon, country_code):
-                        logger.warning(f"[research] Google coords for {resort_name} outside {country} bounds")
-                        return None
-
-                    logger.info(f"[research] Google Geocoding coords for {resort_name}: ({lat}, {lon})")
-                    return (lat, lon)
-
-        except Exception as e:
-            logger.warning(f"[research] Google Geocoding failed for {resort_name}: {e}")
 
     return None
