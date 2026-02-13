@@ -64,7 +64,7 @@ const archivoBlack = Archivo_Black({
 })
 
 export const metadata: Metadata = {
-  title: 'Design Showcase | Snowthere',
+  title: 'Design Showcase',
   description: '5 avant-garde homepage design explorations',
 }
 

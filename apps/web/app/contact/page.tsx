@@ -7,7 +7,7 @@ import { ChevronRight, Mail, MessageSquare, Clock, Building2 } from 'lucide-reac
 import { ContactForm } from '@/components/ContactForm'
 
 export const metadata: Metadata = {
-  title: 'Contact Us | Snowthere',
+  title: 'Contact Us',
   description: 'Get in touch with the Snowthere team. Questions about a resort, feedback on our guides, or partnership inquiries - we\'d love to hear from you.',
   alternates: {
     canonical: `${SITE_URL}/contact`,

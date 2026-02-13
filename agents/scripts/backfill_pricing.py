@@ -23,6 +23,9 @@ Usage:
 
     # Fix all missing prices
     python scripts/backfill_pricing.py --missing-only --write
+
+    # Re-acquire pricing for ALL published resorts
+    python scripts/backfill_pricing.py --all --write
 """
 
 import argparse
@@ -169,6 +172,7 @@ async def main():
     parser.add_argument("--resort", help="Fix a single resort by name")
     parser.add_argument("--missing-only", action="store_true", help="Only fix missing prices")
     parser.add_argument("--wrong-only", action="store_true", help="Only fix clearly wrong prices")
+    parser.add_argument("--all", action="store_true", help="Re-acquire pricing for ALL published resorts")
     args = parser.parse_args()
 
     print("Pricing Backfill")
@@ -231,6 +235,9 @@ async def main():
                 "country": r["country"],
                 "adult": costs_data.get("lift_adult_daily") if costs_data else None,
             })
+    elif getattr(args, 'all'):
+        # Re-acquire ALL published resorts (wrong + missing + suspicious + ok)
+        targets = wrong + missing + suspicious + ok
     elif args.missing_only:
         targets = missing
     elif args.wrong_only:

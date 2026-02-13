@@ -229,7 +229,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Build rich title with family score if available
   const familyScore = metrics?.family_overall_score
   const scoreLabel = familyScore ? ` (${familyScore}/10 Family Score)` : ''
-  const title = seoMeta?.title || `Family Ski Guide: ${resort.name} with Kids${scoreLabel} | Snowthere`
+  const title = seoMeta?.title || `Family Ski Guide: ${resort.name} with Kids${scoreLabel}`
 
   // Build rich description with age range and key details
   const ageRange =

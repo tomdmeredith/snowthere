@@ -67,7 +67,7 @@ export function QuickScoreSummary({
       {formattedDate && (
         <div className="flex items-center gap-1.5 text-xs text-dark-400 mb-4">
           <Calendar className="w-3 h-3" />
-          <span>Updated {formattedDate}</span>
+          <span suppressHydrationWarning>Updated {formattedDate}</span>
         </div>
       )}
 

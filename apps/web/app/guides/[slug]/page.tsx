@@ -66,10 +66,10 @@ export async function generateMetadata({
   const guide = await getGuideBySlug(slug)
 
   if (!guide) {
-    return { title: 'Guide Not Found | Snowthere' }
+    return { title: 'Guide Not Found' }
   }
 
-  const title = guide.seo_meta?.title || `${guide.title} | Snowthere`
+  const title = guide.seo_meta?.title || guide.title
   const description =
     guide.seo_meta?.description ||
     guide.excerpt ||
@@ -95,7 +95,7 @@ export async function generateMetadata({
     },
     openGraph: {
       type: 'article',
-      title,
+      title: `${title} | Snowthere`,
       description,
       url: canonicalUrl,
       siteName: 'Snowthere',
@@ -114,7 +114,7 @@ export async function generateMetadata({
     },
     twitter: {
       card: 'summary_large_image',
-      title,
+      title: `${title} | Snowthere`,
       description,
       ...(guide.featured_image_url && {
         images: [guide.featured_image_url],

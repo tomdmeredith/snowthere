@@ -79,6 +79,17 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Google Analytics is loaded via CookieConsent component after user consent */}
+        {/* Admitad affiliate verification */}
+        <meta name="verify-admitad" content="c8b708cbb1" />
+        {/* Travelpayouts affiliate verification */}
+        <script
+          data-noptimize="1"
+          data-cfasync="false"
+          data-wpfc-render="false"
+          dangerouslySetInnerHTML={{
+            __html: `(function () { var script = document.createElement("script"); script.async = 1; script.src = 'https://tp-em.com/NDk4MDA0.js?t=498004'; document.head.appendChild(script); })();`
+          }}
+        />
       </head>
       <body className="font-sans bg-white text-dark-800">
         {/* Skip to content link - visible on focus for keyboard users (WCAG 2.4.1) */}

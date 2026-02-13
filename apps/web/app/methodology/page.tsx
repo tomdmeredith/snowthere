@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: 'Family Score Methodology | How We Rate Ski Resorts',
+  title: 'Family Score Methodology',
   description:
     'Learn how Snowthere calculates Family Scores for ski resorts. Our transparent, deterministic methodology considers childcare, ski school, terrain, value, and convenience.',
   alternates: {
