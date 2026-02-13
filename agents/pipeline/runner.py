@@ -1307,9 +1307,24 @@ async def run_resort_pipeline(
             raise ValueError(f"Failed to save content for resort {resort_id}")
 
         # Update costs if available - verify write succeeded
-        if research_data.get("costs"):
-            costs_result = update_resort_costs(resort_id, research_data["costs"])
-            if not costs_result:
+        costs_to_write = research_data.get("costs", {})
+
+        # Safety net: if costs are empty but pricing cache has data, use cache
+        if not costs_to_write or not costs_to_write.get("lift_adult_daily"):
+            from shared.primitives.costs import get_cached_pricing
+            cached = await get_cached_pricing(resort_name, country)
+            if cached and cached.success and cached.costs:
+                costs_to_write = {**cached.costs, "currency": cached.currency or costs_to_write.get("currency", "EUR")}
+                print(f"  ℹ️  Using cached pricing for {resort_name} (pipeline costs were empty)")
+
+        if costs_to_write and costs_to_write.get("lift_adult_daily"):
+            costs_result = update_resort_costs(resort_id, costs_to_write)
+            if costs_result:
+                # Also update USD comparison columns
+                from shared.primitives.costs import update_usd_columns
+                currency = costs_to_write.get("currency", "EUR")
+                update_usd_columns(resort_id, costs_to_write, currency)
+            else:
                 print(f"⚠️  Warning: Failed to save costs for {resort_name}", file=sys.stderr)
 
         # Update family metrics if available - verify write succeeded
