@@ -81,6 +81,8 @@ export default function RootLayout({
         {/* Google Analytics is loaded via CookieConsent component after user consent */}
         {/* Admitad affiliate verification */}
         <meta name="verify-admitad" content="c8b708cbb1" />
+        {/* Pinterest domain verification */}
+        <meta name="p:domain_verify" content="a1e29c5305037a91990662690e4d8371" />
         {/* Travelpayouts affiliate verification */}
         <script
           data-noptimize="1"
@@ -88,6 +90,12 @@ export default function RootLayout({
           data-wpfc-render="false"
           dangerouslySetInnerHTML={{
             __html: `(function () { var script = document.createElement("script"); script.async = 1; script.src = 'https://tp-em.com/NDk4MDA0.js?t=498004'; document.head.appendChild(script); })();`
+          }}
+        />
+        {/* AvantLink ownership verification (temporary - remove after approval) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function () { var script = document.createElement("script"); script.async = 1; script.src = 'https://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=d14bc919b2780f144a88cc1ad785f511963eaa85'; document.head.appendChild(script); })();`
           }}
         />
       </head>
