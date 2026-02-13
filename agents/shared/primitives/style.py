@@ -112,11 +112,22 @@ def apply_deterministic_style(
         for pattern, replacement in FORMATTING_FIXES:
             text = re.sub(pattern, replacement, text)
 
-        # Em-dash / en-dash deterministic removal (obvious formatting errors only)
-        # Replace " — " or " – " at start of lines (bullet-style misuse)
+        # Em-dash / en-dash removal (voice profile: NEVER use these)
+        # 1. Start of lines (bullet-style misuse)
         text = re.sub(r"^\s*[—–]\s+", "- ", text, flags=re.MULTILINE)
-        # Replace triple em-dashes (clearly wrong)
+        # 2. Triple+ em-dashes
         text = re.sub(r"—{2,}", " - ", text)
+        # 3. Spaced em/en-dashes between words: replace with comma or period
+        #    "word — word" → "word, word" (most common LLM pattern)
+        text = re.sub(r"\s+[—–]\s+", ", ", text)
+        # 4. Unspaced em-dashes attached to words: "word—word" → "word, word"
+        text = re.sub(r"(\w)[—–](\w)", r"\1, \2", text)
+        # 5. Trailing em-dash: "word—" → "word."
+        text = re.sub(r"[—–]\s*$", ".", text, flags=re.MULTILINE)
+        # 6. Any remaining stray em/en-dashes
+        text = text.replace("—", ", ").replace("–", ", ")
+        # Clean up double commas from replacements
+        text = re.sub(r",\s*,", ",", text)
 
         # Cap exclamation marks per section
         max_excl = profile.exclamation_max_per_section
