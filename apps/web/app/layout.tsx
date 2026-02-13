@@ -94,6 +94,21 @@ export default function RootLayout({
         />
         {/* AvantLink: JS verification removed — their server returns 404 for app 1559905.
            Contact affiliateapps@avantlink.com with App ID 1559905 for manual verification. */}
+        {/* Pinterest Tag — audience tracking pixel (Tag ID: 2613199211710) */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `!function(e){if(!window.pintrk){window.pintrk=function(){window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var n=window.pintrk;n.queue=[],n.version="3.0";var t=document.createElement("script");t.async=!0,t.src=e;var r=document.getElementsByTagName("script")[0];r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");pintrk('load','2613199211710');pintrk('page');`
+          }}
+        />
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            alt=""
+            src="https://ct.pinterest.com/v3/?event=init&tid=2613199211710&noscript=1"
+          />
+        </noscript>
       </head>
       <body className="font-sans bg-white text-dark-800">
         {/* Skip to content link - visible on focus for keyboard users (WCAG 2.4.1) */}
