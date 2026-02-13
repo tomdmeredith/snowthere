@@ -809,6 +809,7 @@ KNOWN_COORDINATES: dict[str, tuple[float, float]] = {
     "st. anton": (47.1297, 10.2685),
     "winter park": (39.8841, -105.7625),
     "baqueira-beret": (42.6980, 0.9349),
+    "stubai glacier": (47.0000, 11.3100),
 }
 
 
