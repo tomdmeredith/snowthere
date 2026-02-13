@@ -1199,6 +1199,13 @@ def extract_entities_from_strong_tags(
         "good news", "the catch", "bottom line", "perfect if", "skip if",
         "the good", "the bad", "note", "important", "heads up",
         "key takeaway", "quick tip", "fun fact", "insider tip",
+        # Preamble / summary labels (not entities)
+        "what families love", "what parents say", "common concerns",
+        "pro tip from experienced parents", "the bottom line",
+        "best value moves", "the value calculation", "the real value play",
+        # Pricing category labels
+        "day passes", "multi-day passes", "flexible options",
+        "multi-day savings", "season passes", "group discounts",
     }
 
     # Find all <strong> tag contents
@@ -1228,6 +1235,22 @@ def extract_entities_from_strong_tags(
         # Skip blacklisted generic bold text
         if name_lower in _GENERIC_BOLD_BLACKLIST:
             continue
+
+        # Skip structural non-entities:
+        # 1. Text ending with colon (section labels like "What families love:")
+        if name.endswith(":"):
+            continue
+        # 2. Age-range patterns like "Adults (19 to 64)" or "Children (6-12)"
+        if re.search(r'\(\d+\s*(?:to|-)\s*\d+\)', name):
+            continue
+        # 3. Pure pricing/category labels (contain only common words, no proper nouns)
+        if re.match(r'^[a-z\s\-&/]+$', name_lower) and len(name.split()) <= 4:
+            # All-lowercase with no proper noun signals = likely a category label
+            # But allow it if it has a capitalized word that isn't the first word
+            words = name.split()
+            has_proper_noun = any(w[0].isupper() and i > 0 for i, w in enumerate(words) if w)
+            if not has_proper_noun:
+                continue
 
         # Skip resort name itself
         if name_lower == resort_name.lower():
