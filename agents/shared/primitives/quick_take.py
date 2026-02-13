@@ -122,7 +122,7 @@ class QuickTakeResult:
     validation_errors: list[str] = field(default_factory=list)
 
     # Metadata
-    model_used: str = "claude-opus-4-20250514"
+    model_used: str = "claude-opus-4-6"
     generation_reasoning: str = ""
 
 

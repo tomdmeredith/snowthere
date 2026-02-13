@@ -82,6 +82,10 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Three long sentences in a row without a short sentence breaking the rhythm",
         "Dropping articles (a, the, an) or connectors to sound 'efficient'. Every sentence must read naturally aloud",
         "Opening a section with a description instead of a verdict or take",
+        "Preamble phrases that announce what you're about to say instead of just saying it. Delete these entirely: "
+        "'The headline for families:', 'Here's the setup:', 'Here's the thing:', 'Here's the honest truth:', "
+        "'Here's where families win big:', 'Here's where families can unlock real value:', "
+        "'Here's what makes X exceptional:'. Just state the fact directly.",
         "Starting a paragraph that only makes sense if you read the headline. Every paragraph must be self-contained",
         "Bare price numbers without context. Always use 'Expect to pay' or compare to a reference point",
         "Cold inventory lists. Introduce items with personality ('Think [x], [y], and [z]')",

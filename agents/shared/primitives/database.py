@@ -65,6 +65,20 @@ RESORT_FAMILY_METRICS_COLUMNS = frozenset({
     "english_friendly",
     "snow_reliability",  # DECIMAL(3,1) after migration 030
     "village_charm",  # DECIMAL(3,1) after migration 030
+    # Added in migration 033 (data quality):
+    "data_completeness",
+    # Terrain breakdown:
+    "terrain_beginner_pct",
+    "terrain_intermediate_pct",
+    "terrain_advanced_pct",
+    # Scoring fields (migration 030+):
+    "structural_score",
+    "content_score",
+    "review_score",
+    "score_confidence",
+    "score_reasoning",
+    "score_dimensions",
+    "scored_at",
 })
 
 # Field name mappings (extraction layer name -> database column name)

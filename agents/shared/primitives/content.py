@@ -342,7 +342,7 @@ Quick Take: {quick_take[:500]}
 
 Format as JSON: {{"title": "...", "description": "..."}}
 
-Title: 50-60 chars, format "Family Ski Guide: [Resort] with Kids | Snowthere"
+Title: 50-60 chars, format "Family Ski Guide: [Resort] with Kids" (do NOT include "| Snowthere" — it's added by the frontend)
 Description: 150-160 chars, focus on family value prop""",
             }
         ],
@@ -360,7 +360,7 @@ Description: 150-160 chars, focus on family value prop""",
         return json.loads(response_text.strip())
     except json.JSONDecodeError:
         return {
-            "title": f"Family Ski Guide: {resort_name} with Kids | Snowthere",
+            "title": f"Family Ski Guide: {resort_name} with Kids",
             "description": f"Complete family guide to skiing at {resort_name}. Kid-friendly terrain, costs, and honest parent reviews.",
         }
 

@@ -1160,6 +1160,19 @@ async def run_resort_pipeline(
         # Log content generation cost (~$0.70 for Claude API, Quick Take logged separately)
         log_cost("anthropic", 0.70, None, {"run_id": run_id, "stage": "content_generation"})
 
+        # Truncation detection: flag sections that end mid-sentence
+        truncated_sections = []
+        for section in sections:
+            html = content.get(section, "")
+            if isinstance(html, str) and html:
+                stripped = html.rstrip()
+                # Good endings: </p>, </ul>, </ol>, </li>, period, etc.
+                if stripped and not re.search(r'(</p>|</ul>|</ol>|</li>|</h[1-6]>|</table>|\.|!|\?)\s*$', stripped):
+                    truncated_sections.append(section)
+        if truncated_sections:
+            print(f"  ⚠️ Truncated sections detected: {truncated_sections}", file=sys.stderr)
+            result["truncated_sections"] = truncated_sections
+
         # Total sections = 6 regular + 1 quick_take (generated earlier)
         result["stages"]["content"] = {"status": "complete", "sections": len(sections) + 1}
 
@@ -1227,6 +1240,24 @@ async def run_resort_pipeline(
                 action="created_new",
                 reasoning=f"Created new resort entry (ID: {resort_id})",
             )
+
+            # Extract coordinates for new resort
+            try:
+                from shared.primitives.research import extract_coordinates
+
+                coords = await extract_coordinates(resort_name, country)
+                if coords:
+                    update_resort(resort_id, {"latitude": coords[0], "longitude": coords[1]})
+                    print(f"  Coordinates: ({coords[0]}, {coords[1]})")
+                elif trail_map_data and trail_map_data.get("center_coords"):
+                    # Fallback: use trail map center coords from OSM data
+                    cc = trail_map_data["center_coords"]
+                    update_resort(resort_id, {"latitude": cc[0], "longitude": cc[1]})
+                    print(f"  Coordinates (from trail map): ({cc[0]}, {cc[1]})")
+                else:
+                    print(f"  Warning: No coordinates found for {resort_name}")
+            except Exception as e:
+                print(f"  Warning: Coordinate extraction failed: {e}")
 
         # Calculate word count for SEO thin content detection
         content["word_count"] = calculate_content_word_count(content)

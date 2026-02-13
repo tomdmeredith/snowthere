@@ -58,7 +58,7 @@ class Settings(BaseSettings):
 
     # Agent Settings
     default_model: str = "claude-sonnet-4-20250514"  # Fast decisions
-    content_model: str = "claude-opus-4-5-20251101"  # Quality content
+    content_model: str = "claude-opus-4-6"  # Quality content
     max_retries: int = 3
     request_timeout: int = 60
 

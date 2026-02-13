@@ -60,6 +60,16 @@ FORBIDDEN_PHRASES: list[tuple[str, str]] = [
     ("Confession:", ""),
     ("Truth bomb:", ""),
     ("Hot take:", ""),
+    # Preamble phrases (announce what you're about to say instead of saying it)
+    ("The headline for families:", ""),
+    ("Here's the setup:", ""),
+    ("Here's the thing:", ""),
+    ("Here's the honest truth:", ""),
+    ("Here's where families win big:", ""),
+    ("Here's where families can unlock real value:", ""),
+    ("Here's what you need to know:", ""),
+    ("Here's the deal:", ""),
+    ("Here's the bottom line:", ""),
     # Corporate filler
     ("At the end of the day,", ""),
     ("When all is said and done,", ""),
