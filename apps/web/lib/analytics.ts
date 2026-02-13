@@ -92,15 +92,42 @@ export function trackNewsletterSignup(source: string): void {
 /**
  * Track a quiz completion.
  *
- * @param quizType - The type of quiz completed
- * @param resultId - The result/recommendation ID
+ * @param resultCount - Number of resort matches shown
+ * @param topResult - Slug of the top-ranked resort match
  */
-export function trackQuizComplete(quizType: string, resultId: string): void {
+export function trackQuizComplete(resultCount: number, topResult: string): void {
   if (!isAnalyticsReady()) return
 
   window.gtag?.('event', 'quiz_complete', {
-    quiz_type: quizType,
-    result_id: resultId,
+    result_count: resultCount,
+    top_result: topResult,
+  })
+}
+
+/**
+ * Track an affiliate link click.
+ *
+ * @param params - Affiliate click parameters
+ * @param params.partner - Affiliate partner name (e.g. 'booking', 'viator')
+ * @param params.resortSlug - The resort page where the click occurred
+ * @param params.linkUrl - The destination URL
+ */
+export function trackAffiliateClick({
+  partner,
+  resortSlug,
+  linkUrl,
+}: {
+  partner: string
+  resortSlug: string
+  linkUrl: string
+}): void {
+  if (!isAnalyticsReady()) return
+
+  window.gtag?.('event', 'affiliate_click', {
+    partner,
+    resort_slug: resortSlug,
+    link_url: linkUrl,
+    transport_type: 'beacon',
   })
 }
 

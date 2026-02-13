@@ -1,7 +1,7 @@
 'use client'
 
 import { ExternalLink } from 'lucide-react'
-import { trackOutboundClick } from '@/lib/analytics'
+import { trackOutboundClick, trackAffiliateClick } from '@/lib/analytics'
 
 interface ResortLink {
   id: string
@@ -27,6 +27,23 @@ const CATEGORY_CONFIG: Record<string, { label: string; emoji: string }> = {
   rental: { label: 'Rent Gear', emoji: '🎿' },
   ski_school: { label: 'Ski Lessons', emoji: '👨‍🏫' },
   childcare: { label: 'Kids Care', emoji: '👶' },
+}
+
+function extractPartnerName(url: string): string {
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '')
+    // Map known domains to clean partner names
+    if (hostname.includes('booking.com')) return 'booking'
+    if (hostname.includes('viator.com')) return 'viator'
+    if (hostname.includes('getyourguide')) return 'getyourguide'
+    if (hostname.includes('skiset')) return 'skiset'
+    if (hostname.includes('worldnomads')) return 'worldnomads'
+    if (hostname.includes('travelpayouts')) return 'travelpayouts'
+    // Fallback: use first part of domain
+    return hostname.split('.')[0]
+  } catch {
+    return 'unknown'
+  }
 }
 
 function addUtmParams(url: string, resortSlug: string, category: string): string {
@@ -103,9 +120,16 @@ export function UsefulLinks({ links, resortSlug }: UsefulLinksProps) {
                           linkText: link.title,
                           category,
                           isAffiliate: link.is_affiliate ?? false,
-                          affiliateProgram: link.is_affiliate ? 'booking.com' : undefined, // TODO: Add affiliate_program to link data
+                          affiliateProgram: link.is_affiliate ? extractPartnerName(targetUrl) : undefined,
                           resortSlug,
                         })
+                        if (link.is_affiliate) {
+                          trackAffiliateClick({
+                            partner: extractPartnerName(targetUrl),
+                            resortSlug,
+                            linkUrl: targetUrl,
+                          })
+                        }
                       }}
                     >
                       <div className="min-w-0 flex-1">

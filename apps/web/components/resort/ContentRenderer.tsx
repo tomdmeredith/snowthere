@@ -1,13 +1,15 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { ProTipCallout } from './ProTipCallout'
 import { WarningCallout } from './WarningCallout'
+import { trackAffiliateClick } from '@/lib/analytics'
 
 interface ContentRendererProps {
   /** HTML content - must be pre-sanitized server-side via lib/sanitize.ts */
   html: string
   className?: string
+  resortSlug?: string
 }
 
 interface ParsedContent {
@@ -27,7 +29,25 @@ interface ParsedContent {
  * - "Warning:" or "Heads up:" followed by text
  * - "Real talk:" followed by text
  */
-export function ContentRenderer({ html, className = 'prose-family' }: ContentRendererProps) {
+export function ContentRenderer({ html, className = 'prose-family', resortSlug }: ContentRendererProps) {
+  // Track clicks on in-content affiliate links (rel="sponsored") via event delegation
+  const handleClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const anchor = (e.target as HTMLElement).closest('a[rel*="sponsored"]') as HTMLAnchorElement | null
+    if (!anchor || !resortSlug) return
+
+    const linkUrl = anchor.href
+    let partner = 'unknown'
+    try {
+      const hostname = new URL(linkUrl).hostname.replace('www.', '')
+      if (hostname.includes('booking.com')) partner = 'booking'
+      else if (hostname.includes('viator.com')) partner = 'viator'
+      else if (hostname.includes('getyourguide')) partner = 'getyourguide'
+      else if (hostname.includes('skiset')) partner = 'skiset'
+      else partner = hostname.split('.')[0]
+    } catch { /* keep unknown */ }
+
+    trackAffiliateClick({ partner, resortSlug, linkUrl })
+  }, [resortSlug])
   const parsedContent = useMemo(() => {
     // Content is pre-sanitized server-side - just use it directly
     const sanitized = html
@@ -82,7 +102,7 @@ export function ContentRenderer({ html, className = 'prose-family' }: ContentRen
   }, [html])
 
   return (
-    <div className={className}>
+    <div className={className} onClick={resortSlug ? handleClick : undefined}>
       {parsedContent.map((segment, index) => {
         if (segment.type === 'pro_tip') {
           return (

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Snowflake, ArrowRight, RefreshCw, Home } from 'lucide-react'
+import { trackQuizComplete } from '@/lib/analytics'
 import { Navbar } from '@/components/layout/Navbar'
 import { PersonalityCard } from '@/components/quiz/PersonalityCard'
 import { ResortMatchCard } from '@/components/quiz/ResortMatch'
@@ -175,6 +176,12 @@ export default function QuizResultsPage() {
 
     loadResults()
   }, [router])
+
+  // Fire GA4 quiz_complete event when results are ready
+  useEffect(() => {
+    if (!result || result.topMatches.length === 0) return
+    trackQuizComplete(result.topMatches.length, result.topMatches[0].slug)
+  }, [result])
 
   const handleRetakeQuiz = () => {
     sessionStorage.removeItem(STORAGE_KEY)

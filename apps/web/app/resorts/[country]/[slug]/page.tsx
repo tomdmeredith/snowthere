@@ -644,7 +644,7 @@ export default async function ResortPage({ params }: Props) {
                   <span>✈️</span>
                   <span>How Do You Get to {resort.name}?</span>
                 </h2>
-                <ContentRenderer html={linkedContent.getting_there} />
+                <ContentRenderer resortSlug={resort.slug} html={linkedContent.getting_there} />
               </section>
             )}
 
@@ -655,7 +655,7 @@ export default async function ResortPage({ params }: Props) {
                   <span>🏠</span>
                   <span>Where Should Your Family Stay?</span>
                 </h2>
-                <ContentRenderer html={linkedContent.where_to_stay} />
+                <ContentRenderer resortSlug={resort.slug} html={linkedContent.where_to_stay} />
               </section>
             )}
 
@@ -666,7 +666,7 @@ export default async function ResortPage({ params }: Props) {
                   <span>🎟️</span>
                   <span>How Much Do Lift Tickets Cost at {resort.name}?</span>
                 </h2>
-                <ContentRenderer html={linkedContent.lift_tickets} />
+                <ContentRenderer resortSlug={resort.slug} html={linkedContent.lift_tickets} />
                 {resort.passes.length > 0 && (
                   <div className="mt-8">
                     <h3 className="font-display font-semibold text-dark-800 mb-4">
@@ -700,7 +700,7 @@ export default async function ResortPage({ params }: Props) {
                   <span>⛷️</span>
                   <span>What&apos;s the Skiing Like for Families?</span>
                 </h2>
-                <ContentRenderer html={linkedContent.on_mountain} />
+                <ContentRenderer resortSlug={resort.slug} html={linkedContent.on_mountain} />
               </section>
             )}
 
@@ -720,7 +720,7 @@ export default async function ResortPage({ params }: Props) {
                   <span>☕</span>
                   <span>What Can You Do Off the Slopes?</span>
                 </h2>
-                <ContentRenderer html={linkedContent.off_mountain} />
+                <ContentRenderer resortSlug={resort.slug} html={linkedContent.off_mountain} />
               </section>
             )}
 
@@ -736,7 +736,7 @@ export default async function ResortPage({ params }: Props) {
                   <span>💬</span>
                   <span>What Do Other Parents Think?</span>
                 </h2>
-                <ContentRenderer html={linkedContent.parent_reviews_summary} />
+                <ContentRenderer resortSlug={resort.slug} html={linkedContent.parent_reviews_summary} />
               </section>
             )}
 
