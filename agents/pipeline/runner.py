@@ -905,6 +905,47 @@ async def run_resort_pipeline(
         result["stages"]["trail_map"] = {"status": "skipped", "error": str(e)}
 
     # =========================================================================
+    # STAGE 2.6: Ski Quality Calendar
+    # =========================================================================
+    try:
+        from shared.primitives.calendar import generate_and_store_calendar
+
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="start_calendar",
+            reasoning=f"Generating ski quality calendar for {resort_name}",
+        )
+
+        calendar_result = await generate_and_store_calendar(
+            resort_id=resort_id,
+            resort_name=resort_name,
+            country=country,
+            research_data=research_data,
+        )
+
+        if calendar_result.success:
+            log_cost("anthropic", 0.003, None, {"run_id": run_id, "stage": "calendar"})
+            result["stages"]["calendar"] = {
+                "status": "complete",
+                "months": len(calendar_result.months),
+            }
+            print(f"✓ Calendar: {len(calendar_result.months)} months generated")
+        else:
+            result["stages"]["calendar"] = {"status": "failed", "error": calendar_result.error}
+            print(f"⚠️  Calendar: Failed - {calendar_result.error}")
+
+    except Exception as e:
+        # Calendar is non-critical - continue without it
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="calendar_failed",
+            reasoning=f"Calendar generation failed (non-critical): {e}",
+        )
+        result["stages"]["calendar"] = {"status": "skipped", "error": str(e)}
+
+    # =========================================================================
     # STAGE 3: Content Generation
     # =========================================================================
     try:
