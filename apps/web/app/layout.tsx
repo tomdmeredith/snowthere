@@ -92,12 +92,8 @@ export default function RootLayout({
             __html: `(function () { var script = document.createElement("script"); script.async = 1; script.src = 'https://tp-em.com/NDk4MDA0.js?t=498004'; document.head.appendChild(script); })();`
           }}
         />
-        {/* AvantLink ownership verification (temporary - remove after approval) */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
-        <script
-          type="text/javascript"
-          src="http://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=d14bc919b2780f144a88cc1ad785f511963eaa85"
-        />
+        {/* AvantLink: JS verification removed — their server returns 404 for app 1559905.
+           Contact affiliateapps@avantlink.com with App ID 1559905 for manual verification. */}
       </head>
       <body className="font-sans bg-white text-dark-800">
         {/* Skip to content link - visible on focus for keyboard users (WCAG 2.4.1) */}
