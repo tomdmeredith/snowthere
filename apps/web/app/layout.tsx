@@ -5,6 +5,7 @@ import './globals.css'
 import { CookieConsent } from '@/components/CookieConsent'
 import { WebVitalsReporter } from '@/components/WebVitalsReporter'
 import { ExitIntentPopup } from '@/components/ExitIntentPopup'
+import Script from 'next/script'
 
 // SPIELPLATZ Design System Typography
 // Plus Jakarta Sans - Swiss-inspired geometry with rounded terminals (body text, UI)
@@ -93,10 +94,9 @@ export default function RootLayout({
           }}
         />
         {/* AvantLink ownership verification (temporary - remove after approval) */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function () { var script = document.createElement("script"); script.async = 1; script.src = 'https://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=d14bc919b2780f144a88cc1ad785f511963eaa85'; document.head.appendChild(script); })();`
-          }}
+        <Script
+          src="https://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=d14bc919b2780f144a88cc1ad785f511963eaa85"
+          strategy="beforeInteractive"
         />
       </head>
       <body className="font-sans bg-white text-dark-800">
