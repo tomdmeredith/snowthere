@@ -96,7 +96,7 @@ export default function RootLayout({
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script
           type="text/javascript"
-          src="https://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=d14bc919b2780f144a88cc1ad785f511963eaa85"
+          src="http://classic.avantlink.com/affiliate_app_confirm.php?mode=js&authResponse=d14bc919b2780f144a88cc1ad785f511963eaa85"
         />
       </head>
       <body className="font-sans bg-white text-dark-800">
