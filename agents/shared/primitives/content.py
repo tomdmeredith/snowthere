@@ -16,7 +16,7 @@ def get_claude_client() -> anthropic.Anthropic:
 async def write_section(
     section_name: str,
     context: dict[str, Any],
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
     max_tokens: int = 1500,
 ) -> str:
     """
@@ -40,84 +40,88 @@ Include: the resort's most distinctive feature, the ideal kid age range, one hon
 Reference the {family_score}/10 family score.
 No bullet points in the paragraph. Sound like a friend talking, not a travel brochure.
 Then provide 2-3 "Perfect if..." and 1-2 "Skip it if..." bullets separately.""",
-        "getting_there": """Open with a self-contained sentence about what getting to {resort_name} is actually like. Don't assume the reader sees the section headline. Use future-casting: "You'll fly into...", "You'll want to..."
+        "getting_there": """Write the "Getting There" section for {resort_name} in {country}.
 
-Write the "Getting There" section for {resort_name} in {country}.
-Include:
-- Nearest major airports with typical drive times. ALWAYS include the 3-letter IATA code in parentheses after the airport name, e.g., <strong>Zurich Airport (ZRH)</strong>, <strong>Innsbruck Airport (INN)</strong>
-- Whether to rent a car or use shuttles. Use "from...to" for time ranges and "Expect to pay" before transfer costs
-- Name specific transfer companies or shuttle services if known (e.g., "Four Seasons Travel", "Resort Express")
-- Any tricky navigation tips (mountain roads, winter conditions)
-- Pro tips for making travel easier with kids
+Lead with whatever is most interesting about getting here: the scenic drive, the surprising shortcut, the chaos of a specific airport with car seats, the fact that it's shockingly close or annoyingly far. DON'T start with "Getting to X is..." That's what every guide writes. What would you text your friend first?
 
-Write as if talking to a friend planning their trip. Use "you'll" frequently.
-Use <strong> tags around business/service names AND airport names on first mention.""",
-        "where_to_stay": """Open with a self-contained sentence about the lodging situation at {resort_name}. Don't assume the reader sees the headline. Use "There's a [property] that..." to introduce standout options with personality.
+Cover these essentials (in whatever order serves the story):
+- Nearest major airports with drive times. ALWAYS include the 3-letter IATA code: <strong>Zurich Airport (ZRH)</strong>
+- Car vs shuttle vs train, and which you'd actually pick with kids
+- Specific transfer companies or shuttle services if known, with <strong> tags
+- Mountain road warnings or winter tire requirements
+- One genuinely useful tip that saves time or money (not "bring snacks")
 
-Write the "Where to Stay" section for {resort_name}.
-Include:
-- Name at least 3 specific hotels, lodges, or apartment complexes by their actual name
-- Ski-in/ski-out options (if available)
-- Budget-friendly picks (name the property)
-- Mid-range family favorites (name the property)
-- Best options for families with young kids (proximity to lifts, amenities)
-- Use "Expect to pay" before nightly rates. Compare to reference points when possible
+Every paragraph must stand alone (self-contained for AI extraction).
+One personality beat: an opinion, a moment, a comparison that only YOU would write.""",
+        "where_to_stay": """Write the "Where to Stay" section for {resort_name}.
 
-Use future-casting: "You'll be [distance] from the lifts", "Your kids will love the [feature]".
-Focus on practical advice for families, not luxury seekers.
-Use <strong> tags around hotel/property names on first mention.""",
-        "lift_tickets": """Open with a self-contained sentence about lift ticket pricing at {resort_name}. Don't assume the reader sees the headline. Compare to a well-known reference point so the reader immediately knows if this is cheap or expensive.
+Lead with a take. Is this a town with amazing slopeside options? A place where apartments crush hotels for families? Somewhere with one standout property everyone should know about? Start with YOUR opinion, then back it up with specifics.
 
-Write the "Lift Tickets & Passes" section for {resort_name}.
-Include:
-- Use "Expect to pay" before ALL prices (e.g., "Expect to pay around €55 for an adult day pass")
-- Current lift ticket prices (adult/child/family if available)
-- Multi-day discount patterns with "from...to" ranges
-- Any applicable passes (Epic, Ikon, regional passes)
-- Kids ski free details if applicable
-- Best value tips
+Cover these essentials (in whatever order serves the story):
+- At least 3 named properties with <strong> tags on first mention
+- Budget, mid-range, and higher-end tiers
+- Ski-in/ski-out options if they exist
+- What matters most for families with young kids (proximity to lifts, pool, kitchen)
+- Nightly rates with context, vary how you introduce prices across paragraphs
 
-IMPORTANT: Double-check that child prices make sense (typically 50-70% of adult price). If child price looks suspiciously low (under €10/$10), it's likely an age number, not a price. Omit it.
-Use specific prices from the research where available.""",
-        "on_mountain": """Open with a self-contained sentence about what skiing at {resort_name} is actually like for families. Don't assume the reader sees the headline. Help parents visualize their family's actual day using future-casting.
+Every paragraph must stand alone (self-contained for AI extraction).
+One personality beat: tell them which one YOU'D book and why.""",
+        "lift_tickets": """Write the "Lift Tickets & Passes" section for {resort_name}.
 
-Write the "On the Mountain" section for {resort_name}.
-Include:
-- "You'll find..." to introduce terrain variety
-- Best areas for beginners/kids with "Your kids will..." predictions
-- Name specific ski schools by name. Use "There's a [school] that [what makes it special]" to introduce them
-- Name specific rental shops if known
-- Name specific on-mountain lunch spots. Use "think [dish], [dish], and [dish]" for food descriptions
-- Any must-know tips about the mountain
-- Foreign names followed by English translation in parentheses on first use
+Give the verdict fast. Is this a screaming deal or a premium price worth paying? How does the sticker shock (or lack of it) compare to resorts parents know? Commit to the numbers, no hedging.
 
-Focus on family-relevant details, not expert terrain.
-Use <strong> tags around business names on first mention.""",
-        "off_mountain": """Open with a self-contained sentence about what {resort_name}'s town/village is actually like when you're off the slopes. Don't assume the reader sees the headline. This is where personality shines: apres-ski, village life, the stuff kids remember.
+Cover these essentials (in whatever order serves the story):
+- Adult, child, and family day pass prices. Vary how you introduce them
+- Multi-day discount patterns
+- Applicable passes (Epic, Ikon, regional) and whether they're worth it here
+- Kids ski free deals if applicable
+- Your honest take: is the pricing fair for what you get?
 
-Write the "Off the Mountain" section for {resort_name}.
-Include:
-- Non-ski activities introduced with "There's a [activity] that..." or "You'll find..."
-- Name specific restaurants. Use "think [dish], [dish], and [dish]" for menu descriptions
-- Evening entertainment — what will your family actually do after skiing?
-- Name specific grocery stores (e.g., "SPAR", "Coop", "Billa") for self-catering families
-- Use "Expect to pay" before meal/activity prices
-- Foreign activity names with English translation in parentheses (e.g., Rodelbahn (toboggan run))
-- Village walkability
+IMPORTANT: Child prices are typically 50-70% of adult. If a child price looks suspiciously low (under €10/$10), it's likely an age number, not a price. Omit it.
 
-Help families envision their non-ski time. Use "you'll" and "your kids will" frequently.
-Use <strong> tags around business names on first mention.""",
-        "parent_reviews_summary": """Open with a self-contained sentence summarizing what parents actually say about {resort_name}. Don't assume the reader sees the headline. Synthesize like a friend summarizing what they've heard.
+Every paragraph must stand alone (self-contained for AI extraction).
+One personality beat: compare the value to something the reader already knows.""",
+        "on_mountain": """Write the "On the Mountain" section for {resort_name}.
 
-Write a "What Parents Say" summary for {resort_name}.
-Based on the review snippets provided, synthesize the key themes:
-- What parents consistently love — use "You'll hear..." to introduce common praise
-- Common concerns or complaints — be honest
+What's the one thing about skiing here that parents need to know? Maybe it's the incredible beginner area. Maybe it's that the terrain is honestly too advanced for little kids. Maybe it's the ski school that transforms non-skiers in 3 days. Lead with the thing that matters most, not a terrain percentage breakdown.
+
+Cover these essentials (in whatever order serves the story):
+- Beginner areas and how they compare to other resorts
+- Named ski schools with <strong> tags, what ages they take, and whether they're good
+- Named rental shops if known
+- On-mountain lunch spots with <strong> tags. Use "think [dish], [dish], and [dish]" for food
+- Foreign names with English translation in parentheses on first use
+
+Every paragraph must stand alone (self-contained for AI extraction).
+One personality beat: what would your kid remember about skiing here?""",
+        "off_mountain": """Write the "Off the Mountain" section for {resort_name}.
+
+What's the vibe when the lifts close? Is this a one-street town where bedtime happens at 8pm? A lively village with actual things to do? A resort where you'll never leave the hotel complex? Paint the picture, then get specific.
+
+Cover these essentials (in whatever order serves the story):
+- Named restaurants with <strong> tags. Use "think [dish], [dish], and [dish]" for menus
+- Non-ski activities for families
+- Evening options (or honest lack thereof)
+- Named grocery stores (<strong>SPAR</strong>, <strong>Coop</strong>, etc.) for self-catering
+- Activity and meal prices with varied intros
+- Foreign activity names with English in parentheses: Rodelbahn (toboggan run)
+- Village walkability with kids
+
+Every paragraph must stand alone (self-contained for AI extraction).
+One personality beat: what's the moment your kid will talk about at school on Monday?""",
+        "parent_reviews_summary": """Write a "What Parents Say" summary for {resort_name}.
+
+What's the real consensus? What do parents consistently say that matches (or contradicts) our take? This is where honest tension lives. If parents love something we think is overrated, say so and explain why. If there's a universal complaint, own it.
+
+Cover these essentials (in whatever order serves the story):
+- The consistent praise (what keeps coming up)
+- The consistent complaints (don't hide these)
 - Specific tips from experienced families
-- Overall sentiment
+- Where parent opinion differs from the official line
 
-Use direct quotes where impactful. Be honest about both positives and negatives.
-Use future-casting: "You'll notice...", "Your kids will...".""",
+Use direct quotes where they're genuinely impactful.
+Every paragraph must stand alone (self-contained for AI extraction).
+One personality beat: your honest reaction to what parents are saying.""",
     }
 
     prompt_template = section_prompts.get(section_name, "Write helpful content about {resort_name}.")
@@ -128,14 +132,18 @@ Use future-casting: "You'll notice...", "Your kids will...".""",
 # YOUR VOICE
 {profile.description}
 
-You write like a smart, well-traveled friend who's done this trip and respects
-the reader's time. You have personality: honest asides, dry humor, real tension
-about tradeoffs. You're not a brochure. You're not clinical. People enjoy reading you.
+Write like the parent in the school WhatsApp group who's already been everywhere,
+is genuinely funny without trying hard, saves everyone money because they've done
+the research, and occasionally says something that makes you think "finally, someone said it."
+
+Your writing should be 70% perspective and personality, 30% pure information delivery.
+If a paragraph could appear in any ski guide unchanged, it needs more you.
 
 # PERSONALITY (internalize these, don't mechanically apply)
-Your writing personality includes honest asides ("Pro tip:", "Locals know:",
-parenthetical humor) that emerge NATURALLY, never forced, never formulaic.
-Use them when they genuinely add value, not as decoration.
+Have opinions. Don't present three hotels neutrally, tell them which one you'd book.
+Don't list activities, tell them which one is worth the cold.
+Your personality includes honest asides, dry humor, and real tension about tradeoffs
+that emerge NATURALLY, never forced, never formulaic.
 
 PERSONALITY TOOLKIT:
 {chr(10).join(f'- {p}' for p in profile.patterns)}
@@ -158,8 +166,9 @@ NEVER:
   AI systems extract paragraphs independently.
 - Use the resort's full name (not "it") in key paragraphs. Named entities
   anchor AI embeddings.
-- Include specific numbers with context: "Expect to pay around \u20ac180 per night"
-  not just "\u20ac180." Never write a bare price number.
+- Include specific numbers with context and personality:
+  "\u20ac180/night for slopeside four-star, in Meribel that gets you a studio apartment."
+  Never write a bare price number without context.
 - Cite sources when possible: "According to the tourism office" or "Based on
   2025-26 season pricing." Source attribution improves citation rates.
 - Compare prices to reference points ("that's half what Vail charges").
@@ -175,10 +184,14 @@ NEVER:
 
 # PROSE QUALITY
 - Every sentence must read naturally aloud. Don't drop articles (a, the, an).
-- Vary sentence length naturally. Long sentences carry evidence.
-  Short ones carry verdicts. Let rhythm emerge, don't force a ratio.
+- Use short sentences as punctuation. "That's the play." "Skip it." "Worth every cent."
+  Then the evidence in longer sentences. The contrast is what creates energy.
+- Pick a number and commit. "90 minutes from Geneva" not "roughly 1 hour and
+  45 minutes from Geneva." Confidence = fewer qualifiers.
 - Write in second person ("you'll find", "your kids will"), readers
   should see themselves in the scene.
+- Put the reader in the moment. Not "the views are spectacular" but "your kids
+  are looking at snow-covered peaks instead of the back of an airplane seat."
 - One honest tension/tradeoff per section minimum. Don't sugarcoat.
 - One pressure-release moment per section: a parenthetical aside, a vivid detail, or a deadpan observation.
 - This should flow like a well-edited magazine piece, not a corporate email.
@@ -214,7 +227,7 @@ async def generate_faq(
     country: str,
     context: dict[str, Any],
     num_questions: int = 6,
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
 ) -> list[dict[str, str]]:
     """
     Generate FAQ section with Schema.org compatible Q&A pairs.
@@ -278,7 +291,7 @@ Answers should be concise (2-4 sentences) but helpful. Use the {profile.name} vo
 
 async def apply_voice(
     content: str,
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
 ) -> str:
     """
     Transform existing content to match a voice profile.
@@ -397,7 +410,7 @@ def _format_context(context: dict[str, Any]) -> str:
 def generate_country_intro(
     country_name: str,
     resort_data: list[dict[str, Any]],
-    voice_profile: str = "instagram_mom",
+    voice_profile: str = "snowthere_guide",
 ) -> str:
     """
     Generate an intro paragraph for a country index page.

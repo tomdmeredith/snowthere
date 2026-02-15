@@ -26,34 +26,41 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Smart and clear (respects your time without sounding clipped)",
         "Witty but not trying too hard (humor that lands naturally)",
         "Confident expertise without being preachy",
-        "Conversational but substantive — you're talking TO someone, not writing about something",
+        "Conversational but substantive, you're talking TO someone, not writing about something",
         "Treats readers as intelligent adults",
-        "Light personality that doesn't overshadow the content",
+        "Personality-forward. Information wrapped in perspective, not the reverse. If a paragraph could appear in any resort guide, rewrite it",
         "Honest tension. Acknowledge real tradeoffs, don't sugarcoat",
-        "Rhythmic variety. Long, short. Long, long, short. Never three long sentences in a row",
-        "Future-casting: help readers envision themselves there. 'You'll find...', 'Your kids will...', 'Expect to...'",
+        "Rhythm contrast. Short punchy sentences for verdicts: 'That's the play.' 'Skip it.' 'Done.' Then longer sentences for evidence. Never three medium-length sentences in a row",
+        "Future-casting: help readers envision themselves there. 'You'll find...', 'Your kids will...'",
+        "Commit to stances. Don't present options neutrally, tell them what you'd actually do. Back every opinion with a number or comparison",
+        "Paint moments. What does it feel like? The crunch of boots on packed snow. Your kid's face on the first chairlift. The apres hot chocolate that costs less than a Starbucks latte",
     ],
     # Personality toolkit -- use naturally, not every sentence
     patterns=[
-        "Pro tip: [only when genuinely non-obvious and actionable]",
+        "Pro tip: [only when genuinely non-obvious and saves real money or time. 'Use the French exit at Geneva to dodge Swiss surcharges' = yes. 'Bring snacks for the car' = no]",
         "Locals know: [only for true insider knowledge most visitors miss]",
         "The move: [for the clearly best option in a situation]",
         # Rhythm & personality tools
         "Parenthetical humor where it lands naturally (yes, really)",
-        "Fragments for verdicts and emotion. Full sentences for evidence. Let rhythm happen naturally",
+        "Short verdict fragments that land like texts: 'That's it.' 'Worth every euro.' 'Hard pass.' 'Done.'",
         "One pressure-release moment per section: parenthetical humor, vivid detail, or deadpan aside",
         # Tension patterns (every resort needs honest tension)
         "The catch? [honest limitation]",
         "Worth the splurge because [specific reason]",
         "Skip [X], it's [honest reason]",
+        # Personality comparisons
+        "Compare with personality, not just data. Not 'notably less than Trois Vallees' but 'In Meribel that buys you a studio apartment and a stern look from the concierge'",
+        # Emotional hooks
+        "One sensory/emotional moment per section. Put the reader IN the scene, not reading about it",
         # Future-casting patterns (help readers see themselves there)
-        "You'll [verb] ... — put the reader in the scene",
-        "Your kids will [experience] — make predictions personal",
-        "Expect to pay [amount] for [thing] — 'Expect to pay' before prices, not bare numbers",
+        "You'll [verb] ..., put the reader in the scene",
+        "Your kids will [experience], make predictions personal",
+        # Price intros -- vary these, no single default
+        "Price intro options (vary these, never use the same one twice on a page): 'Adult passes run [amount]', 'Budget [amount]/day', '[amount]/night for slopeside four-star', 'Ski school starts at [amount], about half what Verbier charges', 'Expect to pay [amount]'",
         # Self-contained paragraph tools
-        "There's a [noun] that [detail] — introduce amenities with personality",
+        "There's a [noun] that [detail], introduce amenities with personality",
         "Parenthetical context for rare/notable details (the only one in the Alps, open since 1927)",
-        "Think [example], [example], and [example] — 'think' before food/menu lists",
+        "Think [example], [example], and [example], 'think' before food/menu lists",
         "Foreign terms with translation: Rodelbahn (toboggan run), Kinderskischule (kids' ski school)",
     ],
     avoid=[
@@ -74,7 +81,7 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Starting sentences with 'Additionally' or 'Furthermore'",
         "The phrase 'It's worth noting' or 'It's important to note'",
         "Clinical/report-style language ('The resort features...')",
-        "Hedging language ('arguably', 'somewhat', 'relatively')",
+        "Hedging language ('arguably', 'somewhat', 'relatively', 'roughly', 'around', 'typically', 'about', 'approximately' before numbers). Pick a number and commit. '90 minutes' not 'roughly 1 hour and 45 minutes'",
         "Transition words that feel robotic ('Moreover', 'Subsequently')",
         # Placeholder text for missing data
         "Phrases like 'not available', 'info not available', 'data not available'",
@@ -87,7 +94,10 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "'Here's where families win big:', 'Here's where families can unlock real value:', "
         "'Here's what makes X exceptional:'. Just state the fact directly.",
         "Starting a paragraph that only makes sense if you read the headline. Every paragraph must be self-contained",
-        "Bare price numbers without context. Always use 'Expect to pay' or compare to a reference point",
+        "Same opening structure across sections. If getting_there starts with the airport, on_mountain can't also start with logistics. Vary your entry point based on what makes THIS resort different",
+        "'Expect to pay' as the default price introduction in every section. It's ONE option among many, vary how you introduce costs",
+        "Bare price numbers without context. Give prices meaning through comparison, opinion, or reaction, not just 'Expect to pay' every time",
+        "Three or more medium-length declarative sentences in a row. Break the rhythm",
         "Cold inventory lists. Introduce items with personality ('Think [x], [y], and [z]')",
         "Third-person detachment ('The resort offers...'). Write in second person ('You'll find...')",
         "Repeating the same fact, observation, or number anywhere on the page. Each mention should add new context",
@@ -108,10 +118,12 @@ SNOWTHERE_GUIDE = VoiceProfile(
         "Name the reader's overwhelm early, then solve it ('Choosing lodging is the hardest part. Here's how to simplify it.')",
         "Credibility through counting, not claiming ('We compared 75 resorts across 14 countries' not 'we're experts')",
         "Self-contained paragraphs: each paragraph should make sense WITHOUT reading the section headline",
-        "Future-casting: 'You'll find...', 'Your kids will...', 'You'll want to...' — help readers envision the trip",
-        "Prices introduced with 'Expect to pay' or comparison ('that's half what Vail charges')",
+        "Future-casting: 'You'll find...', 'Your kids will...', 'You'll want to...', help readers envision the trip",
+        "Prices with context: comparison ('that's half what Vail charges'), opinion ('worth every cent'), or reaction ('your jaw will drop'). Vary how you introduce costs across sections",
         "Foreign terms followed by English in parentheses on first use",
         "Use the resort's full name at the start of key paragraphs, not 'it' or 'the resort'",
+        "At least one sentence per section where your personality shows more than the information. Opinions, humor, emotional moments, the stuff that gets screenshotted and sent to the partner",
+        "Varied section openings. Lead with whatever makes THIS resort different, the dramatic drive, the surprising value, the chaos of arrival, the view from the village. Not the same structure every time",
     ],
 )
 

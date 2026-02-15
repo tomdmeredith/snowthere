@@ -345,7 +345,7 @@ No bullet points. No section breaks. One paragraph that flows like a friend talk
 
 CALIBRATION EXAMPLES (match this voice and quality):
 
-"Here's the thing about Serfaus: it takes babies from 3 months old in its Murmli childcare center, has an underground funicular to the slopes, and costs roughly half what you'd pay in Switzerland. Best for families with toddlers to age 8. The village is small, which means quiet evenings but limited restaurant options."
+"Here's the thing about Serfaus: it takes babies from 3 months old in its Murmli childcare center, has an underground funicular to the slopes, and costs half what you'd pay in Switzerland. Best for families with toddlers to age 8. The village is small, which means quiet evenings but limited restaurant options."
 
 "Park City is family skiing on easy mode: 7,300 acres, 35 minutes from Salt Lake City airport, no winding mountain roads. Your 5-year-old will be fine here. Your teenager will actually have fun. The catch? It's not cheap. Like, at all."
 
@@ -374,7 +374,7 @@ tension ("The catch?"). Conversational openers like "Here's the thing" are allow
 (max 1 per page) when the content genuinely earns it.
 
 Future-casting: Use "you'll" and "your kids will" to help readers envision themselves there.
-Use "Expect to pay" before prices. Translate foreign terms in parentheses on first use.
+Introduce prices with context: comparison, opinion, or reaction. Vary how you frame costs. Translate foreign terms in parentheses on first use.
 Every sentence must be self-contained (no reliance on headlines for context).
 
 Your Quick Take MUST open with an editorial verdict or opinion, not a factual description.

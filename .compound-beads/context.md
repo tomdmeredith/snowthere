@@ -1,22 +1,22 @@
 # Snowthere Context
 
-> Last synced: 2026-02-10 (Round 22 — MEO + Voice De-Mandating)
+> Last synced: 2026-02-15 (Voice Evolution: Personality-Forward)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
 
 ## Current State
 
-**Round 22 COMPLETE (ad373c6 + a7edaaa).** MEO optimization + voice de-mandating deployed + Vercel build fix. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS. Vercel deployment LIVE, 151 static pages.
+**Voice Evolution COMPLETE.** Section prompts rewritten personality-forward (70/30 perspective-to-info), VoiceCoach upgraded to 6-criteria evaluation, anti-hedging in style pre-pass, Layer 3 upgraded to Opus. All code on origin/main. 99 published resorts, all with coordinates, pricing, and ski quality calendar (495 entries).
 
-- **Resorts:** ~90 published with entity links, pipeline adds ~6/day
+- **Resorts:** 99 published with entity links, pipeline adds ~6/day
 - **Guides:** 15 total (10 published, 5 drafts), autonomous generation Mon/Thu
 - **Countries:** 14 with country pages + intro content
 - **Collections:** 6 programmatic SEO pages (best-for-beginners, best-for-toddlers, etc.)
-- **Static Pages:** 151 on Vercel (build passes, zero TypeScript errors)
-- **Voice:** Snowthere Guide ("Morning Brew for family ski trips") — probabilistic personality, no mandated ratios
+- **Static Pages:** 151+ on Vercel (build passes, zero TypeScript errors)
+- **Voice:** Snowthere Guide — personality-forward (70/30 perspective-to-info), 6-criteria VoiceCoach, anti-hedging
 - **MEO:** Link-predictive titles, question-based headings (2/6 with entity names), anti-repetition, source citations
-- **Entity Links:** Strong-tag-first extraction, Skyscanner flight URLs, context-aware destinations
+- **Entity Links:** Strong-tag-first extraction, Skyscanner flight URLs, context-aware destinations, structural guardrails
 - **Scoring:** Three-layer hybrid: structural 30% + content LLM 50% + review 20%
 - **Quick Takes:** 50-90 word single paragraph format (fact-based, validation accepts up to 95)
 - **Type Safety:** Zero `as any` casts, 8 migration fields in database.types.ts
@@ -26,7 +26,245 @@
 - **Bing Webmaster Tools:** Connected, 124 URLs indexed, 0 errors, AI Performance baseline 0 citations
 - **Content Freshness:** Date display includes day (e.g., "Feb 7, 2026") for freshness signal
 - **Google Places:** Both APIs enabled, correct API key deployed to Railway
-- **Migrations:** 042 + 043 applied to cloud Supabase (Feb 6)
+- **Content Model:** Claude Opus 4.6 (upgraded from 4.5 on Feb 13)
+- **Style Primitive:** 3-layer editing — deterministic pre-pass + Haiku + Opus (upgraded from Sonnet)
+- **Pricing:** Exa discovery + Claude Haiku interpretation + country-specific validation
+- **Calendar:** All 99 resorts have ski quality calendar (495 entries via generate_ski_calendar())
+- **GA4 Events:** quiz_complete + affiliate_click deployed (0a53767)
+- **Pinterest:** Tracking pixel active (Tag ID 2613199211710)
+- **Migrations:** 042 + 043 + 044 applied to cloud Supabase
+
+---
+
+## Voice Evolution: Personality-Forward Content (2026-02-15) ✅
+
+**Goal:** Evolve voice from "smart and practical" to "personality-forward" — content worth screenshotting and sending to your partner. 70/30 personality-to-info ratio.
+
+### Section Prompts Rewritten — 6 sections overhauled
+
+All section prompts in `content.py` rewritten to lead with personality, not logistics:
+- **getting_there:** Lead with whatever is most interesting (scenic drive, surprising shortcut, airport chaos). NOT "Getting to X is..."
+- **where_to_stay:** Lead with a take (apartments crush hotels here, one standout property everyone should know). Tell them which one YOU'D book
+- **lift_tickets:** Give the verdict fast. Screaming deal or premium worth paying? Commit to numbers, no hedging
+- **on_mountain:** Lead with the ONE thing parents need to know, not terrain percentage breakdown
+- **off_mountain:** Paint the vibe first. One-street town? Lively village? Then get specific
+- **parent_reviews_summary:** Where honest tension lives. Where parent opinion contradicts official line
+
+### VoiceCoach Evaluation — 6 criteria
+
+Evaluator in `approval.py` rewritten from 5 generic criteria to 6 specific, measurable criteria:
+1. **Personality density:** Flag sections that read as pure info delivery
+2. **Opening variety:** Flag formulaic opening patterns
+3. **Emotional hooks:** At least one sensory/emotional detail (soft guidance)
+4. **Sentence rhythm:** Flag 3+ medium-length declarative sentences in a row
+5. **Stance strength:** Flag neutral option-presenting without verdicts
+6. **Hedging frequency:** Count "roughly", "around", "approximately" before numbers
+
+Test changed: "Would a parent feel informed?" → "Would a parent screenshot this and send it to their partner?"
+
+### Anti-Hedging — deterministic stripping
+
+- `HEDGING_PATTERNS` in `style.py`: regex strips "roughly" and "approximately" before numbers
+- Voice profile `avoid` list expanded: "roughly", "around", "typically", "about", "approximately" before numbers
+- Guidance: "Pick a number and commit. '90 minutes' not 'roughly 1 hour and 45 minutes'"
+
+### Layer 3 Style Edit — Opus upgrade
+
+- `style.py` Layer 3 upgraded from Sonnet (~$0.08/section) to Opus 4.6 (~$0.40/section)
+- Better prose quality justifies 5x cost increase for style editing
+
+### Voice Profile Updates
+
+- 70/30 personality-to-info ratio: "If a paragraph could appear in any resort guide, rewrite it"
+- Stance commitment: "Don't present options neutrally, tell them what you'd actually do"
+- Rhythm contrast: "Short punchy sentences for verdicts: 'That's the play.' 'Skip it.' 'Done.'"
+- Price intro variety: 5+ options instead of defaulting to "Expect to pay" every time
+- Emotional hooks: "Paint moments. What does it feel like?"
+- "Here's the thing:" and "Here's the deal:" re-allowed sparingly (removed from FORBIDDEN_PHRASES)
+- Anti-hedging in avoid list: explicit guidance on committed numbers
+
+### Default Voice Profile — 4 params updated
+
+`content.py`: `voice_profile` default changed from `instagram_mom` to `snowthere_guide` in:
+- `write_section()`, `generate_faq()`, `apply_voice()`, `generate_country_intro()`
+
+### Files Modified
+
+| File | Changes |
+|------|---------|
+| `agents/shared/primitives/approval.py` | VoiceCoach 6-criteria evaluation, new test, new system prompt |
+| `agents/shared/primitives/content.py` | 6 section prompts rewritten, system prompt personality-forward, 4 default params |
+| `agents/shared/primitives/quick_take.py` | Anti-hedging in calibration examples, varied price intros |
+| `agents/shared/primitives/style.py` | Layer 3 Opus upgrade, HEDGING_PATTERNS, re-allow "Here's the thing" |
+| `agents/shared/voice_profiles.py` | 70/30 ratio, stance commitment, price variety, emotional hooks, anti-hedging |
+
+**Arc:**
+- Started believing: Smart, practical voice was producing quality content
+- Ended believing: Smart and practical without personality density produces interchangeable content. 70/30 personality-to-info with stance commitment creates content worth screenshotting
+- Transformation: From respectful intelligence to personality-forward intelligence — the voice should make parents send it to their partner, not just nod approvingly
+
+---
+
+## Deep Audit + GA4 Events (2026-02-13) ✅
+
+**Goal:** Audit 4 new resorts (Stubai, Arosa, Engelberg, Revelstoke), fix systemic pipeline bugs, deploy GA4 custom events.
+
+### 6 Systemic Bugs Fixed
+
+| Bug | Root Cause | Fix |
+|-----|------------|-----|
+| Calendar never generated | No primitive existed | NEW `generate_ski_calendar()` in calendar.py (~$0.003/resort via Haiku) |
+| Coordinates missing for new resorts | `extract_coordinates()` never called after resort creation | Added call in runner.py |
+| data_completeness always 0.0 | 12 columns missing from `RESORT_FAMILY_METRICS_COLUMNS` allowlist | Added to database.py |
+| Duplicate title "| Snowthere | Snowthere" | Layout template + content.py both appending suffix | Strip suffix in page.tsx + don't generate in content.py |
+| Pricing cache → resort_costs disconnect | `research_data["costs"]` empty by write time | Cache fallback at write time + automatic USD column updates |
+| Content truncation | Not detected | Added truncation detection in runner.py |
+
+### Additional Fixes
+
+- **Content model:** Opus 4.5 → Opus 4.6
+- **LLM preamble stripping:** 9 phrases (e.g., "Here's the content...", "I'll create...") in deterministic style pre-pass + voice profile avoid list
+- **Entity link guardrails:** Blacklist + structural filters (colon-ending text, age-range patterns, all-lowercase short phrases)
+- **Em-dash enforcement:** Comprehensive removal in deterministic pre-pass (spaced, unspaced, trailing, stray patterns)
+- **Pricing cache fallback:** `acquire_resort_costs()` now writes to resort_costs via cache fallback
+- **Ski quality calendar:** 495 entries backfilled across all 99 resorts
+- **Stubai Glacier coordinates:** Added to KNOWN_COORDINATES dict
+- **GA4 custom events:** `quiz_complete` (result_count, top_result) + `affiliate_click` (partner_name from URL domain)
+
+### Key Commits
+```
+0a53767 feat: Add quiz_complete and affiliate_click GA4 custom events
+550d1fa fix: Comprehensive em-dash/en-dash removal in deterministic pre-pass
+8fda4f9 feat: Add ski quality calendar generation primitive + backfill all 99 resorts
+eecdf0b fix: Add pricing cache fallback + USD column updates in pipeline
+6ae9e51 fix: Add entity link guardrails to prevent nonsensical Maps links
+6daf220 fix: Add Stubai Glacier to KNOWN_COORDINATES, backfill 4 new resort coords
+dc71625 fix: Deep audit fixes — Opus 4.6, preamble stripping, data completeness, title dedup, coordinates
+```
+
+**Arc:**
+- Started believing: The pipeline was producing quality content at scale
+- Ended believing: 6 systemic bugs were silently degrading every resort — calendar never generated, coordinates missing, completeness always 0.0, titles duplicated, pricing disconnected, content truncated
+- Transformation: From trusting pipeline output to auditing individual resort pages, revealing systemic issues invisible in aggregate logs
+
+---
+
+## Affiliate Verification + Pinterest (2026-02-12-13) ✅
+
+**Goal:** Add tracking pixels and verification tags for affiliate networks and Pinterest.
+
+- **Pinterest tracking pixel:** Tag ID 2613199211710 via next/script
+- **AvantLink:** Multiple attempts to add verification tag (script tag, next/script, http://, plain) — ultimately removed (broken)
+- **Travelpayouts:** Added tp-em.com to CSP for verification
+- **SEO duplicate title fix:** Additional instances found and fixed
+
+### Key Commits
+```
+766656f feat: Add Pinterest tracking pixel (Tag ID 2613199211710)
+4fe3f15 fix: Remove broken AvantLink script, keep Pinterest meta tag
+504d7d0 feat: Add affiliate verification tags + fix SEO duplicate titles
+```
+
+---
+
+## Coordinates + Pricing Backfill (2026-02-12) ✅
+
+**Goal:** Backfill coordinates and pricing data for all 95 resorts that had gaps.
+
+- All 95 resorts now have coordinates and pricing data
+- Fills gaps left by earlier pipeline runs that missed coordinate extraction
+
+### Key Commits
+```
+f51f23b fix: Backfill coordinates + pricing for all 95 resorts
+```
+
+---
+
+## Round 24: Style Primitive + Pricing Redesign (2026-02-12) ✅
+
+**Goal:** Build 3-layer style editing system, redesign pricing acquisition, add snow conditions chart, fix coordinate issues.
+
+### 3-Layer Style Primitive — COMMITTED (120610e)
+
+1. **Layer 1: Deterministic pre-pass** (free) — Em-dash/en-dash removal, preamble stripping, whitespace cleanup
+2. **Layer 2: Haiku contextual** (~$0.002/section) — Context-aware em-dash replacement (comma, period, or removal based on position)
+3. **Layer 3: Sonnet style edit** (~$0.08/section) — Full voice editing for natural prose
+
+Results: Alta 24→4 em-dashes, Crested Butte 19→2 em-dashes.
+
+### Pricing Redesign — COMMITTED (120610e)
+
+4. **Exa discovery** — Finds official resort pricing pages via semantic search
+5. **Claude Haiku interpretation** — Extracts structured pricing from discovered pages
+6. **Country-specific validation** — Rejects impossible prices per-country (Mount Bachelor $23 → $149, Sunday River $29 → $129)
+7. **Migration 044:** pricing_cache provenance columns
+
+### SnowConditionsChart — COMMITTED (120610e)
+
+8. **Animated bar chart** — framer-motion animations, teal/gold/coral color tiers
+9. **Crowd dots** — Visual indicator of crowd levels per month
+10. **"Best" pill** — Highlights recommended months
+11. **Southern Hemisphere** — Month sorting adjusted (Jun-Oct instead of Dec-Apr)
+
+### Coordinate Fixes — COMMITTED (120610e)
+
+12. **Nominatim query reordered** — "ski area" first in search
+13. **Country codes parameter** — Constrains Nominatim search to correct country
+14. **Country bounding box validation** — Rejects coordinates outside country bounds
+15. **Google Geocoding fallback** — When Nominatim fails
+
+### Pipeline Fixes — COMMITTED (120610e)
+
+16. **429 errors** — Now reset to "pending" not "rejected" (allows retry next day)
+17. **Style applied before all DB writes** — Deterministic style runs on every content section
+18. **Em-dash/en-dash in approval** — Added to FORBIDDEN_PATTERNS in approval.py
+
+### Key Commits
+```
+120610e feat: Style primitive, pricing redesign, snow chart, pipeline fixes (Round 24)
+```
+
+### New Files
+- `agents/shared/primitives/style.py` — 3-layer style editing primitive
+- `agents/shared/style_profiles.py` — Style profile configuration
+- `agents/scripts/backfill_style.py` — Style backfill script
+- `agents/scripts/fix_feb12_resorts.py` — Fix specific resort data
+- `agents/shared/primitives/costs.py` — Major rewrite with Exa discovery + validation
+- `apps/web/components/resort/SnowConditionsChart.tsx` — Animated snow chart
+- `supabase/migrations/044_pricing_cache_provenance.sql` — Provenance columns
+
+**Arc:**
+- Started believing: Em-dashes just need a regex find-and-replace and pricing just needs a better prompt
+- Ended believing: Em-dashes need context-aware replacement (3 layers for different complexity levels) and pricing needs discovery + interpretation + validation as separate stages
+- Transformation: From single-pass solutions to multi-layer systems where each layer handles a different complexity level
+
+---
+
+## Round 23: Content Refresh System (2026-02-11) ✅
+
+**Goal:** Align VoiceCoach with MEO voice, build batch content regeneration system for existing resorts and guides.
+
+### Voice Alignment — COMMITTED (e1762c4)
+
+1. **VoiceCoach prompt** — Aligned with MEO voice (smart, practical, expert) — removed "warmth" as primary evaluator criterion
+2. **4 default voice_profile params** — Changed from `instagram_mom` to `snowthere_guide` in approval.py
+3. **Newsletter voice** — Dropped "warm" from newsletter prompts, added VOICE directive to parent hack section
+
+### Batch Regeneration — COMMITTED (e1762c4)
+
+4. **Resort batch mode** — `regenerate_resort_content.py` now supports `--batch`, `--batch-limit`, `--batch-offset` for bulk content refresh
+5. **Guide regeneration** — New `regenerate_guide_content.py` script for refreshing draft + published guide content
+
+### Key Commits
+```
+e1762c4 feat: Content refresh system + guide pipeline fixes (Round 23)
+```
+
+**Arc:**
+- Started believing: Content regeneration is a one-resort-at-a-time manual process
+- Ended believing: Batch regeneration with voice-aligned quality gates enables systematic content refresh across the entire corpus
+- Transformation: From manual per-resort updates to scalable batch content refresh with consistent voice application
 
 ---
 
@@ -854,11 +1092,15 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 
 ## Pipeline Status
 
-- **Resorts:** 8/day max, 70% discovery, deterministic scoring
+- **Resorts:** ~6/day, entity linking (10-20 links/resort), 3-layer style editing on all content
 - **Guides:** Mon/Thu, 3-agent approval panel, auto-publish, Nano Banana Pro featured images
 - **Images:** Nano Banana Pro on Replicate (primary), 4-tier fallback, permanent Supabase Storage
 - **Newsletter:** Thursday 6am PT, Morning Brew style
 - **Email sequences:** 5-email welcome series (Day 0/2/4/7/14)
+- **Pricing:** Exa discovery + Haiku interpretation + country-specific validation
+- **Calendar:** generate_ski_calendar() generates monthly snow/crowds/recommendation via Haiku (~$0.003/resort)
+- **Style:** Deterministic pre-pass + Haiku em-dash replacement + Sonnet style edit on all sections
+- **429 handling:** Rate-limit errors reset to "pending" (retry next day, not "rejected")
 
 ## Known Issues
 
@@ -871,10 +1113,19 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 - ~~Entity links missing/broken~~ — **FIXED** in Linking Strategy Overhaul (371 links across 58 resorts, context-aware destinations)
 - ~~sanitize.ts overwrites rel attributes~~ — **FIXED** with allowlist validation (noopener, noreferrer, nofollow, sponsored, ugc)
 - ~~No UTMs on in-content links~~ — **FIXED** with utm_medium=in_content on entity links
-- ~~Duplicate title suffix on index pages~~ — Fixed in R14
+- ~~Duplicate title suffix on index pages~~ — Fixed in R14 + Deep Audit
 - ~~Quiz page missing footer~~ — Fixed in R14
 - ~~Inconsistent footers~~ — Unified in R14
 - ~~Kitzbühel 404~~ — Fixed in R14 (Unicode normalization + ASCII slug)
+- ~~Calendar never generated~~ — **FIXED** in Deep Audit (new generate_ski_calendar() primitive, 495 entries backfilled)
+- ~~Coordinates missing for new resorts~~ — **FIXED** in Deep Audit (extract_coordinates() in pipeline)
+- ~~data_completeness always 0.0~~ — **FIXED** in Deep Audit (12 missing columns added to allowlist)
+- ~~Pricing cache → resort_costs disconnect~~ — **FIXED** in Deep Audit (cache fallback + USD columns)
+- ~~Content truncation undetected~~ — **FIXED** in Deep Audit (detection in runner.py)
+- ~~Em-dashes in content~~ — **FIXED** with comprehensive 3-layer style primitive (R24) + deterministic pre-pass
+- ~~LLM preamble phrases in content~~ — **FIXED** with 9-phrase strip in style pre-pass + voice profile
+- ~~US resort pricing unrealistic~~ — **FIXED** in R24 (Exa discovery + country-specific validation)
+- ~~AvantLink verification~~ — Removed (broken), keeping Pinterest only
 - **MCP parity at ~40%** — 58 of ~340 primitive functions exposed; 22 modules missing → R17
 - **Runner monolith** — `run_resort_pipeline()` is 1,627 lines, no partial re-run → R18
 - ~~Quick Take length occasionally exceeds 120 word limit~~ — Reformatted to 50-90 word single paragraph (R20 initial, R21 voice rebalancing)
@@ -883,10 +1134,10 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
 - Google Places API key is unrestricted (allows all 32 Maps APIs) — should restrict to Places only
 - ~~Data quality backfill not yet run~~ — **DONE in R15** (33/38 updated, 43% avg completeness)
-- Cost data outliers: 20 warnings from cross-resort validation (US resorts with $27-37 lift prices, Austrian resorts with EUR-as-USD)
-- 9 resorts at 0% completeness: Selva Val Gardena, Cortina, Stowe, Deer Valley, Hakuba, Winter Park, Smugglers Notch, Hakuba Valley, Cortina d'Ampezzo
+- ~~Cost data outliers~~ — Partially fixed in R24 (country-specific validation prevents impossible prices)
 - TAVILY_API_KEY on Railway needs updating (local .env updated, Railway still has expired key)
 - Migration 036 (`data_requests` table) not yet applied to cloud Supabase — GDPR form returns 500
+- Bad Gastein still FAILED (429 rate limit) — needs re-run
 
 ## Planned Rounds (Ultimate Audit — 2026-01-29)
 
@@ -985,12 +1236,19 @@ _(no active task)_
 - ~~Commit type safety + security hardening fixes~~ → DONE (0c7121b)
 - ~~Run backfills~~ → **DONE** (Feb 7): 247 links, 44 quick takes, 75 taglines, 75 hybrid scores
 - ~~Pipeline bug fix~~ → **DONE** (f3e892c): datetime scope + check_budget signature
+- ~~Coordinate + pricing backfill~~ → **DONE** (f51f23b): all 95 resorts
+- ~~Calendar backfill~~ → **DONE** (8fda4f9): 495 entries across 99 resorts
+- ~~GA4 custom events~~ → **DONE** (0a53767): quiz_complete + affiliate_click
+- ~~Pinterest tracking pixel~~ → **DONE** (766656f): Tag ID 2613199211710
+- Re-run Bad Gastein (`python3 cron.py --resort "Bad Gastein" --country "Austria"`)
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
 - Run migration 032_comprehensive_affiliate_programs.sql on production
 - Apply migration 036 to cloud Supabase (data_requests table for GDPR form)
 - Request indexing for remaining GSC pages (daily quota, ~10/day)
 - Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
-- Homepage redesign (moved to after R16)
+- Homepage redesign (deferred from R14)
+- Content strategy discussion
+- Update TAVILY_API_KEY on Railway
 
 ## Key Files
 
@@ -1006,13 +1264,17 @@ _(no active task)_
 ## Recent Commits
 
 ```
-a7edaaa fix: Add Array.isArray() guards to prevent Vercel build failure
-ad373c6 feat: MEO optimization + voice de-mandating + question-based headings
-7b7dbd9 feat: Voice prompt hardening + multilingual research + thin content gate
-53d3503 fix: Child price floor + voice future-casting + self-contained paragraphs
-5f1806e fix: Resolve voice rebalancing consistency issues from expert review
-fd92739 feat: Voice rebalancing — Wirecutter + personality (Level B)
-f3e892c fix: Pipeline crash — datetime scope + check_budget signature
-4fcf231 fix: Type safety + security hardening across frontend
-b5c3e8f feat: Round 20 — Content quality & linking overhaul
+(pending) feat: Voice evolution — personality-forward prompts, 6-criteria VoiceCoach, anti-hedging, Opus style edit
+0a53767 feat: Add quiz_complete and affiliate_click GA4 custom events
+550d1fa fix: Comprehensive em-dash/en-dash removal in deterministic pre-pass
+8fda4f9 feat: Add ski quality calendar generation primitive + backfill all 99 resorts
+eecdf0b fix: Add pricing cache fallback + USD column updates in pipeline
+6ae9e51 fix: Add entity link guardrails to prevent nonsensical Maps links
+6daf220 fix: Add Stubai Glacier to KNOWN_COORDINATES, backfill 4 new resort coords
+dc71625 fix: Deep audit fixes — Opus 4.6, preamble stripping, data completeness, title dedup, coordinates
+766656f feat: Add Pinterest tracking pixel (Tag ID 2613199211710)
+504d7d0 feat: Add affiliate verification tags + fix SEO duplicate titles
+f51f23b fix: Backfill coordinates + pricing for all 95 resorts
+120610e feat: Style primitive, pricing redesign, snow chart, pipeline fixes (Round 24)
+e1762c4 feat: Content refresh system + guide pipeline fixes (Round 23)
 ```

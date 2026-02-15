@@ -1,8 +1,8 @@
 # Snowthere Quick Start
 
-> Compound Beads v3.0 | Last Updated: 2026-02-10
+> Compound Beads v3.0 | Last Updated: 2026-02-15
 
-**Round 22 COMPLETE (ad373c6 + a7edaaa).** MEO + voice de-mandating deployed + Vercel build fix. All code on origin/main. 7 expert reviewers ALL APPROVE/PASS. Build passes, 151 static pages on Vercel.
+**Voice Evolution COMPLETE.** Section prompts rewritten personality-forward (70/30 perspective-to-info), VoiceCoach upgraded to 6-criteria evaluation, anti-hedging in style pre-pass, Layer 3 upgraded to Opus. All code on origin/main. 99 published resorts.
 
 **North Star**: "Snowthere is THE go-to source for high value, trusted information for family ski trips anywhere in the world"
 
@@ -12,24 +12,28 @@
 - MEO optimized (link-predictive titles, question headings, anti-repetition, source citations)
 - Autonomous operation (daily cron: resorts + guides + newsletter)
 
-**Stats**: ~90 resorts, 15 guides (10 published), 14 countries, 6 collection pages, 151 static pages
+**Stats**: 99 resorts, 15 guides (10 published), 14 countries, 6 collection pages, 151+ static pages
 
-**Round 22 — MEO + Voice De-Mandating (ad373c6)**:
-- content.py: Probabilistic voice guidance replaces prescriptive rules (no more 80/20 ratio, mandatory patterns)
-- page.tsx: Link-predictive titles ("Family Ski Guide: {Name} with Kids"), 6 question-based headings
-- Anti-repetition block + "content that gets cited" MEO framing + source citation guidance
-- Date displays now include day for content freshness signal
-- Based on Princeton GEO study + Exa link prediction model research
-- Vercel build fix (a7edaaa): Array.isArray() guards for JSONB data — Garmisch-Partenkirchen had non-array value crashing `.map()`
+**Voice Evolution (Feb 15) — Personality-Forward Content**:
+- Section prompts: Lead with personality, not logistics. 70/30 perspective-to-info ratio
+- VoiceCoach: 6-criteria evaluation (personality density, opening variety, emotional hooks, rhythm, stance, hedging)
+- Anti-hedging: deterministic stripping of "roughly"/"approximately" before numbers
+- Layer 3 style: Upgraded from Sonnet to Opus 4.6 (~$0.40/section)
+- Stance commitment: "Tell them which hotel you'd book, not list three neutrally"
+- Price intros: 5+ varied options, anti-"Expect to pay" repetition
+- Test: "Would a parent screenshot this and send it to their partner?"
 
-**Round 21 — Voice Rebalancing (7b7dbd9)**:
-- Voice shifted from "Instagram mom" to "Morning Brew for family ski trips" (smart, witty, efficient)
-- Future-casting, self-contained paragraphs, honest tension, rhythmic variety
-- Multilingual research queries, thin content gate, child price floor
+**Deep Audit (Feb 13) — 6 systemic bugs fixed**:
+- Calendar, coordinates, data_completeness, title dedup, pricing cache, content truncation
+- Content model: Opus 4.6 | GA4: quiz_complete + affiliate_click
 
 **Next Steps**:
+- Re-run Bad Gastein (429 rate limit failure)
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
 - Homepage redesign (deferred from R14)
+- Apply migration 036 to cloud Supabase (GDPR form)
+- Content strategy discussion
+- Regenerate resort content with new personality-forward prompts
 
 **Pipeline**: Active on Railway (snowthere-agents)
 - Resorts: ~6/day, entity linking (10-20 links/resort)
@@ -39,10 +43,11 @@
 - Bing: 124 URLs indexed, AI Performance tracking
 
 **Infrastructure**:
-- Vercel: www.snowthere.com (ISR, 96+ static pages)
+- Vercel: www.snowthere.com (ISR, 151+ static pages)
 - Railway: snowthere-agents (daily cron)
 - Supabase: Snowthere, AWS us-east-2, 30+ tables
 - Bing Webmaster Tools: Connected, 124 URLs indexed
+- Pinterest: Tracking pixel (Tag ID 2613199211710)
 
 **Planned Rounds**:
 - **R17: Agent-Native Parity** — Expose remaining primitives as MCP tools

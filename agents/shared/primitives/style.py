@@ -6,7 +6,7 @@ Layer 1 (Deterministic pre-pass): Free. Formatting fixes, forbidden patterns,
 Layer 2 (Haiku contextual): ~$0.002/section. Context-appropriate em-dash
     replacement (4 distinct patterns need different replacements).
 
-Layer 3 (Sonnet style edit): ~$0.05-0.10/section. Full prose rewrite for
+Layer 3 (Opus style edit): ~$0.30-0.60/section. Full prose rewrite for
     delight, preserving all facts/links/HTML.
 
 Round 24: Created to address em-dash proliferation (23 on Alta, 18 on
@@ -61,19 +61,26 @@ FORBIDDEN_PHRASES: list[tuple[str, str]] = [
     ("Truth bomb:", ""),
     ("Hot take:", ""),
     # Preamble phrases (announce what you're about to say instead of saying it)
+    # NOTE: "Here's the thing:" and "Here's the deal:" are ALLOWED sparingly
+    # (max 1 per page) per voice_profiles.py — do NOT strip them here.
     ("The headline for families:", ""),
     ("Here's the setup:", ""),
-    ("Here's the thing:", ""),
     ("Here's the honest truth:", ""),
     ("Here's where families win big:", ""),
     ("Here's where families can unlock real value:", ""),
     ("Here's what you need to know:", ""),
-    ("Here's the deal:", ""),
     ("Here's the bottom line:", ""),
     # Corporate filler
     ("At the end of the day,", ""),
     ("When all is said and done,", ""),
     ("For what it's worth,", ""),
+]
+
+# Hedging qualifiers before numbers — handled via regex in apply_deterministic_style()
+# rather than simple string replacement to avoid false positives (e.g., "roughly shaped")
+HEDGING_PATTERNS: list[tuple[str, str]] = [
+    (r"[Rr]oughly (?=\d)", ""),
+    (r"[Aa]pproximately (?=\d)", ""),
 ]
 
 
@@ -110,6 +117,10 @@ def apply_deterministic_style(
 
         # Formatting fixes
         for pattern, replacement in FORMATTING_FIXES:
+            text = re.sub(pattern, replacement, text)
+
+        # Hedging qualifiers before numbers (context-aware regex)
+        for pattern, replacement in HEDGING_PATTERNS:
             text = re.sub(pattern, replacement, text)
 
         # Em-dash / en-dash removal (voice profile: NEVER use these)
@@ -251,7 +262,7 @@ async def apply_em_dash_fix(content: dict[str, Any]) -> dict[str, Any]:
 
 
 # =============================================================================
-# Layer 3: Sonnet Style Edit (~$0.05-0.10/section)
+# Layer 3: Opus Style Edit (~$0.30-0.60/section)
 # =============================================================================
 
 
@@ -260,7 +271,7 @@ async def apply_style_edit(
     section_name: str,
     profile: StyleProfile | None = None,
 ) -> str:
-    """Layer 3: Full Sonnet prose rewrite for reading delight.
+    """Layer 3: Full Opus prose rewrite for reading delight.
 
     Preserves all facts, links, HTML, proper nouns. Only rewrites
     for rhythm, personality, and reading experience.
@@ -315,12 +326,12 @@ Text to edit:
 Return ONLY the edited text, nothing else."""
 
         response = client.messages.create(
-            model="claude-sonnet-4-5-20250929",
+            model="claude-opus-4-6",
             max_tokens=len(text) + 500,
             messages=[{"role": "user", "content": prompt}],
         )
 
-        log_cost("anthropic", 0.08, None, {
+        log_cost("anthropic", 0.40, None, {
             "stage": "style_edit",
             "section": section_name,
             "profile": profile.name,
@@ -329,7 +340,7 @@ Return ONLY the edited text, nothing else."""
         return response.content[0].text.strip()
 
     except Exception as e:
-        logger.error(f"[style] Sonnet style edit failed for {section_name}: {e}")
+        logger.error(f"[style] Opus style edit failed for {section_name}: {e}")
         return text
 
 
@@ -338,7 +349,7 @@ async def apply_full_style_edit(
     profile: StyleProfile | None = None,
     sections: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Apply full Sonnet style edit to content sections.
+    """Apply full Opus style edit to content sections.
 
     Args:
         content: Dict of section_name -> text

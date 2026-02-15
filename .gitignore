@@ -57,3 +57,10 @@ supabase/.temp/
 
 # API comparison output (regeneratable)
 agents/comparison_results/
+
+# Screenshots (browser testing, UI audits)
+*.png
+!apps/web/public/**/*.png
+
+# Scratchpad (temporary work files)
+scratchpad/

@@ -4,6 +4,118 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Voice Evolution: Personality-Forward Content (2026-02-15)
+
+**Arc:**
+- **Started believing**: Smart, practical voice was producing quality content
+- **Ended believing**: Smart and practical without personality density produces interchangeable content. 70/30 personality-to-info with stance commitment creates content worth screenshotting
+- **Transformation**: From respectful intelligence to personality-forward intelligence — the voice should make parents send it to their partner, not just nod approvingly
+
+**Technical:**
+- Section prompts must lead with what's INTERESTING, not what's expected. "Getting to X is..." is what every guide writes. Lead with the scenic drive, the surprising shortcut, the airport chaos
+- VoiceCoach evaluation criteria must be specific and measurable, not generic ("does it have personality?"). 6 criteria: personality density, opening variety, emotional hooks, rhythm, stance strength, hedging frequency
+- Hedging qualifiers ("roughly", "approximately") before numbers can be deterministically stripped via regex with lookahead for digits
+- "Here's the thing:" and "Here's the deal:" are earned conversational patterns (allowed sparingly, max 1/page), not preamble phrases to strip
+- Layer 3 style editing at Opus quality ($0.40/section) produces significantly better prose than Sonnet ($0.08/section) — 5x cost is justified for voice-critical content
+- Price intro variety prevents reader fatigue: "Adult passes run [amount]", "Budget [amount]/day", "[amount]/night for slopeside four-star" vs "Expect to pay" everywhere
+- Stance commitment means telling readers which hotel you'd book, not listing three neutrally. Opinions backed by evidence build more trust than neutral presentation
+- "Would a parent screenshot this and send it to their partner?" is a better quality test than "Would a parent feel informed and confident?"
+
+**Process:**
+- Voice evolution is iterative: Instagram mom (R1) → smart friend (R21) → MEO de-mandated (R22) → personality-forward (VE). Each step learns from the previous
+- Anti-hedging needs both prompt guidance (voice profile avoid list) AND deterministic enforcement (regex in style pre-pass). Neither alone is sufficient
+- When voice identity evolves, ALL evaluator prompts, section prompts, and default params must be updated together
+- 70/30 is a guideline, not a mandate. Some sections (lift_tickets) are naturally more info-heavy. Emotional hooks criterion is "soft guidance, not a rejection criterion"
+
+**Key Insight:**
+The difference between "good content" and "content people share" is personality density. A paragraph that could appear in any ski guide unchanged has zero personality. The same facts wrapped in a specific perspective, opinion, or moment become worth screenshotting. Information is commodity; perspective is the product.
+
+---
+
+## Deep Audit + GA4 Events (2026-02-13)
+
+**Arc:**
+- **Started believing**: The pipeline was producing quality content at scale
+- **Ended believing**: 6 systemic bugs were silently degrading every resort — calendar never generated, coordinates missing, completeness always 0.0, titles duplicated, pricing disconnected, content truncated
+- **Transformation**: From trusting pipeline output to auditing individual resort pages, revealing systemic issues invisible in aggregate logs
+
+**Technical:**
+- `RESORT_FAMILY_METRICS_COLUMNS` allowlist in database.py is a silent filter — any column not listed gets silently dropped by `sanitize_for_schema()`
+- When adding new DB columns via migrations, MUST also update the allowlist in database.py — otherwise data_completeness (and any new column) will always be 0.0
+- `acquire_resort_costs()` writes to `pricing_cache` but `research_data["costs"]` can be empty by the time `update_resort_costs()` runs — need cache fallback at write time
+- LLM preamble phrases ("Here's the content...", "I'll create...", "Based on the research...") survive even strong system prompts — need deterministic stripping in style pre-pass
+- Content truncation (LLM hitting output token limit) is undetectable without explicit length checking after generation
+- `generate_ski_calendar()` via Haiku costs ~$0.003/resort — extremely cheap for structured monthly data
+- Calendar primitive generates Dec-Apr for Northern Hemisphere, Jun-Oct for Southern Hemisphere automatically
+- Entity link structural filters: colon-ending text ("What families love:"), age-range patterns ("Adults (19 to 64)"), all-lowercase short phrases are NOT valid entities
+- Nominatim is unreliable for US ski resorts — KNOWN_COORDINATES dict + Google fallback needed
+- GA4 event delegation: `rel="sponsored"` attribute on links enables affiliate_click tracking without per-link event binding
+
+**Process:**
+- Auditing individual resort pages (not just aggregate logs) reveals systemic bugs invisible at pipeline level
+- Every new DB column needs 3 updates: migration, allowlist, pipeline write — missing any one causes silent data loss
+- Pricing cache → production table disconnect is a common pattern when caching and storage are separate concerns
+
+**Key Insight:**
+Pipeline logs showed "success" for every resort, but individual page audits revealed 6 bugs affecting ALL resorts. Aggregate success metrics can hide systematic quality degradation.
+
+---
+
+## Round 24: Style Primitive + Pricing Redesign (2026-02-12)
+
+**Arc:**
+- **Started believing**: Em-dashes just need a regex and pricing just needs a better prompt
+- **Ended believing**: Em-dashes need context-aware replacement (3 layers for different complexity) and pricing needs discovery + interpretation + validation as separate stages
+- **Transformation**: From single-pass solutions to multi-layer systems where each layer handles a different complexity level
+
+**Technical:**
+- 3-layer style editing: Layer 1 deterministic (free, handles obvious patterns), Layer 2 Haiku (~$0.002/section, context-aware em-dash replacement), Layer 3 Sonnet (~$0.08/section, full voice editing)
+- Em-dashes are deeply embedded in LLM training data — even explicit "NEVER use em-dashes" instructions don't fully prevent them; deterministic post-processing is the only reliable solution
+- Exa semantic search finds official resort pricing pages better than Google — "official lift ticket prices 2025-2026 [resort name]" as query
+- Claude Haiku can interpret pricing tables from HTML with high accuracy at ~$0.002/page
+- Country-specific price validation: US adult lift tickets should be $80-250, not $23-37; European should be EUR 30-80
+- Mount Bachelor $23, Sunday River $29, Crested Butte unpriced → all corrected with Exa discovery + validation
+- SnowConditionsChart: framer-motion `initial={{scaleY: 0}}` + `animate={{scaleY: 1}}` with `originY: 1` creates bottom-up bar growth animation
+- Southern Hemisphere month sorting: detect via latitude or country, reorder from Jun-Oct instead of Dec-Apr
+- Pipeline 429 errors should reset to "pending" not "rejected" — rejected prevents future attempts, pending allows retry next day
+- Nominatim query order matters: "ski area" before resort name produces better results
+- Country bounding box validation catches Nominatim returning coordinates in wrong country entirely
+
+**Process:**
+- Style editing cost breakdown: Layer 1 free, Layer 2 ~$0.002/section (7 sections = $0.014), Layer 3 ~$0.08/section (7 = $0.56) — total ~$0.58/resort for full style pass
+- Apply deterministic style before ALL content DB writes (not just final publish) to catch em-dashes early
+- Add em-dash/en-dash to approval FORBIDDEN_PATTERNS so approval panel catches any that slip through
+- Pricing validation should be country-aware, not global — US and European price ranges are very different
+
+**Key Insight:**
+Multi-layer systems beat single-pass solutions when the problem has varying complexity. Simple em-dashes → regex. Context-dependent em-dashes → Haiku. Full voice editing → Sonnet. Each layer handles what it's best at, and the cheapest layer runs first.
+
+---
+
+## Round 23: Content Refresh System (2026-02-11)
+
+**Arc:**
+- **Started believing**: Content regeneration is a one-resort-at-a-time manual process
+- **Ended believing**: Batch regeneration with voice-aligned quality gates enables systematic content refresh across the entire corpus
+- **Transformation**: From manual per-resort updates to scalable batch content refresh with consistent voice application
+
+**Technical:**
+- VoiceCoach evaluator prompt was still evaluating "warmth" when voice had shifted to "smart, practical, expert" — evaluator must match current voice identity
+- Default `voice_profile` parameters scattered across multiple functions need updating together — `instagram_mom` → `snowthere_guide` in 4 places in approval.py
+- Newsletter voice prompts needed the same update — "warm" removed, VOICE directive added
+- Batch mode (`--batch`, `--batch-limit`, `--batch-offset`) enables systematic processing of large resort sets
+- Guide content regeneration is separate from resort regeneration — different content structure, different quality gates
+
+**Process:**
+- When voice identity changes, audit ALL evaluator prompts, default params, and content generation prompts
+- Batch processing scripts should support `--dry-run`, `--limit`, `--offset` for controlled rollouts
+- Content refresh is a recurring maintenance need, not a one-time task — build tooling for it
+
+**Key Insight:**
+Voice alignment isn't just about the generation prompt — evaluators, approval agents, and newsletter prompts all carry voice assumptions that must be updated together when the voice identity shifts.
+
+---
+
 ## Round 22: MEO Optimization + Voice De-Mandating
 
 **Arc:**
@@ -645,6 +757,20 @@ Ski school is often the LARGEST budget item for families with kids — more than
 | Future-casting ("You'll find...", "Your kids will...") | Readers envision themselves at the resort — engagement and specificity | R21 |
 | Self-contained paragraphs | Each paragraph makes sense independently — critical for AI extraction | R21 |
 | Multilingual research queries | Searching in local language improves data quality for international resorts | R21 |
+| 3-layer style editing (free → cheap → full) | Cheapest layer handles most cases; expensive layer only for what it's best at | R24 |
+| Exa for pricing page discovery | Semantic search finds official pricing pages more reliably than keyword search | R24 |
+| Country-specific price validation | US $80-250, Europe EUR 30-80 — prevents impossible prices from reaching production | R24 |
+| Deterministic preamble stripping | 9 LLM preamble phrases caught in style pre-pass — cheaper than prompt engineering | DA |
+| Calendar generation via Haiku | Structured monthly data (snow, crowds, recommendation) at $0.003/resort — cheap atom generation | DA |
+| Individual page audit over aggregate logs | Pipeline reports "success" but individual pages reveal systemic quality issues | DA |
+| Entity link structural filters | Colon-ending text, age ranges, lowercase phrases are never valid entities | DA |
+| GA4 event delegation on rel attribute | `rel="sponsored"` enables affiliate tracking without per-link binding | DA |
+| Cache fallback at write time | When research_data may be empty by write time, read from cache as fallback | DA |
+| 70/30 personality-to-info ratio | Information is commodity; perspective is the product people share | VE |
+| Stance commitment in content | "Tell them which hotel you'd book" builds more trust than neutral listing | VE |
+| Varied section openings by resort uniqueness | Lead with whatever makes THIS resort different, not the same structure | VE |
+| Deterministic hedging removal via regex | `roughly (?=\d)` catches hedging before numbers without false positives | VE |
+| "Screenshot test" for quality | "Would a parent screenshot this?" is a better bar than "would they feel informed?" | VE |
 
 ---
 
@@ -671,6 +797,14 @@ Concrete rules distilled from past failures. Never repeat these.
 | Never mandate specific sentence structure ratios | "80/20 fragment ratio" and "2-3 fragments per section" produce staccato, formulaic prose | R22 |
 | Never have multiple date format components without syncing them all | QuickScoreSummary.tsx had a second date display that was missed on first pass | R22 |
 | Never let `generate_seo_meta()` fallback diverge from frontend title format | Split-brain title strategy: some pages use old format, some new | R22 |
+| Never add a DB column without updating RESORT_FAMILY_METRICS_COLUMNS allowlist | data_completeness was always 0.0 because `sanitize_for_schema()` silently dropped it | DA |
+| Never trust pipeline "success" without auditing individual pages | 6 systemic bugs hid behind aggregate success logs for weeks | DA |
+| Never mark 429 rate-limit errors as "rejected" | Permanently prevents retry; resort never gets processed. Use "pending" for retry | R24 |
+| Never trust LLM output is free of preamble phrases | Even strong system prompts don't prevent "Here's the content..." — need deterministic stripping | DA |
+| Never rely on single geocoding API for ski resorts | Nominatim returns wrong country; need KNOWN_COORDINATES + Google fallback + bounding box validation | R24/DA |
+| Never strip earned conversational patterns as preamble | "Here's the thing:" is allowed sparingly (max 1/page), not preamble to strip | VE |
+| Never use the same price introduction pattern across sections | "Expect to pay" in every section = reader fatigue. 5+ varied intros needed | VE |
+| Never present options neutrally without a stance | Content without opinions is interchangeable. Back every opinion with evidence | VE |
 
 ---
 
@@ -697,6 +831,13 @@ Approaches tried and abandoned. Don't revisit these.
 | "{Resort Name} Family Ski Guide" title format | Doesn't match how people describe links when sharing | "Family Ski Guide: {Name} with Kids" (link-predictive, matches Exa's model) | R22 |
 | Date showing only month+year ("Feb 2026") | Ambiguous freshness signal, doesn't satisfy 30-day freshness criteria | Include day ("Feb 7, 2026") for precise freshness signal | R22 |
 | Performative "Instagram mom" voice | Gendered, patronizing; parents want intel, not encouragement | "Smart friend who respects your time" — gender-neutral, substantive | R21 |
+| Single regex for em-dash removal | Context matters: some em-dashes need commas, some need periods, some just deletion | 3-layer style: deterministic pre-pass + Haiku contextual + Sonnet full edit | R24 |
+| Single prompt for pricing extraction | LLMs hallucinate prices when not found; no validation | Exa discovery → Haiku interpretation → country-specific validation | R24 |
+| Trusting pipeline aggregate success logs | "100% success" hid 6 systemic bugs affecting ALL resorts | Audit individual resort pages, not just pipeline logs | DA |
+| "Expect to pay" as default price intro in every section | Reader fatigue, formulaic feel | 5+ varied price intros: "Adult passes run...", "Budget X/day", comparison | VE |
+| Neutral option presentation (3 hotels listed equally) | No personality, no stance, interchangeable content | Tell them which one you'd book and why | VE |
+| Generic voice evaluation ("does it have personality?") | Not measurable, subjective, inconsistent | 6 specific criteria: personality density, opening variety, rhythm, etc. | VE |
+| Marking 429 rate-limit errors as "rejected" | Permanently prevents retry; resort never gets processed | Reset to "pending" for next-day retry | R24 |
 
 ---
 
@@ -719,3 +860,10 @@ Recurring situations and the best response. When you see X, do Y.
 | Entity extraction returns few results | Add concrete confidence examples + lower threshold + multi-entity JSON template | Default LLM extraction is too conservative | PI |
 | Links need different behavior per entity type | Build data-driven priority table, not nested conditionals | User intent varies: booking vs directions vs registration | LS |
 | Client component renders SEO-critical content | Move to server component or extract server-rendered wrapper | Crawlers can't see client-rendered content | R19 |
+| LLM output contains em-dashes despite instructions | Apply deterministic style pre-pass (regex) + Haiku contextual replacement | LLMs have em-dashes deeply embedded in training data | R24 |
+| Pricing data looks implausibly low | Validate against country-specific ranges (US $80-250, Europe EUR 30-80) | LLMs and web data sources produce outdated/incorrect prices | R24 |
+| New DB column data is always null/0 | Check RESORT_FAMILY_METRICS_COLUMNS allowlist in database.py | `sanitize_for_schema()` silently drops unlisted columns | DA |
+| Pipeline reports success but page looks wrong | Audit individual resort pages in browser, not just pipeline logs | Systemic bugs are invisible in aggregate success metrics | DA |
+| Voice identity changed | Update ALL evaluators, approval defaults, newsletter prompts, not just generation prompt | Voice assumptions are scattered across the codebase | R23 |
+| Content reads like any other guide | Apply 70/30 personality-to-info check. Add opinions, stances, comparisons | "If it could appear in any guide unchanged, it needs more you" | VE |
+| Hedging qualifiers before numbers | Strip deterministically via regex + flag in voice evaluation | Neither prompt guidance nor regex alone catches all | VE |
