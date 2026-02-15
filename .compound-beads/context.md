@@ -1264,7 +1264,7 @@ _(no active task)_
 ## Recent Commits
 
 ```
-(pending) feat: Voice evolution — personality-forward prompts, 6-criteria VoiceCoach, anti-hedging, Opus style edit
+d454caf feat: Voice evolution — personality-forward prompts, 6-criteria VoiceCoach, anti-hedging, Opus style edit
 0a53767 feat: Add quiz_complete and affiliate_click GA4 custom events
 550d1fa fix: Comprehensive em-dash/en-dash removal in deterministic pre-pass
 8fda4f9 feat: Add ski quality calendar generation primitive + backfill all 99 resorts
