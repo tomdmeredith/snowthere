@@ -45,6 +45,7 @@
 
 1. **Migration numbering conflict**
    - Renamed `supabase/migrations/033_gsc_performance.sql` → `supabase/migrations/045_gsc_performance.sql`
+   - Made `045_gsc_performance.sql` idempotent (`IF NOT EXISTS` table/indexes + guarded policy creation)
    - Result: removed duplicate `033` prefix collision in migration ordering
 
 2. **Decision-maker budget context**

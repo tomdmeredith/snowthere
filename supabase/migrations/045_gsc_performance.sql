@@ -3,7 +3,7 @@
 -- Range: Per-page, per-query performance tracking
 
 -- GSC Performance Data Table
-CREATE TABLE gsc_performance (
+CREATE TABLE IF NOT EXISTS gsc_performance (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     -- Page and query identifiers
@@ -25,10 +25,10 @@ CREATE TABLE gsc_performance (
 );
 
 -- Indexes for common queries
-CREATE INDEX idx_gsc_date ON gsc_performance(date DESC);
-CREATE INDEX idx_gsc_page ON gsc_performance(page_url);
-CREATE INDEX idx_gsc_impressions ON gsc_performance(impressions DESC) WHERE impressions > 0;
-CREATE INDEX idx_gsc_ctr ON gsc_performance(ctr) WHERE impressions >= 100;
+CREATE INDEX IF NOT EXISTS idx_gsc_date ON gsc_performance(date DESC);
+CREATE INDEX IF NOT EXISTS idx_gsc_page ON gsc_performance(page_url);
+CREATE INDEX IF NOT EXISTS idx_gsc_impressions ON gsc_performance(impressions DESC) WHERE impressions > 0;
+CREATE INDEX IF NOT EXISTS idx_gsc_ctr ON gsc_performance(ctr) WHERE impressions >= 100;
 
 -- Comments
 COMMENT ON TABLE gsc_performance IS 'Daily Google Search Console performance data for SEO optimization';
@@ -41,16 +41,40 @@ COMMENT ON COLUMN gsc_performance.position IS 'Average position (1.0 = first res
 ALTER TABLE gsc_performance ENABLE ROW LEVEL SECURITY;
 
 -- Service role can do everything
-CREATE POLICY "Service role full access on gsc_performance"
-    ON gsc_performance
-    FOR ALL
-    TO service_role
-    USING (true)
-    WITH CHECK (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename = 'gsc_performance'
+          AND policyname = 'Service role full access on gsc_performance'
+    ) THEN
+        CREATE POLICY "Service role full access on gsc_performance"
+            ON gsc_performance
+            FOR ALL
+            TO service_role
+            USING (true)
+            WITH CHECK (true);
+    END IF;
+END
+$$;
 
 -- Anon users can read (for public dashboards if needed)
-CREATE POLICY "Anon can read gsc_performance"
-    ON gsc_performance
-    FOR SELECT
-    TO anon
-    USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_policies
+        WHERE schemaname = 'public'
+          AND tablename = 'gsc_performance'
+          AND policyname = 'Anon can read gsc_performance'
+    ) THEN
+        CREATE POLICY "Anon can read gsc_performance"
+            ON gsc_performance
+            FOR SELECT
+            TO anon
+            USING (true);
+    END IF;
+END
+$$;

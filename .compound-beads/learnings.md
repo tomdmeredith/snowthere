@@ -13,6 +13,7 @@ Knowledge extracted across all rounds with Arc narratives.
 
 **Technical:**
 - Supabase migration files must have unique numeric prefixes. Duplicate prefixes (`033_*`) create nondeterministic ordering risk for fresh/provisioned environments
+- If a migration is renumbered after partial rollout, the new file must be idempotent (`IF NOT EXISTS` + guarded policy creation) to avoid "already exists" failures on existing environments
 - Decision prompts must interpolate runtime config values, not hardcoded constants. Budget guidance in LLM context now derives from `settings.daily_budget_limit`
 - `has_childcare` is not a valid proxy for ski school availability. Quiz scoring must map `has_ski_school` or `ski_school_min_age` for must-have evaluation
 - Advanced terrain must come from terrain fields (`terrain_advanced_pct`) or explicit defaults, not subtraction formulas that can go negative
