@@ -1,6 +1,6 @@
 # Snowthere Quick Start
 
-> Compound Beads v3.0 | Last Updated: 2026-02-15
+> Compound Beads v3.0 | Last Updated: 2026-02-17
 
 **Voice Evolution COMPLETE.** Section prompts rewritten personality-forward (70/30 perspective-to-info), VoiceCoach upgraded to 6-criteria evaluation, anti-hedging in style pre-pass, Layer 3 upgraded to Opus. All code on origin/main. 99 published resorts.
 
@@ -26,6 +26,11 @@
 **Deep Audit (Feb 13) — 6 systemic bugs fixed**:
 - Calendar, coordinates, data_completeness, title dedup, pricing cache, content truncation
 - Content model: Opus 4.6 | GA4: quiz_complete + affiliate_click
+
+**Audit Remediation (Feb 17) — Critical correctness fixes**:
+- Supabase migration numbering conflict resolved (`033` duplicate removed by renumbering GSC migration to `045`)
+- Decision-maker budget context now uses configured `daily_budget_limit` (no hardcoded `$5.00`)
+- Quiz scoring data mapping corrected (`has_ski_school` / terrain fields instead of childcare-derived proxy math)
 
 **Next Steps**:
 - Re-run Bad Gastein (429 rate limit failure)

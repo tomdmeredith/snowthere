@@ -1,6 +1,6 @@
 # Family Ski Directory - Agent Handoff Document
 
-> Last Updated: 2026-01-28
+> Last Updated: 2026-02-17
 > Current Round: 14 (Homepage Redesign) - pending
 
 ## Quick Context
@@ -10,6 +10,12 @@ A family-focused ski resort directory targeting parents with kids under 12. Comp
 **Core Insight:** It's often cheaper to fly to Austria, get lodging, and buy lift tickets than skiing at major US resorts. Families feel overwhelmed - we answer "How do we do this? Which ones?"
 
 **Voice:** Instagram mom friendly - practical, encouraging, relatable, not intimidating.
+
+## Recent Update (2026-02-17): Audit Remediation
+
+- Fixed duplicate Supabase migration version conflict by renumbering `033_gsc_performance.sql` to `045_gsc_performance.sql`
+- Fixed decision-maker budget prompt context to use `settings.daily_budget_limit` instead of hardcoded `$5.00`
+- Fixed quiz scoring input mapping to use ski school + terrain fields (`has_ski_school`, `ski_school_min_age`, `terrain_*`) instead of childcare proxy and negative-prone derived advanced terrain
 
 ---
 

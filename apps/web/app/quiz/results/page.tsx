@@ -48,8 +48,12 @@ interface ResortWithMetrics {
     family_overall_score: number | null
     best_age_min: number | null
     best_age_max: number | null
+    has_ski_school: boolean | null
+    ski_school_min_age: number | null
     has_childcare: boolean | null
     kid_friendly_terrain_pct: number | null
+    terrain_beginner_pct: number | null
+    terrain_advanced_pct: number | null
   }> | null
   resort_costs: Array<{
     lodging_mid_nightly: number | null
@@ -107,8 +111,12 @@ export default function QuizResultsPage() {
               family_overall_score,
               best_age_min,
               best_age_max,
+              has_ski_school,
+              ski_school_min_age,
               has_childcare,
-              kid_friendly_terrain_pct
+              kid_friendly_terrain_pct,
+              terrain_beginner_pct,
+              terrain_advanced_pct
             ),
             resort_costs (
               lodging_mid_nightly,
@@ -134,6 +142,10 @@ export default function QuizResultsPage() {
         const resortsForScoring: ResortForScoring[] = typedResorts.map((resort) => {
           const metrics = resort.resort_family_metrics?.[0]
           const costs = resort.resort_costs?.[0]
+          const beginnerTerrain = metrics?.terrain_beginner_pct ?? metrics?.kid_friendly_terrain_pct ?? 25
+          const advancedTerrain = metrics?.terrain_advanced_pct ?? 20
+          const hasSkiSchool =
+            metrics?.has_ski_school ?? (metrics?.ski_school_min_age != null ? true : undefined) ?? true
 
           // Use database price_level if available, otherwise compute from lodging cost
           let priceLevel = costs?.price_level || null
@@ -157,9 +169,9 @@ export default function QuizResultsPage() {
             bestAgeMin: metrics?.best_age_min ?? 4,
             bestAgeMax: metrics?.best_age_max ?? 12,
             priceLevel,
-            hasSkiSchool: metrics?.has_childcare ?? true,
-            beginnerTerrain: metrics?.kid_friendly_terrain_pct ?? 25,
-            advancedTerrain: 100 - (metrics?.kid_friendly_terrain_pct ?? 25) - 50,
+            hasSkiSchool,
+            beginnerTerrain: Math.max(0, Math.min(100, beginnerTerrain)),
+            advancedTerrain: Math.max(0, Math.min(100, advancedTerrain)),
           }
         })
 

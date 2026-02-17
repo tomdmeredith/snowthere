@@ -131,11 +131,14 @@ def generate_context() -> str:
             source = d.get('discovery_source', 'unknown')
             context += f"- {d.get('resort_name')}, {d.get('country')} (score: {score:.2f}, source: {source})\n"
 
+    daily_limit = float(settings.daily_budget_limit)
+    remaining_budget = max(0.0, daily_limit - daily_spend)
+
     context += f"""
 ## Budget Status
 - Daily spend so far: ${daily_spend:.2f}
-- Daily limit: $5.00
-- Remaining: ${5.0 - daily_spend:.2f}
+- Daily limit: ${daily_limit:.2f}
+- Remaining: ${remaining_budget:.2f}
 
 ## Priority Guidance
 1. **Discovery candidates** - High-scoring resorts from search demand analysis

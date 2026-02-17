@@ -4,6 +4,28 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Audit Remediation: Migration + Budget + Quiz Correctness (2026-02-17)
+
+**Arc:**
+- **Started believing**: The codebase was broadly healthy after the deep audit, with mostly medium/low residual issues
+- **Ended believing**: Three specific correctness bugs had outsized impact: migration ordering ambiguity, LLM budget context mismatch, and quiz scoring signal corruption
+- **Transformation**: From general confidence in system health to explicit prioritization of deterministic correctness in migration sequencing and ranking inputs
+
+**Technical:**
+- Supabase migration files must have unique numeric prefixes. Duplicate prefixes (`033_*`) create nondeterministic ordering risk for fresh/provisioned environments
+- Decision prompts must interpolate runtime config values, not hardcoded constants. Budget guidance in LLM context now derives from `settings.daily_budget_limit`
+- `has_childcare` is not a valid proxy for ski school availability. Quiz scoring must map `has_ski_school` or `ski_school_min_age` for must-have evaluation
+- Advanced terrain must come from terrain fields (`terrain_advanced_pct`) or explicit defaults, not subtraction formulas that can go negative
+
+**Process:**
+- Fast audit remediation should target highest blast-radius correctness faults first: data migrations, ranking/scoring inputs, and autonomous decision constraints
+- When fixing scoring, validate both data provenance and fallback behavior. Wrong-but-plausible defaults silently skew rankings
+
+**Key Insight:**
+Most production regressions here were not algorithm complexity failures; they were data-mapping and configuration-source failures. Deterministic field provenance beats inferred proxies.
+
+---
+
 ## Voice Evolution: Personality-Forward Content (2026-02-15)
 
 **Arc:**

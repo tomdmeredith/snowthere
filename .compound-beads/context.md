@@ -1,6 +1,6 @@
 # Snowthere Context
 
-> Last synced: 2026-02-15 (Voice Evolution: Personality-Forward)
+> Last synced: 2026-02-17 (Audit Remediation: Migration + Budget + Quiz)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
@@ -33,6 +33,44 @@
 - **GA4 Events:** quiz_complete + affiliate_click deployed (0a53767)
 - **Pinterest:** Tracking pixel active (Tag ID 2613199211710)
 - **Migrations:** 042 + 043 + 044 applied to cloud Supabase
+- **Audit Remediation (Feb 17):** Fixed duplicate migration versioning, decision-maker budget hardcode, and quiz scoring data mapping
+
+---
+
+## Audit Remediation: Migration + Budget + Quiz Correctness (2026-02-17) ✅
+
+**Goal:** Fix highest-severity audit findings that could cause migration drift, incorrect autonomous budget guidance, and skewed quiz rankings.
+
+### Fixes Applied
+
+1. **Migration numbering conflict**
+   - Renamed `supabase/migrations/033_gsc_performance.sql` → `supabase/migrations/045_gsc_performance.sql`
+   - Result: removed duplicate `033` prefix collision in migration ordering
+
+2. **Decision-maker budget context**
+   - Updated `agents/pipeline/decision_maker.py` budget section to use:
+     - `settings.daily_budget_limit`
+     - `remaining_budget = max(0.0, daily_limit - daily_spend)`
+   - Result: prompt guidance now reflects runtime config, not a stale hardcoded `$5.00`
+
+3. **Quiz scoring source mapping**
+   - Updated `apps/web/app/quiz/results/page.tsx` to query and map:
+     - `has_ski_school`, `ski_school_min_age`
+     - `terrain_beginner_pct`, `terrain_advanced_pct`
+   - Removed childcare proxy mapping and negative-prone advanced terrain formula
+   - Result: must-have ski school and skill-terrain signals now use correct fields and bounded values
+
+### Validation
+
+- `python3 -m compileall -q agents/pipeline/decision_maker.py` ✅
+- `pnpm lint` in `apps/web` ✅ (existing `<img>` warnings only)
+- `pnpm build` in `apps/web` ✅
+- Duplicate migration prefix check (`uniq -d`) ✅ none
+
+**Arc:**
+- Started believing: Remaining issues were mostly medium/low and could be deferred
+- Ended believing: Deterministic correctness bugs in migrations/config/ranking inputs needed immediate remediation
+- Transformation: From broad audit confidence to targeted correction of high-blast-radius correctness paths
 
 ---
 
