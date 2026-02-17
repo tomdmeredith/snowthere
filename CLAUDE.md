@@ -26,6 +26,12 @@ A family-focused ski resort directory targeting parents with kids under 12. Comp
 - Added shared `getClientIp()` helper and applied it to API rate-limited endpoints
 - Suppressed local CORS noise from Travelpayouts verification script by skipping localhost
 
+## Recent Update (2026-02-17): First-Principles Execution Rubric
+
+- Added `Execution Rubric (First Principles)` section to `AGENTS.md`
+- Codifies local operating model: agent-native architecture, atomic primitives, probabilistic/deterministic boundary, discovery-led delivery, and MEO-first optimization
+- Written as project-internal guidance with no cross-project references
+
 ---
 
 ## Project Structure

@@ -62,3 +62,64 @@ vercel | Hosting & deployment (Vercel) | ISR revalidation, preview deployments, 
 - **Content structure**: 10-section trip guides families can print. Quick Take BLUF at top for AI extraction.
 - **Pipeline**: Fully autonomous daily cron on Railway. Direct Python + Claude API (not MCP for autonomy).
 - **Two-phase validation**: Claude suggests freely, database validates after. Scales to 3000+ resorts.
+
+## Execution Rubric (First Principles)
+
+Use this rubric for all architecture, feature, and content decisions.
+
+### 1) Agent-Native by Default
+- Every core capability should be invokable programmatically (not UI-only).
+- Prefer structured inputs/outputs (JSON, typed schemas, explicit contracts).
+- Design for composition: agents should chain capabilities without bespoke glue.
+- Maintain observability: log decisions, inputs, outputs, cost, and latency.
+
+### 2) Atomic Primitives over Monoliths
+- Build smallest useful operations that are independently testable.
+- Avoid mega-prompts and tightly coupled "do everything" flows.
+- New workflows should be composition of existing primitives first, new primitive second.
+- Keep primitive boundaries crisp: one responsibility per primitive.
+
+### 3) Probabilistic Where Possible, Deterministic Where Necessary
+- Use probabilistic systems for judgment, language generation, and discovery.
+- Use deterministic logic for safety, policy, validation, scoring formulas, and compliance.
+- Explicitly document boundary decisions in PRs/round notes:
+  - What is probabilistic?
+  - What is deterministic?
+  - What fallback/guardrail enforces correctness?
+
+### 4) Discovery-Led Delivery
+- Start from user/problem evidence before implementation choices.
+- Continuously validate assumptions with real behavior/data, not opinions.
+- Prioritize outcomes over outputs:
+  - Decision quality
+  - Time-to-value
+  - Trustworthiness
+  - Citation/discovery lift
+- When unsure, run a lightweight discovery pass before building.
+
+### 5) Optimize for Agents + Users + Search (MEO-first)
+- Optimize for humans and machine retrieval simultaneously.
+- Always include structure for machine understanding:
+  - Schema.org / JSON-LD
+  - llms.txt coverage
+  - Clear entity consistency
+  - Standalone answer-first sections
+- Prioritize MEO outcomes:
+  - Semantic clarity
+  - Citation-ready chunks
+  - Specific numbers/dates/entities
+  - Internal linking by meaning, not just keywords
+- SEO, GEO, and AEO are required; MEO is the unifying strategy.
+
+### 6) Human Judgment Remains in High-Stakes Loops
+- Keep human-in-the-loop for decisions with reputational, legal, financial, or trust risk.
+- AI should accelerate analysis and drafting; humans own final judgment where stakes are high.
+- Default escalation path: uncertain model output -> deterministic validation -> human review.
+
+### 7) Definition of Done (Quality Gate)
+A change is not done until all applicable checks pass:
+- Build/lint/type/test gates
+- Security and validation gates
+- Browser/UI testing for user-facing changes
+- Agent-path verification for agent-invoked flows
+- Tracking artifacts updated (`.compound-beads/*`, `CLAUDE.md`) per session protocol

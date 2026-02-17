@@ -4,6 +4,32 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## First-Principles Rubric Codification (2026-02-17)
+
+**Arc:**
+- **Started believing**: Team principles were understood implicitly through prior rounds
+- **Ended believing**: High-velocity agent work needs explicit, local, always-on principles in `AGENTS.md`
+- **Transformation**: From implicit norms to a concrete execution rubric agents can apply deterministically each round
+
+**Technical:**
+- First principles are most useful when encoded as decision constraints, not philosophy text
+- The highest leverage framing is a build-time rubric:
+  - agent-native interfaces
+  - atomic primitives
+  - probabilistic vs deterministic boundary
+  - discovery-led sequencing
+  - MEO-first optimization
+- "Definition of done" should include both human-facing and agent-facing verification paths
+
+**Process:**
+- Keep principle docs self-contained and repo-local for maximum operational adoption
+- Avoid cross-project references in operating docs; preserve one mental model per repo
+
+**Key Insight:**
+If principles are not in the execution path (`AGENTS.md`), they become optional memory. Once codified, they become default behavior.
+
+---
+
 ## Expert Review Loop + Browser QA Hardening (2026-02-17)
 
 **Arc:**

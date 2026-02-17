@@ -1,6 +1,6 @@
 # Snowthere Context
 
-> Last synced: 2026-02-17 (Expert Review Loop + Browser QA Hardening)
+> Last synced: 2026-02-17 (First-Principles Rubric Codification)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
@@ -35,6 +35,29 @@
 - **Migrations:** 042 + 043 + 044 applied to cloud Supabase
 - **Audit Remediation (Feb 17):** Fixed duplicate migration versioning, decision-maker budget hardcode, and quiz scoring data mapping
 - **Expert Review Loop (Feb 17):** Multi-expert strong-approval gate passed with browser QA (16/16 routes, desktop+mobile, zero console/page errors)
+- **First-Principles Rubric (Feb 17):** `AGENTS.md` now includes explicit execution rubric for agent-native, atomic, discovery-led, probabilistic/deterministic, and MEO-first delivery
+
+---
+
+## First-Principles Rubric Codification (2026-02-17) ✅
+
+**Goal:** Encode the team’s mental model directly in `AGENTS.md` as an execution rubric, without cross-project references.
+
+### Change Applied
+
+- Added `Execution Rubric (First Principles)` section in `AGENTS.md` covering:
+  - Agent-native by default
+  - Atomic primitives over monoliths
+  - Probabilistic where possible, deterministic where necessary
+  - Discovery-led delivery
+  - Optimize for agents + users + SEO/GEO/AEO, with MEO-first priority
+  - Human judgment in high-stakes loops
+  - Definition-of-done quality gates
+
+**Arc:**
+- Started believing: The principles were already shared and implicitly applied
+- Ended believing: Shared principles need explicit operational encoding to remain consistent across sessions and agents
+- Transformation: From implicit understanding to explicit execution contract
 
 ---
 

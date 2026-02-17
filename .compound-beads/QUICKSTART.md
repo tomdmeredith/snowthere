@@ -41,6 +41,11 @@
 - Local UI QA signal cleaned: Travelpayouts verification script now skips localhost (no CORS console error noise)
 - Final UI gate: 16/16 routes passed, zero console/page errors
 
+**Execution Rubric (Feb 17) — First principles codified**:
+- Added explicit `Execution Rubric (First Principles)` to `AGENTS.md`
+- Captures shared mental model: agent-native, atomic primitives, probabilistic/deterministic boundary, discovery-led delivery, and MEO-first optimization
+- Written project-specifically (no external project references)
+
 **Next Steps**:
 - Re-run Bad Gastein (429 rate limit failure)
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
