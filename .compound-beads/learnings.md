@@ -4,6 +4,30 @@ Knowledge extracted across all rounds with Arc narratives.
 
 ---
 
+## Expert Review Loop + Browser QA Hardening (2026-02-17)
+
+**Arc:**
+- **Started believing**: Build/lint success plus targeted fixes were enough to claim readiness
+- **Ended believing**: Strong approval required a full gate loop: code experts + browser runtime experts + remediation + re-validation
+- **Transformation**: From static code confidence to runtime-verified confidence backed by deterministic browser evidence
+
+**Technical:**
+- Client navigation APIs (`router.replace`) should not be invoked during render paths in App Router pages; move route validation redirects into `useEffect`
+- Dynamic Tailwind class interpolation (`text-${color}-600`) silently no-ops under content scanning; use explicit class maps for deterministic output
+- Resort-link fallback paths must always resolve to valid routes; defaulting to index route is safer than constructing malformed dynamic URLs
+- IP-based rate limiting should normalize and validate IP candidates (`x-vercel-forwarded-for`, `x-real-ip`, `cf-connecting-ip`, `x-forwarded-for`) before use
+- Local browser QA must avoid known third-party verification noise; gate affiliate verification script behavior by hostname in development
+
+**Process:**
+- Strong approval is a loop, not a single pass: run gates, patch failures, re-run from clean dev state, then freeze verdict
+- Browser QA should fail on console errors and page errors, not only HTTP status, for higher confidence in user-facing quality
+- Keep a reproducible route set (desktop + mobile) and preserve screenshots/report artifacts for auditability
+
+**Key Insight:**
+Runtime correctness defects (500s, no-op CSS, bad links, noisy third-party scripts) can survive compile-time checks. A strict browser gate catches what lint/build cannot.
+
+---
+
 ## Audit Remediation: Migration + Budget + Quiz Correctness (2026-02-17)
 
 **Arc:**

@@ -1,6 +1,6 @@
 # Snowthere Context
 
-> Last synced: 2026-02-17 (Audit Remediation: Migration + Budget + Quiz)
+> Last synced: 2026-02-17 (Expert Review Loop + Browser QA Hardening)
 > Agent: compound-beads v3.0
 > Session ID: (none — no active round)
 > Sessions This Round: 0
@@ -34,6 +34,55 @@
 - **Pinterest:** Tracking pixel active (Tag ID 2613199211710)
 - **Migrations:** 042 + 043 + 044 applied to cloud Supabase
 - **Audit Remediation (Feb 17):** Fixed duplicate migration versioning, decision-maker budget hardcode, and quiz scoring data mapping
+- **Expert Review Loop (Feb 17):** Multi-expert strong-approval gate passed with browser QA (16/16 routes, desktop+mobile, zero console/page errors)
+
+---
+
+## Expert Review Loop + Browser QA Hardening (2026-02-17) ✅
+
+**Goal:** Reach strong approval with a full team-style review loop, including mandatory browser UI testing, and remediate any failing gates.
+
+### Fixes Applied
+
+1. **Quiz step runtime stability**
+   - Updated `apps/web/app/quiz/[step]/page.tsx` route validation to redirect via `useEffect` instead of render-time router calls
+   - Result: fixed `/quiz/ages` 500 runtime failure found in Playwright audit
+
+2. **Guide rendering correctness**
+   - Updated `apps/web/app/guides/page.tsx` and `apps/web/app/guides/[slug]/page.tsx` to replace dynamic Tailwind interpolation with static color class maps
+   - Updated `apps/web/components/guides/GuideContent.tsx`:
+     - fixed invalid route fallback (`/resorts` instead of malformed `/resorts/{slug}`)
+     - replaced non-existent classes (`bg-cream-50/50`, `font-body`) with valid classes
+   - Result: deterministic styles and valid fallback navigation
+
+3. **API rate-limit IP extraction hardening**
+   - Added `apps/web/lib/request-ip.ts` with normalized IP parsing and validation
+   - Applied to:
+     - `apps/web/app/api/revalidate/route.ts`
+     - `apps/web/app/api/subscribe/route.ts`
+     - `apps/web/app/api/data-request/route.ts`
+     - `apps/web/app/api/contact/route.ts`
+   - Result: reduced spoof/garbage header risk and consistent rate-limit identity extraction
+
+4. **Local browser QA signal cleanup**
+   - Updated `apps/web/app/layout.tsx` Travelpayouts verification script to skip localhost/127.0.0.1
+   - Result: removed local CORS console noise from strict browser QA
+
+### Validation
+
+- `pnpm lint` ✅ (existing `<img>` optimization warnings only)
+- `pnpm build` ✅
+- `python3 -m compileall -q agents` ✅
+- Migration prefix collision check (`uniq -d`) ✅ none
+- Strict Playwright QA (desktop + mobile, 16 routes) ✅
+  - 16/16 passed
+  - 0 page errors
+  - 0 console errors
+
+**Arc:**
+- Started believing: Green build/lint plus targeted patches were enough for sign-off
+- Ended believing: Strong approval requires explicit runtime browser evidence and re-validation loops
+- Transformation: From static confidence to expert-gated runtime confidence
 
 ---
 

@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { timingSafeEqual } from 'crypto'
+import { getClientIp } from '@/lib/request-ip'
 
 /**
  * ISR Revalidation Endpoint
@@ -85,8 +86,7 @@ function isValidPath(path: string): boolean {
 export async function POST(request: NextRequest) {
   try {
     // Get client IP for rate limiting
-    const forwardedFor = request.headers.get('x-forwarded-for')
-    const ip = forwardedFor?.split(',')[0]?.trim() || 'unknown'
+    const ip = getClientIp(request)
 
     // Check rate limit
     const { allowed, remaining } = checkRateLimit(ip)

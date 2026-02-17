@@ -17,6 +17,15 @@ A family-focused ski resort directory targeting parents with kids under 12. Comp
 - Fixed decision-maker budget prompt context to use `settings.daily_budget_limit` instead of hardcoded `$5.00`
 - Fixed quiz scoring input mapping to use ski school + terrain fields (`has_ski_school`, `ski_school_min_age`, `terrain_*`) instead of childcare proxy and negative-prone derived advanced terrain
 
+## Recent Update (2026-02-17): Expert Review Loop + Browser QA
+
+- Multi-expert strong-approval loop completed with browser UI testing (Playwright, desktop + mobile)
+- Fixed quiz step runtime 500 (`/quiz/[step]`) caused by render-time redirect logic
+- Fixed guide rendering class reliability (removed dynamic Tailwind interpolation and invalid class names)
+- Fixed guide resort fallback link to valid route when country mapping is missing
+- Added shared `getClientIp()` helper and applied it to API rate-limited endpoints
+- Suppressed local CORS noise from Travelpayouts verification script by skipping localhost
+
 ---
 
 ## Project Structure

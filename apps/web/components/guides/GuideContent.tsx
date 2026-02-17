@@ -8,7 +8,8 @@ import type { GuideSection, GuideListItem, GuideChecklistItem, GuideFAQItem, Gui
 // Build correct resort URL using country slug map
 function buildResortHref(slug: string, countryMap?: Record<string, string>): string {
   const countrySlug = countryMap?.[slug]
-  return countrySlug ? `/resorts/${countrySlug}/${slug}` : `/resorts/${slug}`
+  // Fallback to valid index route when country is unknown.
+  return countrySlug ? `/resorts/${countrySlug}/${slug}` : '/resorts'
 }
 
 // =============================================================================
@@ -206,7 +207,7 @@ function ComparisonTableSection({
               <tr
                 key={rowIdx}
                 className={`border-b border-gray-50 last:border-0 ${
-                  rowIdx % 2 === 1 ? 'bg-cream-50/50' : ''
+                  rowIdx % 2 === 1 ? 'bg-gray-50/60' : ''
                 }`}
               >
                 {row.map((cell, cellIdx) => (
@@ -291,7 +292,7 @@ function ImageSection({ section }: { section: GuideSection }) {
         />
       </div>
       {section.caption && (
-        <figcaption className="text-center text-sm text-gray-500 mt-3 italic font-body">
+        <figcaption className="text-center text-sm text-gray-500 mt-3 italic font-sans">
           {section.caption}
         </figcaption>
       )}

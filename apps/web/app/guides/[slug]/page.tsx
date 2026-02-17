@@ -47,6 +47,25 @@ const GUIDE_TYPE_EMOJI: Record<string, string> = {
   gear: '🎿',
 }
 
+const GUIDE_COLOR_STYLES: Record<string, { badge: string; text: string }> = {
+  coral: {
+    badge: 'text-coral-600 bg-coral-50',
+    text: 'text-coral-600',
+  },
+  teal: {
+    badge: 'text-teal-600 bg-teal-50',
+    text: 'text-teal-600',
+  },
+  mint: {
+    badge: 'text-mint-700 bg-mint-50',
+    text: 'text-mint-700',
+  },
+  gold: {
+    badge: 'text-gold-700 bg-gold-50',
+    text: 'text-gold-700',
+  },
+}
+
 // A7: Static generation for all published guides
 export async function generateStaticParams() {
   const slugs = await getAllGuideSlugs()
@@ -221,6 +240,8 @@ export default async function GuidePage({
   const typeConfig = GUIDE_TYPE_CONFIG[guide.guide_type as GuideType]
   const Icon = GUIDE_TYPE_ICONS[guide.guide_type] || BookOpen
   const heroEmoji = GUIDE_TYPE_EMOJI[guide.guide_type] || '📖'
+  const typeColor =
+    GUIDE_COLOR_STYLES[typeConfig?.color || 'coral'] || GUIDE_COLOR_STYLES.coral
 
   const publishedDate = guide.published_at
     ? new Date(guide.published_at).toLocaleDateString('en-US', {
@@ -275,7 +296,7 @@ export default async function GuidePage({
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto text-center">
               <span
-                className={`inline-flex items-center gap-2 text-sm font-medium text-${typeConfig?.color || 'coral'}-600 bg-${typeConfig?.color || 'coral'}-50 px-4 py-2 rounded-full mb-6`}
+                className={`inline-flex items-center gap-2 text-sm font-medium ${typeColor.badge} px-4 py-2 rounded-full mb-6`}
               >
                 <Icon className="w-4 h-4" />
                 {typeConfig?.label || 'Guide'}
@@ -386,7 +407,7 @@ export default async function GuidePage({
                         className="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-shadow group"
                       >
                         <span
-                          className={`text-xs font-medium text-${relatedConfig?.color || 'coral'}-600`}
+                          className={`text-xs font-medium ${(GUIDE_COLOR_STYLES[relatedConfig?.color || 'coral'] || GUIDE_COLOR_STYLES.coral).text}`}
                         >
                           {relatedConfig?.label || 'Guide'}
                         </span>

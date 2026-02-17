@@ -19,6 +19,7 @@ export default function QuizStepPage() {
 
   const [answers, setAnswers] = useState<QuizAnswers>(getInitialAnswers())
   const [isLoaded, setIsLoaded] = useState(false)
+  const [isValidStep, setIsValidStep] = useState<boolean | null>(null)
 
   // Load answers from sessionStorage on mount
   useEffect(() => {
@@ -53,16 +54,26 @@ export default function QuizStepPage() {
     }
   }, [answers, isLoaded])
 
-  // Validate step number
-  if (step < 1 || step > TOTAL_STEPS || isNaN(step)) {
-    router.replace('/quiz')
-    return null
-  }
+  // Validate step client-side; avoid router calls during render.
+  useEffect(() => {
+    if (isNaN(step) || step < 1 || step > TOTAL_STEPS) {
+      setIsValidStep(false)
+      router.replace('/quiz')
+      return
+    }
+
+    const exists = QUIZ_QUESTIONS.some((q) => q.step === step)
+    if (!exists) {
+      setIsValidStep(false)
+      router.replace('/quiz')
+      return
+    }
+
+    setIsValidStep(true)
+  }, [router, step])
 
   const question = QUIZ_QUESTIONS.find((q) => q.step === step)
-
-  if (!question) {
-    router.replace('/quiz')
+  if (!question || !isValidStep) {
     return null
   }
 

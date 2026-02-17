@@ -89,7 +89,14 @@ export default function RootLayout({
           data-cfasync="false"
           data-wpfc-render="false"
           dangerouslySetInnerHTML={{
-            __html: `(function () { var script = document.createElement("script"); script.async = 1; script.src = 'https://tp-em.com/NDk4MDA0.js?t=498004'; document.head.appendChild(script); })();`
+            __html: `(function () {
+              var hostname = window.location.hostname;
+              if (hostname === 'localhost' || hostname === '127.0.0.1') return;
+              var script = document.createElement("script");
+              script.async = 1;
+              script.src = 'https://tp-em.com/NDk4MDA0.js?t=498004';
+              document.head.appendChild(script);
+            })();`
           }}
         />
         {/* AvantLink: JS verification removed — their server returns 404 for app 1559905.

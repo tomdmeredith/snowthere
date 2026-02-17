@@ -42,6 +42,29 @@ const GUIDE_TYPE_CONFIG: Record<
   gear: { icon: Snowflake, color: 'teal', label: 'Gear & Packing' },
 }
 
+const GUIDE_COLOR_STYLES: Record<string, { gradient: string; badge: string; icon: string }> = {
+  coral: {
+    gradient: 'from-coral-100 to-coral-200',
+    badge: 'text-coral-600 bg-coral-50',
+    icon: 'text-coral-500',
+  },
+  teal: {
+    gradient: 'from-teal-100 to-teal-200',
+    badge: 'text-teal-600 bg-teal-50',
+    icon: 'text-teal-500',
+  },
+  mint: {
+    gradient: 'from-mint-100 to-mint-200',
+    badge: 'text-mint-700 bg-mint-50',
+    icon: 'text-mint-600',
+  },
+  gold: {
+    gradient: 'from-gold-100 to-gold-200',
+    badge: 'text-gold-700 bg-gold-50',
+    icon: 'text-gold-600',
+  },
+}
+
 interface Guide {
   id: string
   slug: string
@@ -72,12 +95,13 @@ function GuideCard({ guide }: { guide: Guide }) {
   const config = GUIDE_TYPE_CONFIG[guide.guide_type] || GUIDE_TYPE_CONFIG.comparison
   const Icon = config.icon
   const emoji = GUIDE_TYPE_EMOJI[guide.guide_type] || '📖'
+  const colorStyles = GUIDE_COLOR_STYLES[config.color] || GUIDE_COLOR_STYLES.coral
 
   return (
     <Link href={`/guides/${guide.slug}`}>
       <article className="group bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
         {/* Image or placeholder */}
-        <div className={`h-40 bg-gradient-to-br from-${config.color}-100 to-${config.color}-200 flex items-center justify-center relative overflow-hidden`}>
+        <div className={`h-40 bg-gradient-to-br ${colorStyles.gradient} flex items-center justify-center relative overflow-hidden`}>
           {guide.featured_image_url ? (
             <img
               src={guide.featured_image_url}
@@ -96,7 +120,7 @@ function GuideCard({ guide }: { guide: Guide }) {
         {/* Content */}
         <div className="p-5 flex-1 flex flex-col">
           {/* Type badge */}
-          <span className={`inline-flex items-center gap-1.5 text-xs font-medium text-${config.color}-600 bg-${config.color}-50 px-2.5 py-1 rounded-full w-fit mb-3`}>
+          <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${colorStyles.badge} px-2.5 py-1 rounded-full w-fit mb-3`}>
             <Icon className="w-3 h-3" />
             {config.label}
           </span>
@@ -217,7 +241,7 @@ export default async function GuidesPage() {
                 return (
                   <div key={type}>
                     <h2 className="font-display text-2xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                      <config.icon className={`w-6 h-6 text-${config.color}-500`} />
+                      <config.icon className={`w-6 h-6 ${(GUIDE_COLOR_STYLES[config.color] || GUIDE_COLOR_STYLES.coral).icon}`} />
                       {config.label}
                     </h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -32,6 +32,15 @@
 - Decision-maker budget context now uses configured `daily_budget_limit` (no hardcoded `$5.00`)
 - Quiz scoring data mapping corrected (`has_ski_school` / terrain fields instead of childcare-derived proxy math)
 
+**Expert Review Loop (Feb 17) — Strong approval gate passed**:
+- Multi-expert remediation loop completed with browser UI testing (Playwright) on desktop + mobile
+- Fixed `/quiz/[step]` runtime 500 caused by route validation redirect during render
+- Fixed guide rendering correctness: dynamic Tailwind class no-ops replaced with static class maps
+- Fixed guide resort URL fallback to valid route when country mapping missing
+- Hardened API IP extraction for rate-limiting via `getClientIp()` helper (validated parsing + trusted header precedence)
+- Local UI QA signal cleaned: Travelpayouts verification script now skips localhost (no CORS console error noise)
+- Final UI gate: 16/16 routes passed, zero console/page errors
+
 **Next Steps**:
 - Re-run Bad Gastein (429 rate limit failure)
 - Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
