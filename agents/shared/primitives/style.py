@@ -84,6 +84,56 @@ HEDGING_PATTERNS: list[tuple[str, str]] = [
 ]
 
 
+def _apply_text_fixes(text: str, profile: StyleProfile) -> str:
+    """Apply all deterministic text fixes to a single string."""
+    # Forbidden phrases (case-insensitive)
+    for pattern, replacement in FORBIDDEN_PHRASES:
+        text = re.sub(re.escape(pattern), replacement, text, flags=re.IGNORECASE)
+
+    # Formatting fixes
+    for pattern, replacement in FORMATTING_FIXES:
+        text = re.sub(pattern, replacement, text)
+
+    # Hedging qualifiers before numbers (context-aware regex)
+    for pattern, replacement in HEDGING_PATTERNS:
+        text = re.sub(pattern, replacement, text)
+
+    # Em-dash / en-dash removal (voice profile: NEVER use these)
+    text = re.sub(r"^\s*[—–]\s+", "- ", text, flags=re.MULTILINE)
+    text = re.sub(r"—{2,}", " - ", text)
+    text = re.sub(r"\s+[—–]\s+", ", ", text)
+    text = re.sub(r"(\w)[—–](\w)", r"\1, \2", text)
+    text = re.sub(r"[—–]\s*$", ".", text, flags=re.MULTILINE)
+    text = text.replace("—", ", ").replace("–", ", ")
+    text = re.sub(r",\s*,", ",", text)
+
+    # Cap exclamation marks per section
+    max_excl = profile.exclamation_max_per_section
+    excl_count = text.count("!")
+    if excl_count > max_excl:
+        parts = text.split("!")
+        rebuilt = []
+        kept = 0
+        for i, part in enumerate(parts):
+            if i == len(parts) - 1:
+                rebuilt.append(part)
+            elif kept < max_excl:
+                rebuilt.append(part + "!")
+                kept += 1
+            else:
+                rebuilt.append(part + ".")
+        text = "".join(rebuilt)
+
+    # Clean up artifacts from removals
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"\s+([.,!?])", r"\1", text)
+    text = re.sub(r"^\s+", "", text)
+    text = re.sub(r"\s+$", "", text)
+    text = re.sub(r"^[.,!?]\s*", "", text)
+
+    return text.strip()
+
+
 def apply_deterministic_style(
     content: dict[str, Any],
     profile: StyleProfile | None = None,
@@ -105,67 +155,29 @@ def apply_deterministic_style(
     processed = {}
 
     for key, value in content.items():
+        # Handle FAQ format: list of {"question": "...", "answer": "..."}
+        if isinstance(value, list):
+            processed_list = []
+            for item in value:
+                if isinstance(item, dict):
+                    processed_item = {}
+                    for k, v in item.items():
+                        if isinstance(v, str):
+                            processed_item[k] = _apply_text_fixes(v, profile)
+                        else:
+                            processed_item[k] = v
+                    processed_list.append(processed_item)
+                else:
+                    processed_list.append(item)
+            processed[key] = processed_list
+            continue
+
         if not isinstance(value, str):
             processed[key] = value
             continue
 
         text = value
-
-        # Forbidden phrases (case-insensitive)
-        for pattern, replacement in FORBIDDEN_PHRASES:
-            text = re.sub(re.escape(pattern), replacement, text, flags=re.IGNORECASE)
-
-        # Formatting fixes
-        for pattern, replacement in FORMATTING_FIXES:
-            text = re.sub(pattern, replacement, text)
-
-        # Hedging qualifiers before numbers (context-aware regex)
-        for pattern, replacement in HEDGING_PATTERNS:
-            text = re.sub(pattern, replacement, text)
-
-        # Em-dash / en-dash removal (voice profile: NEVER use these)
-        # 1. Start of lines (bullet-style misuse)
-        text = re.sub(r"^\s*[—–]\s+", "- ", text, flags=re.MULTILINE)
-        # 2. Triple+ em-dashes
-        text = re.sub(r"—{2,}", " - ", text)
-        # 3. Spaced em/en-dashes between words: replace with comma or period
-        #    "word — word" → "word, word" (most common LLM pattern)
-        text = re.sub(r"\s+[—–]\s+", ", ", text)
-        # 4. Unspaced em-dashes attached to words: "word—word" → "word, word"
-        text = re.sub(r"(\w)[—–](\w)", r"\1, \2", text)
-        # 5. Trailing em-dash: "word—" → "word."
-        text = re.sub(r"[—–]\s*$", ".", text, flags=re.MULTILINE)
-        # 6. Any remaining stray em/en-dashes
-        text = text.replace("—", ", ").replace("–", ", ")
-        # Clean up double commas from replacements
-        text = re.sub(r",\s*,", ",", text)
-
-        # Cap exclamation marks per section
-        max_excl = profile.exclamation_max_per_section
-        excl_count = text.count("!")
-        if excl_count > max_excl:
-            # Keep only the first N exclamation marks, replace rest with periods
-            parts = text.split("!")
-            rebuilt = []
-            kept = 0
-            for i, part in enumerate(parts):
-                if i == len(parts) - 1:
-                    rebuilt.append(part)
-                elif kept < max_excl:
-                    rebuilt.append(part + "!")
-                    kept += 1
-                else:
-                    rebuilt.append(part + ".")
-            text = "".join(rebuilt)
-
-        # Clean up artifacts from removals
-        text = re.sub(r"\s+", " ", text)
-        text = re.sub(r"\s+([.,!?])", r"\1", text)
-        text = re.sub(r"^\s+", "", text)
-        text = re.sub(r"\s+$", "", text)
-        text = re.sub(r"^[.,!?]\s*", "", text)
-
-        processed[key] = text.strip()
+        processed[key] = _apply_text_fixes(text, profile)
 
     return processed
 

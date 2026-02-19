@@ -1,13 +1,13 @@
 # Snowthere Context
 
-> Last synced: 2026-02-17 (First-Principles Rubric Codification)
+> Last synced: 2026-02-19 (Round QA — COMPLETE)
 > Agent: compound-beads v3.0
-> Session ID: (none — no active round)
-> Sessions This Round: 0
+> Session ID: QA-2
+> Sessions This Round: 2
 
 ## Current State
 
-**Voice Evolution COMPLETE.** Section prompts rewritten personality-forward (70/30 perspective-to-info), VoiceCoach upgraded to 6-criteria evaluation, anti-hedging in style pre-pass, Layer 3 upgraded to Opus. All code on origin/main. 99 published resorts, all with coordinates, pricing, and ski quality calendar (495 entries).
+**Round QA complete.** Fixed 8 resort issues + 3 guide issues (11 fixes total). Published 7 stuck draft guides. All 17 guides now published. Frontend build passes.
 
 - **Resorts:** 99 published with entity links, pipeline adds ~6/day
 - **Guides:** 15 total (10 published, 5 drafts), autonomous generation Mon/Thu
@@ -21,7 +21,7 @@
 - **Quick Takes:** 50-90 word single paragraph format (fact-based, validation accepts up to 95)
 - **Type Safety:** Zero `as any` casts, 8 migration fields in database.types.ts
 - **Security:** `sanitizeHTML()` on all dangerouslySetInnerHTML, `sanitizeJSON()` on all JSON-LD
-- **Newsletter:** Weekly system deployed (Thursdays 6am PT)
+- **Newsletter:** DISABLED in cron.py (welcome sequence still runs via Railway cron)
 - **SEO:** HeroSpielplatz server component, country pages have generateStaticParams, ISR 6h
 - **Bing Webmaster Tools:** Connected, 124 URLs indexed, 0 errors, AI Performance baseline 0 citations
 - **Content Freshness:** Date display includes day (e.g., "Feb 7, 2026") for freshness signal
@@ -36,6 +36,85 @@
 - **Audit Remediation (Feb 17):** Fixed duplicate migration versioning, decision-maker budget hardcode, and quiz scoring data mapping
 - **Expert Review Loop (Feb 17):** Multi-expert strong-approval gate passed with browser QA (16/16 routes, desktop+mobile, zero console/page errors)
 - **First-Principles Rubric (Feb 17):** `AGENTS.md` now includes explicit execution rubric for agent-native, atomic, discovery-led, probabilistic/deterministic, and MEO-first delivery
+
+---
+
+## Round QA: Resort & Guide Quality Audit Remediation (2026-02-19) 🔧
+
+**Goal:** Fix 8 resort issues and 3 guide issues discovered during browser + database audit of the 12 most recent published resorts.
+
+### Resort Issues Found
+
+| # | Priority | Issue | Files |
+|---|----------|-------|-------|
+| 1 | P0 | resort-linker.ts partial word matching ("fee" → Saas-Fee) | `apps/web/lib/resort-linker.ts` |
+| 2 | P1 | Content truncation (max_tokens=1500 too low) | `agents/shared/primitives/content.py`, `runner.py` |
+| 3 | P1 | Non-place entities linked to Google Maps | `agents/shared/primitives/intelligence.py` |
+| 4 | P2 | Calendar generation missing (all 12 resorts) | `agents/pipeline/runner.py` |
+| 5 | P2 | Lodging costs missing | `agents/shared/primitives/costs.py` |
+| 6 | P2 | Internal cross-links missed | `agents/shared/primitives/intelligence.py` |
+| 7 | P3 | FAQ hedging (list-of-dicts bypasses style pre-pass) | `agents/shared/primitives/style.py` |
+| 8 | P3 | Multilingual research not used | Low priority — deferred |
+
+### Guide Issues Found
+
+| # | Issue | Root Cause |
+|---|-------|------------|
+| G1 | 7 guides stuck in draft since Feb 2 | SkepticExpert in 5-expert panel always rejects → effective threshold 3/4 |
+| G2 | Resort links point to generic /resorts | Generation-time link injection fails when resorts aren't published yet |
+| G3 | Guide FAQs bypass style pre-pass | Same as P3 — list-of-dicts skipped |
+
+### Fixes Applied
+
+_(in progress)_
+
+---
+
+## GTM Handoff Session (2026-02-18) ✅
+
+**Goal:** Disable newsletter for GTM handoff, create Resend handoff doc, complete affiliate CSV with all 7 network signups, evaluate Codex refactoring recommendations.
+
+### Newsletter Disabled
+
+- Commented out `newsletter_result = asyncio.run(run_weekly_newsletter())` in `agents/cron.py` (~line 371)
+- Welcome email sequence still runs daily via Railway cron (separate from newsletter)
+
+### Resend Handoff Doc
+
+- Created `scratchpad/resend-handoff.md` — complete GTM handoff for Resend email system
+- Covers: API key locations (Vercel + Railway), sender config, subscriber data (Supabase tables), signup flow, welcome sequence, migration path to other email tools, GA4 tracking already in place
+
+### Affiliate CSV Completed
+
+- Updated `scratchpad/affiliate-programs.csv` from 39 rows to 54 rows
+- Discovered 7 networks signed up (was tracking only 3): Travelpayouts (21 programs), Admitad, CJ, FlexOffers, AWIN, AvantLink, Impact
+- All affiliate IDs, tracking codes, network statuses, and ACTION items included
+- Credentials stored in `memory/affiliates-credentials.md` (gitignored)
+
+### Codex Refactoring Evaluation
+
+Evaluated Codex's 6 refactoring recommendations by reading the actual files:
+
+| # | Recommendation | Verdict | Rationale |
+|---|---------------|---------|-----------|
+| 1 | API route composition layer | SKIP | Premature abstraction — 4 routes, ~20 lines shared pattern each. Not worth a middleware layer. |
+| 2 | Quiz adapter + scoring tests | Tests YES, adapter NO | `scoring.ts` (610 lines) is pure functions, perfectly testable. But the "adapter" extraction has exactly 1 caller — not worth it. |
+| 3 | Guide config unification | Low ROI | Real duplication (~30 lines) across 2 files. But extracting a shared config for 2 files is marginal. |
+| 4 | Playwright CI | SKIP | Premature for a content site. Browser testing is useful but CI integration adds complexity that doesn't pay off yet. |
+| 5 | Migration hygiene tooling | SKIP | One-time problem (duplicate 033 prefix, already fixed in AR round). Tooling for a solved problem. |
+| 6 | **Runner.py decomposition** | **THE ONE** | 2,105 lines. Distinct stages (research, generate, style, approve, publish) jammed into one file. This is R18. |
+
+### Key Deliverables
+
+- `scratchpad/resend-handoff.md` — Resend GTM handoff doc
+- `scratchpad/affiliate-programs.csv` — 54 programs, 7 networks, all IDs/statuses
+- `agents/cron.py` — Newsletter disabled (~line 371)
+- `memory/affiliates-credentials.md` — All 7 network logins (NOT in git)
+
+**Arc:**
+- Started believing: GTM handoff was mainly about disabling the newsletter and writing a doc
+- Ended believing: Deep transcript archaeology revealed 4 more affiliate networks than tracked, and honest evaluation of refactoring recommendations filtered 6 ideas down to 1 genuine priority
+- Transformation: From surface-level handoff to comprehensive inventory — the value was in what we didn't know we had
 
 ---
 
@@ -1206,8 +1285,8 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 - **Resorts:** ~6/day, entity linking (10-20 links/resort), 3-layer style editing on all content
 - **Guides:** Mon/Thu, 3-agent approval panel, auto-publish, Nano Banana Pro featured images
 - **Images:** Nano Banana Pro on Replicate (primary), 4-tier fallback, permanent Supabase Storage
-- **Newsletter:** Thursday 6am PT, Morning Brew style
-- **Email sequences:** 5-email welcome series (Day 0/2/4/7/14)
+- **Newsletter:** DISABLED (handed off to GTM team)
+- **Email sequences:** 5-email welcome series (Day 0/2/4/7/14), still runs via Railway cron
 - **Pricing:** Exa discovery + Haiku interpretation + country-specific validation
 - **Calendar:** generate_ski_calendar() generates monthly snow/crowds/recommendation via Haiku (~$0.003/resort)
 - **Style:** Deterministic pre-pass + Haiku em-dash replacement + Sonnet style edit on all sections
@@ -1241,7 +1320,7 @@ ede019f refactor: Expert review fixes — html.escape, dead code removal, rel al
 - **Runner monolith** — `run_resort_pipeline()` is 1,627 lines, no partial re-run → R18
 - ~~Quick Take length occasionally exceeds 120 word limit~~ — Reformatted to 50-90 word single paragraph (R20 initial, R21 voice rebalancing)
 - ~~Quick Take score discrepancy~~ — Three-layer hybrid scoring replaces single-score model in R20
-- Affiliate programs: migration 032 created but manual network signups pending
+- Affiliate programs: 7 networks signed up (Feb 13-18), migration 032 pending apply, CSV at scratchpad/affiliate-programs.csv
 - ~30 pages still "Discovered - currently not indexed" in GSC (normal for new site, will resolve over 2-6 weeks)
 - Google Places API key is unrestricted (allows all 32 Maps APIs) — should restrict to Places only
 - ~~Data quality backfill not yet run~~ — **DONE in R15** (33/38 updated, 43% avg completeness)
@@ -1352,12 +1431,13 @@ _(no active task)_
 - ~~GA4 custom events~~ → **DONE** (0a53767): quiz_complete + affiliate_click
 - ~~Pinterest tracking pixel~~ → **DONE** (766656f): Tag ID 2613199211710
 - Re-run Bad Gastein (`python3 cron.py --resort "Bad Gastein" --country "Austria"`)
-- Sign up for affiliate networks (Travelpayouts, Skiset, World Nomads)
+- ~~Sign up for affiliate networks~~ — **DONE** (7 networks: Travelpayouts, Admitad, CJ, FlexOffers, AWIN, AvantLink, Impact)
 - Run migration 032_comprehensive_affiliate_programs.sql on production
 - Apply migration 036 to cloud Supabase (data_requests table for GDPR form)
 - Request indexing for remaining GSC pages (daily quota, ~10/day)
-- Monitor pipeline quality (guides Mon/Thu, newsletter Thursday)
+- Monitor pipeline quality (guides Mon/Thu, welcome sequence daily)
 - Homepage redesign (deferred from R14)
+- Runner.py decomposition (R18 — 2,105 lines, only genuinely high-ROI refactor)
 - Content strategy discussion
 - Update TAVILY_API_KEY on Railway
 

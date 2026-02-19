@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { SITE_URL } from '@/lib/constants'
 import { sanitizeJSON } from '@/lib/sanitize'
+import { injectResortLinks } from '@/lib/resort-linker'
 import { Navbar } from '@/components/layout/Navbar'
 import { Footer } from '@/components/home/Footer'
 import { GuideContent } from '@/components/guides/GuideContent'
@@ -24,6 +25,7 @@ import {
   GUIDE_TYPE_CONFIG,
   type GuideWithResorts,
   type GuideType,
+  type GuideSection,
   type GuideFAQItem,
 } from '@/lib/guides'
 
@@ -88,7 +90,9 @@ export async function generateMetadata({
     return { title: 'Guide Not Found' }
   }
 
-  const title = guide.seo_meta?.title || guide.title
+  // Strip "| Snowthere" suffix if present — the layout template already appends it
+  const rawTitle = guide.seo_meta?.title || guide.title
+  const title = rawTitle.replace(/\s*\|\s*Snowthere\s*$/i, '')
   const description =
     guide.seo_meta?.description ||
     guide.excerpt ||
@@ -253,6 +257,30 @@ export default async function GuidePage({
 
   const schemas = buildSchemas(guide)
 
+  // Inject resort links into guide section content (render-time, always fresh)
+  // Use shallow copies to avoid mutating the fetched guide data (cache safety)
+  const linkedSlugs = new Set<string>()
+  const rawSections = guide.content?.sections || []
+  const sections: GuideSection[] = []
+  for (const section of rawSections) {
+    const updated = { ...section }
+    if (typeof updated.content === 'string' && updated.content) {
+      updated.content = await injectResortLinks(updated.content, undefined, linkedSlugs)
+    }
+    // Also process list item descriptions (shallow copy each item)
+    if (section.items && Array.isArray(section.items)) {
+      updated.items = await Promise.all(
+        section.items.map(async (item) => {
+          if ('description' in item && typeof item.description === 'string') {
+            return { ...item, description: await injectResortLinks(item.description, undefined, linkedSlugs) }
+          }
+          return item
+        })
+      ) as typeof section.items
+    }
+    sections.push(updated)
+  }
+
   return (
     <>
       <Navbar />
@@ -352,7 +380,7 @@ export default async function GuidePage({
           <div className="container mx-auto px-4">
             <div className="max-w-3xl mx-auto bg-white rounded-3xl shadow-lg p-8 md:p-12">
               <GuideContent
-                sections={guide.content?.sections || []}
+                sections={sections}
                 resortCountryMap={resortCountryMap}
               />
             </div>

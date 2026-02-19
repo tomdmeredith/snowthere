@@ -7,6 +7,14 @@
 
 import { supabase } from './supabase'
 
+// Common English words excluded from hyphenated resort name splitting
+// (e.g., "Saas-Fee" won't match "creek" or "falls" as standalone variants)
+const COMMON_WORDS = new Set([
+  'creek', 'falls', 'mount', 'valley', 'ridge', 'lake', 'park',
+  'village', 'resort', 'north', 'south', 'upper', 'lower', 'grand',
+  'great', 'royal', 'white', 'black', 'green', 'stone', 'field',
+])
+
 interface ResortLinkData {
   name: string
   slug: string
@@ -54,13 +62,15 @@ function generateNameVariants(name: string): string[] {
     variants.push(`Mount ${base}`, `Mont ${base}`, `Mt. ${base}`)
   }
 
-  // Handle hyphenated resort names (e.g., "Lech-Zürs" matches "Lech" or "Zürs")
-  // Only add components if they're substantial (3+ chars)
+  // Handle hyphenated resort names (e.g., "Serfaus-Fiss-Ladis" matches "Serfaus")
+  // Require 5+ chars to avoid false positives: "Fee" from "Saas-Fee" matching
+  // the English word "fee", or "Lech" from "Lech-Zürs" matching partial words.
+  // Also exclude common English words that happen to be long enough.
   if (name.includes('-')) {
     const parts = name.split('-')
     for (const part of parts) {
       const trimmed = part.trim()
-      if (trimmed.length >= 3) {
+      if (trimmed.length >= 5 && !COMMON_WORDS.has(trimmed.toLowerCase())) {
         variants.push(trimmed)
       }
     }

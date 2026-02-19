@@ -25,6 +25,7 @@ Resolution Tiers:
 """
 
 import html
+import logging
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -35,6 +36,51 @@ import httpx
 
 from ..config import get_settings
 from ..supabase_client import get_supabase_client
+
+logger = logging.getLogger(__name__)
+
+# Entity types that should never get Google Maps links
+_NON_GEOGRAPHIC_TYPES = frozenset({"product", "event"})
+
+
+# ============================================================================
+# INTERNAL RESORT LINK LOOKUP (for cross-link priority)
+# ============================================================================
+
+_published_resorts_cache: dict[str, dict[str, str]] | None = None
+
+
+def _get_published_resorts() -> dict[str, dict[str, str]]:
+    """Load published resort names → {slug, country} mapping. Cached per process."""
+    global _published_resorts_cache
+    if _published_resorts_cache is not None:
+        return _published_resorts_cache
+
+    try:
+        client = get_supabase_client()
+        response = (
+            client.table("resorts")
+            .select("name, slug, country")
+            .eq("status", "published")
+            .execute()
+        )
+
+        _published_resorts_cache = {}
+        for r in response.data or []:
+            _published_resorts_cache[r["name"].lower()] = {
+                "slug": r["slug"],
+                "country": r["country"],
+            }
+    except Exception as e:
+        logger.warning(f"[external_links] Failed to load published resorts: {e}")
+        _published_resorts_cache = {}
+    return _published_resorts_cache
+
+
+def _match_published_resort(entity_name: str) -> dict[str, str] | None:
+    """Check if entity name matches a published resort. Returns {slug, country} or None."""
+    resorts = _get_published_resorts()
+    return resorts.get(entity_name.lower())
 
 
 # ============================================================================
@@ -732,6 +778,11 @@ async def resolve_entity_link(
         ResolvedEntity with all available links, or None only if entity_type
         should be skipped entirely
     """
+    # === Skip non-geographic entities ===
+    # Products, passes, events etc. should never get Maps links
+    if entity_type in _NON_GEOGRAPHIC_TYPES:
+        return None
+
     # === Tier 1: Brand registry ===
     brand_result = _resolve_brand(name)
     if brand_result:
@@ -1130,6 +1181,50 @@ async def inject_external_links(
 
             # Skip low confidence extractions (lowered threshold for wider net)
             if entity.confidence < 0.5:
+                continue
+
+            # Check if entity matches a published resort → internal link priority
+            resort_match = _match_published_resort(entity.name)
+            if resort_match and resort_match["slug"] != resort_slug:
+                country_slug = resort_match["country"].lower().replace(" ", "-")
+                internal_href = f"/resorts/{country_slug}/{resort_match['slug']}"
+                safe_url = html.escape(internal_href, quote=True)
+                escaped_name = re.escape(entity.name)
+
+                # Try to inject the internal link
+                strong_pattern = rf'<strong>({escaped_name})</strong>(?![^<]*</a>)'
+                match = re.search(strong_pattern, modified_content, re.IGNORECASE)
+                if match:
+                    original_text = match.group(1)
+                    modified_content = (
+                        modified_content[:match.start()]
+                        + f'<a href="{safe_url}" class="resort-link"><strong>{original_text}</strong></a>'
+                        + modified_content[match.end():]
+                    )
+                else:
+                    plain_pattern = rf'(?<!["\'/])(?<!<)\b({escaped_name})\b(?![^<]*</a>)'
+                    match = re.search(plain_pattern, modified_content, re.IGNORECASE)
+                    if match:
+                        original_text = match.group(1)
+                        modified_content = (
+                            modified_content[:match.start(1)]
+                            + f'<a href="{safe_url}" class="resort-link">{original_text}</a>'
+                            + modified_content[match.end(1):]
+                        )
+
+                if match:
+                    injected_links.append(
+                        InjectedLink(
+                            entity_name=entity.name,
+                            entity_type="resort_crosslink",
+                            original_text=match.group(1) if match.lastindex else entity.name,
+                            url=internal_href,
+                            is_affiliate=False,
+                            rel_attribute="",
+                        )
+                    )
+                    already_linked.add(entity.name)
+                    links_added += 1
                 continue
 
             # Resolve entity to links (3-tier: brand → Places → Maps search)

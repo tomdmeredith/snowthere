@@ -808,6 +808,101 @@ async def get_pass_network_pricing(
 
 
 # =============================================================================
+# Lodging Discovery (dedicated pass for accommodation pricing)
+# =============================================================================
+
+
+async def discover_lodging_costs(
+    resort_name: str,
+    country: str,
+) -> dict[str, float] | None:
+    """Use Exa + Haiku to find nightly hotel/lodging prices for families.
+
+    Returns dict with lodging_budget_nightly, lodging_mid_nightly,
+    lodging_luxury_nightly (any found), or None if nothing found.
+    Cost: ~$0.009 (Exa search + Haiku interpretation).
+    """
+    if not settings.exa_api_key or not settings.anthropic_api_key:
+        return None
+
+    try:
+        from exa_py import Exa
+        exa = Exa(api_key=settings.exa_api_key)
+
+        results = exa.search(
+            f"{resort_name} {country} hotel accommodation prices per night family ski",
+            num_results=5,
+        )
+
+        log_cost("exa", 0.006, None, {"stage": "lodging_discovery", "resort": resort_name})
+
+        if not results.results:
+            return None
+
+        # Collect snippets from top results
+        snippets = []
+        for r in results.results[:5]:
+            text = getattr(r, "text", "") or getattr(r, "highlight", "") or ""
+            if text:
+                snippets.append(text[:500])
+
+        if not snippets:
+            return None
+
+        combined = "\n\n".join(snippets)
+        currency = get_currency_for_country(country)
+
+        client = anthropic.Anthropic(api_key=settings.anthropic_api_key)
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=200,
+            messages=[{"role": "user", "content": f"""Extract nightly hotel/accommodation prices for {resort_name}, {country} from these search results.
+
+I need per-night rates for a family (2 adults, 1-2 kids) during ski season:
+- Budget: cheapest decent option (apartment, hostel, basic hotel)
+- Mid-range: typical family hotel or apartment
+- Luxury: upscale hotel or chalet
+
+Search results:
+{combined}
+
+Return ONLY JSON:
+{{
+    "lodging_budget_nightly": <number or null>,
+    "lodging_mid_nightly": <number or null>,
+    "lodging_luxury_nightly": <number or null>,
+    "currency": "{currency}"
+}}
+
+Be conservative — only extract prices you're confident about."""}],
+        )
+
+        log_cost("anthropic", 0.003, None, {"stage": "lodging_interpretation", "resort": resort_name})
+
+        json_match = re.search(r"\{[^{}]+\}", response.content[0].text, re.DOTALL)
+        if not json_match:
+            return None
+
+        data = json.loads(json_match.group())
+        lodging = {}
+        # Currency-aware sanity bounds (convert to USD for comparison)
+        usd_rate = USD_RATES.get(currency.upper(), 1.0)
+        for key in ("lodging_budget_nightly", "lodging_mid_nightly", "lodging_luxury_nightly"):
+            if data.get(key):
+                price = float(data[key])
+                price_usd = price * usd_rate
+                # Sanity check in USD equivalent: $15-$3000/night
+                if 15 <= price_usd <= 3000:
+                    lodging[key] = price
+
+        return lodging if lodging else None
+
+    except Exception as e:
+        logger.warning(f"[costs] Lodging discovery failed for {resort_name}: {e}")
+        return None
+
+
+# =============================================================================
 # Main Orchestrator
 # =============================================================================
 
@@ -860,14 +955,14 @@ async def acquire_resort_costs(
                     scrape_result.source_urls.extend(corr.source_urls)
 
             await cache_pricing_result(resort_name, country, scrape_result)
-            return scrape_result
+            return await _supplement_lodging(scrape_result, resort_name, country)
 
     # Strategy 4: Tavily standalone (if Exa didn't find anything)
     tavily_result = await corroborate_pricing(resort_name, country)
     if tavily_result.success:
         tavily_result.source = "tavily"
         await cache_pricing_result(resort_name, country, tavily_result)
-        return tavily_result
+        return await _supplement_lodging(tavily_result, resort_name, country)
 
     # Strategy 5: Claude extraction from research snippets
     if research_snippets:
@@ -876,13 +971,30 @@ async def acquire_resort_costs(
         )
         if claude_result.success:
             await cache_pricing_result(resort_name, country, claude_result)
-            return claude_result
+            return await _supplement_lodging(claude_result, resort_name, country)
 
     logger.warning(f"[costs] All strategies failed for {resort_name}")
     return CostResult(
         success=False,
         error="All cost acquisition strategies failed",
     )
+
+
+async def _supplement_lodging(result: CostResult, resort_name: str, country: str) -> CostResult:
+    """If a CostResult is missing lodging data, run dedicated lodging discovery."""
+    if not result.success:
+        return result
+    if result.costs.get("lodging_mid_nightly"):
+        return result  # Already have lodging
+
+    lodging = await discover_lodging_costs(resort_name, country)
+    if lodging:
+        result.costs.update(lodging)
+        result.validation_notes.append(f"Lodging prices added via dedicated discovery ({len(lodging)} tiers)")
+        logger.info(f"[costs] Supplemented lodging for {resort_name}: {lodging}")
+        # Re-cache with lodging included (original cache_pricing_result ran before supplement)
+        await cache_pricing_result(resort_name, country, result)
+    return result
 
 
 # =============================================================================

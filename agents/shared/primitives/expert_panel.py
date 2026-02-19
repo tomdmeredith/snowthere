@@ -66,6 +66,7 @@ class ExpertRole:
     system_prompt: str
     evaluation_criteria: list[str]
     content_focus: str  # What aspect of content this expert cares about
+    advisory_only: bool = False  # If True, feedback included but vote doesn't count
 
 
 # --- Expert Definitions ---
@@ -155,6 +156,7 @@ SKEPTIC_EXPERT = ExpertRole(
         "Is there anything that feels like filler rather than substance?",
     ],
     content_focus="completeness gaps and unstated assumptions",
+    advisory_only=True,  # Feedback informs improvement but doesn't block publication
 )
 
 BUSY_PARENT_EXPERT = ExpertRole(
@@ -410,14 +412,17 @@ async def run_expert_panel(
         else:
             votes.append(result)
 
-    # Aggregate
-    approve_count = sum(1 for v in votes if v.verdict == "approve")
-    improve_count = sum(1 for v in votes if v.verdict == "improve")
-    reject_count = sum(1 for v in votes if v.verdict == "reject")
+    # Aggregate — exclude advisory_only experts from vote count
+    advisory_names = {e.name for e in experts if e.advisory_only}
+    voting = [v for v in votes if v.agent_name not in advisory_names]
 
-    # Majority approval: more approves than non-approves
-    total = len(votes)
-    approved = approve_count > total / 2
+    approve_count = sum(1 for v in voting if v.verdict == "approve")
+    improve_count = sum(1 for v in voting if v.verdict == "improve")
+    reject_count = sum(1 for v in voting if v.verdict == "reject")
+
+    # Majority approval: more approves than non-approves (among voting experts)
+    total = len(voting)
+    approved = approve_count > total / 2 if total > 0 else False
 
     # Combine issues and suggestions
     all_issues = []
@@ -490,9 +495,10 @@ async def review_and_summarize(
         )
 
     verdict = "APPROVED" if panel.approved else "NEEDS IMPROVEMENT"
+    total_voting = panel.approve_count + panel.improve_count + panel.reject_count
     summary = (
         f"Panel verdict: {verdict} "
-        f"({panel.approve_count}/{len(panel.votes)} approved)\n"
+        f"({panel.approve_count}/{total_voting} voting approved)\n"
         + "\n".join(summary_parts)
     )
 
@@ -557,6 +563,7 @@ class ExpertApprovalLoopResult:
     iterations: int
     panel_history: list[PanelResult] = field(default_factory=list)
     final_issues: list[str] = field(default_factory=list)
+    low_confidence: bool = False  # True if published despite not reaching full approval
 
 
 async def improve_content_from_panel(
@@ -696,8 +703,24 @@ async def expert_approval_loop(
                 voice_profile=voice_profile,
             )
         else:
-            # Max iterations reached
+            # Max iterations reached — check for low-confidence publish
+            # If at least half the voting experts approved, publish with low_confidence flag
             final = apply_voice_cleanup(current_content)
+            total_voting = panel_result.approve_count + panel_result.improve_count + panel_result.reject_count
+            near_majority = total_voting > 0 and panel_result.approve_count >= total_voting / 2
+            if near_majority and panel_result.approve_count >= 2:
+                logger.info(
+                    f"[expert_panel] Low-confidence publish: {panel_result.approve_count} approvals "
+                    f"after {iteration} iterations"
+                )
+                return ExpertApprovalLoopResult(
+                    final_content=final,
+                    approved=True,
+                    low_confidence=True,
+                    iterations=iteration,
+                    panel_history=panel_history,
+                    final_issues=panel_result.combined_issues,
+                )
             return ExpertApprovalLoopResult(
                 final_content=final,
                 approved=False,

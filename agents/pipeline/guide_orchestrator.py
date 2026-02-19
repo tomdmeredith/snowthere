@@ -152,26 +152,8 @@ async def generate_single_guide(
         if approval.approved and approval.final_content is not None:
             content = approval.final_content
 
-        # Stage 5.5: Inject internal resort links into guide prose
-        try:
-            from shared.primitives.publishing import inject_internal_resort_links
-            client = get_supabase_client()
-            published_resorts_resp = (
-                client.table("resorts")
-                .select("name, slug, country")
-                .eq("status", "published")
-                .execute()
-            )
-            published_resorts = published_resorts_resp.data or []
-            if published_resorts and isinstance(content, dict):
-                for section_key, section_val in content.items():
-                    if isinstance(section_val, str) and len(section_val) > 100:
-                        content[section_key] = inject_internal_resort_links(
-                            section_val, published_resorts
-                        )
-                logger.info(f"  Injected internal resort links into guide prose")
-        except Exception as e:
-            logger.warning(f"  Internal link injection failed (non-fatal): {e}")
+        # Stage 5.5: Resort links now injected at render-time via resort-linker.ts
+        # (always fresh, handles new resort publications automatically)
 
         # Stage 6: Create guide in database
         logger.info(f"  Creating guide in database...")
@@ -223,9 +205,20 @@ async def generate_single_guide(
         # Stage 7: Publish or draft based on approval
         final_status = "draft"
         if approval.approved:
-            logger.info(f"  Publishing guide...")
+            confidence_note = " (low confidence)" if getattr(approval, "low_confidence", False) else ""
+            logger.info(f"  Publishing guide{confidence_note}...")
             publish_guide(guide_id)
             final_status = "published"
+
+            # Store pending improvements for low-confidence guides
+            if getattr(approval, "low_confidence", False) and approval.final_issues:
+                try:
+                    client = get_supabase_client()
+                    client.table("guides").update({
+                        "metadata": {"pending_improvements": approval.final_issues[:10]}
+                    }).eq("id", guide_id).execute()
+                except Exception as e:
+                    logger.warning(f"  Failed to store pending improvements: {e}")
 
             # Revalidate the guides listing and individual page
             try:
@@ -234,16 +227,21 @@ async def generate_single_guide(
             except Exception as e:
                 logger.warning(f"Revalidation failed: {e}")
         else:
-            logger.info(f"  Saving as draft (not approved)")
+            # Log rejection reasons for debugging stuck guides
+            rejection_summary = "; ".join(approval.final_issues[:5]) if approval.final_issues else "no specific issues"
+            logger.warning(
+                f"  Saving as draft (not approved after {approval.iterations} iterations): "
+                f"{rejection_summary}"
+            )
 
         # Extract confidence from the last panel result
         confidence = 0.0
         if approval.panel_history:
             last_panel = approval.panel_history[-1]
-            if hasattr(last_panel, "evaluations") and last_panel.evaluations:
+            if hasattr(last_panel, "votes") and last_panel.votes:
                 confidence = sum(
-                    e.confidence for e in last_panel.evaluations
-                ) / len(last_panel.evaluations)
+                    v.confidence for v in last_panel.votes
+                ) / len(last_panel.votes)
 
         return GuideResult(
             success=True,

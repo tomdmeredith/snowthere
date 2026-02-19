@@ -1314,6 +1314,18 @@ def _classify_entity_type(name: str, section_name: str | None = None) -> str:
     rental_kw = {"rental", "sport", "intersport", "christy sports"}
     childcare_kw = {"kinderland", "kids club", "childcare", "nursery", "crèche", "daycare", "murmli"}
     transport_kw = {"railway", "shuttle", "bus", "transfer", "airlines", "train"}
+    # Multi-word product/event phrases checked AFTER specific-type keywords.
+    # This avoids false positives: "Park City" won't match "card", "Race Creek Lodge"
+    # won't match "race". Specific types (hotel, restaurant) take priority.
+    product_phrases = {"ski pass", "lift pass", "lift ticket", "day pass", "season pass",
+                       "multi-day pass", "day ticket", "season ticket", "gift card",
+                       "voucher", "insurance plan", "bundle", "package deal", "membership"}
+    event_phrases = {"ski festival", "ski race", "competition", "championship",
+                     "world cup", "ski series"}
+    # Single-word product/event suffixes — only match when entity name ENDS with these
+    # (e.g., "Epic Local Pass" ends with "pass", but "Passauer Hütte" doesn't)
+    product_suffixes = {"pass", "ticket", "card", "voucher", "bundle", "package", "membership"}
+    event_suffixes = {"festival", "championship", "competition"}
 
     for kw in hotel_kw:
         if kw in name_lower:
@@ -1342,6 +1354,20 @@ def _classify_entity_type(name: str, section_name: str | None = None) -> str:
     for kw in transport_kw:
         if kw in name_lower:
             return "transport"
+
+    # Product/event detection AFTER specific types — prevents Maps links for non-geographic entities
+    words = name_lower.split()
+    last_word = words[-1] if words else ""
+    for phrase in product_phrases:
+        if phrase in name_lower:
+            return "product"
+    if last_word in product_suffixes:
+        return "product"
+    for phrase in event_phrases:
+        if phrase in name_lower:
+            return "event"
+    if last_word in event_suffixes:
+        return "event"
 
     # Fall back to section-based hint
     if section_name and section_name in section_type_map:

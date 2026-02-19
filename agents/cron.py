@@ -368,9 +368,10 @@ def main():
     # This advances subscribers through welcome sequences, sends due emails
     email_result = asyncio.run(run_email_sequences())
 
-    # Run weekly newsletter (Thursdays at 6am PT)
-    # Generates and sends Morning Brew-style digest to all subscribers
-    newsletter_result = asyncio.run(run_weekly_newsletter())
+    # DISABLED: Newsletter writing handed off to head of growth/GTM (Feb 2026)
+    # To re-enable: uncomment the line below
+    # newsletter_result = asyncio.run(run_weekly_newsletter())
+    newsletter_result = {"success": True, "status": "disabled", "message": "Newsletter generation disabled - managed by GTM team"}
 
     # Run guide generation (Monday and Thursday)
     # Produces 2 guides/week through autonomous discovery and 3-agent approval

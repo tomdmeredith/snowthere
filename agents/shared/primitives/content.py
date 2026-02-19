@@ -17,7 +17,7 @@ async def write_section(
     section_name: str,
     context: dict[str, Any],
     voice_profile: str = "snowthere_guide",
-    max_tokens: int = 1500,
+    max_tokens: int = 2500,
 ) -> str:
     """
     Generate a content section for a resort guide.
@@ -256,6 +256,8 @@ Format as JSON array:
 ]
 
 Answers should be concise (2-4 sentences) but helpful. Use the {profile.name} voice.
+
+CRITICAL: Use exact numbers, never hedge. Say "$85" not "roughly $85" or "around $85" or "approximately $85". If you don't know the exact number, give a specific realistic estimate without hedging qualifiers.
 """
 
     message = client.messages.create(

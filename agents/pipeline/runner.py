@@ -924,6 +924,18 @@ async def run_resort_pipeline(
             research_data=research_data,
         )
 
+        # Retry once on failure (calendar is cheap at ~$0.003)
+        if not calendar_result.success:
+            print(f"  ⚠️ Calendar first attempt failed: {calendar_result.error} — retrying...", file=sys.stderr)
+            import asyncio
+            await asyncio.sleep(2)
+            calendar_result = await generate_and_store_calendar(
+                resort_id=resort_id,
+                resort_name=resort_name,
+                country=country,
+                research_data=research_data,
+            )
+
         if calendar_result.success:
             log_cost("anthropic", 0.003, None, {"run_id": run_id, "stage": "calendar"})
             result["stages"]["calendar"] = {
@@ -933,17 +945,19 @@ async def run_resort_pipeline(
             print(f"✓ Calendar: {len(calendar_result.months)} months generated")
         else:
             result["stages"]["calendar"] = {"status": "failed", "error": calendar_result.error}
-            print(f"⚠️  Calendar: Failed - {calendar_result.error}")
+            print(f"  ❌ Calendar: Failed after retry - {calendar_result.error}", file=sys.stderr)
 
     except Exception as e:
-        # Calendar is non-critical - continue without it
+        import traceback
+        print(f"  ❌ Calendar exception: {e}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         log_reasoning(
             task_id=None,
             agent_name="pipeline_runner",
             action="calendar_failed",
-            reasoning=f"Calendar generation failed (non-critical): {e}",
+            reasoning=f"Calendar generation failed: {e}",
         )
-        result["stages"]["calendar"] = {"status": "skipped", "error": str(e)}
+        result["stages"]["calendar"] = {"status": "error", "error": str(e)}
 
     # =========================================================================
     # STAGE 3: Content Generation
@@ -1108,6 +1122,7 @@ async def run_resort_pipeline(
                 section_name=section,
                 context=content_context,
                 voice_profile="snowthere_guide",
+                max_tokens=2500,
             )
 
         # Generate FAQs
@@ -1210,9 +1225,33 @@ async def run_resort_pipeline(
                 # Good endings: </p>, </ul>, </ol>, </li>, period, etc.
                 if stripped and not re.search(r'(</p>|</ul>|</ol>|</li>|</h[1-6]>|</table>|\.|!|\?)\s*$', stripped):
                     truncated_sections.append(section)
+
+        # Retry truncated sections with higher max_tokens
         if truncated_sections:
-            print(f"  ⚠️ Truncated sections detected: {truncated_sections}", file=sys.stderr)
-            result["truncated_sections"] = truncated_sections
+            print(f"  ⚠️ Truncated sections detected: {truncated_sections} — retrying with max_tokens=4000", file=sys.stderr)
+            for section in truncated_sections:
+                retried = await write_section(
+                    section_name=section,
+                    context=content_context,
+                    voice_profile="snowthere_guide",
+                    max_tokens=4000,
+                )
+                content[section] = retried
+                log_cost("anthropic", 0.04, None, {"run_id": run_id, "stage": "truncation_retry", "section": section})
+
+            # Re-check after retry
+            still_truncated = []
+            for section in truncated_sections:
+                html = content.get(section, "")
+                if isinstance(html, str) and html:
+                    stripped = html.rstrip()
+                    if stripped and not re.search(r'(</p>|</ul>|</ol>|</li>|</h[1-6]>|</table>|\.|!|\?)\s*$', stripped):
+                        still_truncated.append(section)
+
+            if still_truncated:
+                print(f"  ❌ Still truncated after retry: {still_truncated}", file=sys.stderr)
+                result["truncated_sections"] = still_truncated
+                result["quality_gate_failed"] = True
 
         # Total sections = 6 regular + 1 quick_take (generated earlier)
         result["stages"]["content"] = {"status": "complete", "sections": len(sections) + 1}
