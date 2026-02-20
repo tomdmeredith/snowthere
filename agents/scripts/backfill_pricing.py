@@ -146,9 +146,10 @@ async def fix_resort_pricing(resort: dict, write: bool) -> dict:
                 update_data["lodging_mid_nightly"] = validated["lodging_mid_nightly"]
             if update_data:
                 update_data["currency"] = cost_result.currency or COUNTRY_CURRENCIES.get(country.lower(), "USD")
-                client.table("resort_costs").update(
-                    update_data
-                ).eq("resort_id", resort_id).execute()
+                update_data["resort_id"] = resort_id
+                client.table("resort_costs").upsert(
+                    update_data, on_conflict="resort_id"
+                ).execute()
                 # Update USD comparison columns for cross-country comparisons
                 currency = update_data.get("currency", "USD")
                 update_usd_columns(resort_id, update_data, currency)
