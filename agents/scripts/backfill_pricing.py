@@ -40,6 +40,7 @@ from shared.primitives.costs import (
     acquire_resort_costs,
     validate_costs,
     validate_price,
+    update_usd_columns,
     LIFT_TICKET_RANGES,
     COUNTRY_CURRENCIES,
 )
@@ -148,7 +149,10 @@ async def fix_resort_pricing(resort: dict, write: bool) -> dict:
                 client.table("resort_costs").update(
                     update_data
                 ).eq("resort_id", resort_id).execute()
-                print(f"    Written to DB")
+                # Update USD comparison columns for cross-country comparisons
+                currency = update_data.get("currency", "USD")
+                update_usd_columns(resort_id, update_data, currency)
+                print(f"    Written to DB (+ USD columns)")
 
         return {
             "name": name,
@@ -262,6 +266,9 @@ async def main():
         else:
             failed += 1
         print()
+
+        # Small delay to avoid rate limits on Exa + Anthropic APIs
+        await asyncio.sleep(1)
 
     print(f"Results: {fixed} fixed, {failed} failed")
     print(f"Daily spend: ${get_daily_spend():.2f}")

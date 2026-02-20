@@ -838,6 +838,54 @@ async def run_resort_pipeline(
         return result
 
     # =========================================================================
+    # STAGE 1.5: Resort Record (ensures resort_id exists for calendar + storage)
+    # =========================================================================
+    try:
+        slug = slugify(resort_name)
+        existing = get_resort_by_slug(slug, country)
+        if existing:
+            resort_id = existing["id"]
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="resort_record_found",
+                reasoning=f"Found existing resort (ID: {resort_id})",
+            )
+        else:
+            resort = create_resort(
+                name=resort_name,
+                country=country,
+                region=research_data.get("region", ""),
+                slug=slug,
+            )
+            if not resort or "id" not in resort:
+                raise ValueError(f"Failed to create resort record for {resort_name} - no ID returned")
+            resort_id = resort["id"]
+            log_reasoning(
+                task_id=None,
+                agent_name="pipeline_runner",
+                action="resort_record_created",
+                reasoning=f"Created new resort entry (ID: {resort_id})",
+            )
+
+            # Set coordinates from research data
+            lat = research_data.get("latitude")
+            lon = research_data.get("longitude")
+            if lat and lon:
+                update_resort(resort_id, {"latitude": lat, "longitude": lon})
+
+    except Exception as e:
+        log_reasoning(
+            task_id=None,
+            agent_name="pipeline_runner",
+            action="resort_record_failed",
+            reasoning=f"Failed to create/find resort record: {e}",
+        )
+        result["status"] = "failed"
+        result["error"] = f"Resort record creation failed: {e}"
+        return result
+
+    # =========================================================================
     # STAGE 2.5: Trail Map Data (OpenStreetMap)
     # =========================================================================
     trail_map_data = None
@@ -1286,58 +1334,17 @@ async def run_resort_pipeline(
             task_id=None,
             agent_name="pipeline_runner",
             action="start_storage",
-            reasoning="Storing resort data in Supabase",
+            reasoning=f"Storing resort data in Supabase (resort_id={resort_id})",
         )
 
-        slug = slugify(resort_name)
-
-        # Check if resort exists
-        existing = get_resort_by_slug(slug, country)
-
-        if existing:
-            resort_id = existing["id"]
-            log_reasoning(
-                task_id=None,
-                agent_name="pipeline_runner",
-                action="updating_existing",
-                reasoning=f"Found existing resort (ID: {resort_id}), updating content",
-            )
-        else:
-            # Create new resort
-            resort = create_resort(
-                name=resort_name,
-                country=country,
-                region=research_data.get("region", ""),
-                slug=slug,
-            )
-            # CRITICAL: Verify resort was created
-            if not resort or "id" not in resort:
-                raise ValueError(f"Failed to create resort record for {resort_name} - no ID returned")
-            resort_id = resort["id"]
-            log_reasoning(
-                task_id=None,
-                agent_name="pipeline_runner",
-                action="created_new",
-                reasoning=f"Created new resort entry (ID: {resort_id})",
-            )
-
-            # Extract coordinates for new resort
-            try:
-                from shared.primitives.research import extract_coordinates
-
-                coords = await extract_coordinates(resort_name, country)
-                if coords:
-                    update_resort(resort_id, {"latitude": coords[0], "longitude": coords[1]})
-                    print(f"  Coordinates: ({coords[0]}, {coords[1]})")
-                elif trail_map_data and trail_map_data.get("center_coords"):
-                    # Fallback: use trail map center coords from OSM data
-                    cc = trail_map_data["center_coords"]
-                    update_resort(resort_id, {"latitude": cc[0], "longitude": cc[1]})
-                    print(f"  Coordinates (from trail map): ({cc[0]}, {cc[1]})")
-                else:
-                    print(f"  Warning: No coordinates found for {resort_name}")
-            except Exception as e:
-                print(f"  Warning: Coordinate extraction failed: {e}")
+        # Resort record already created in Stage 1.5 — update coordinates
+        # from trail map if research didn't find them
+        if trail_map_data and trail_map_data.get("center_coords"):
+            existing_check = get_resort_by_slug(slugify(resort_name), country)
+            if existing_check and not existing_check.get("latitude"):
+                cc = trail_map_data["center_coords"]
+                update_resort(resort_id, {"latitude": cc[0], "longitude": cc[1]})
+                print(f"  Coordinates (from trail map): ({cc[0]}, {cc[1]})")
 
         # Calculate word count for SEO thin content detection
         content["word_count"] = calculate_content_word_count(content)

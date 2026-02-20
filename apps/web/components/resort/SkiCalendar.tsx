@@ -7,19 +7,28 @@ interface SkiCalendarProps {
 }
 
 const MONTH_MAP: Record<number, string> = {
-  12: 'December',
-  1: 'January',
-  2: 'February',
-  3: 'March',
-  4: 'April',
+  1: 'January', 2: 'February', 3: 'March', 4: 'April',
+  5: 'May', 6: 'June', 7: 'July', 8: 'August',
+  9: 'September', 10: 'October', 11: 'November', 12: 'December',
 }
 
 const MONTH_SHORT: Record<number, string> = {
-  12: 'Dec',
-  1: 'Jan',
-  2: 'Feb',
-  3: 'Mar',
-  4: 'Apr',
+  1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr',
+  5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Aug',
+  9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec',
+}
+
+// Hemisphere-aware sort ordering (matches SnowConditionsChart.tsx)
+const NORTH_ORDER = [12, 1, 2, 3, 4]
+const SOUTH_ORDER = [6, 7, 8, 9, 10]
+
+function getSortOrder(months: number[]): number[] {
+  const hasSouthern = months.some(m => m >= 6 && m <= 10)
+  const hasNorthern = months.some(m => m === 12 || (m >= 1 && m <= 4))
+
+  if (hasSouthern && !hasNorthern) return SOUTH_ORDER
+  if (hasNorthern) return NORTH_ORDER
+  return [...months].sort((a, b) => a - b)
 }
 
 const SnowDots = ({ score }: { score: number | null }) => {
@@ -101,10 +110,13 @@ const FamilyScoreBadge = ({ score }: { score: number | null }) => {
 }
 
 export function SkiCalendar({ calendar }: SkiCalendarProps) {
-  // Sort calendar by month order for ski season (Dec-Apr)
-  const sortOrder = [12, 1, 2, 3, 4]
+  // Hemisphere-aware sort: northern (Dec-Apr) or southern (Jun-Oct)
+  const months = calendar.map(c => c.month)
+  const sortOrder = getSortOrder(months)
   const sortedCalendar = [...calendar].sort((a, b) => {
-    return sortOrder.indexOf(a.month) - sortOrder.indexOf(b.month)
+    const ai = sortOrder.indexOf(a.month)
+    const bi = sortOrder.indexOf(b.month)
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
   })
 
   // Find best month
