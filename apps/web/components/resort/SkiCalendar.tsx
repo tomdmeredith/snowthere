@@ -32,7 +32,7 @@ function getSortOrder(months: number[]): number[] {
 }
 
 const SnowQualityBadge = ({ score }: { score: number | null }) => {
-  if (!score) return <span className="text-dark-300">—</span>
+  if (score === null || score === undefined) return <span className="text-dark-300">—</span>
   if (score >= 5) {
     return (
       <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-teal-50 to-mint-50 text-teal-700 px-3 py-1.5 text-xs font-semibold rounded-full border border-teal-200 shadow-sm">
@@ -102,7 +102,7 @@ const CrowdBadge = ({ level }: { level: string | null }) => {
 }
 
 const FamilyScoreBadge = ({ score }: { score: number | null }) => {
-  if (!score) return <span className="text-dark-300">—</span>
+  if (score === null || score === undefined) return <span className="text-dark-300">—</span>
 
   // Design-5: Use gradients for better scores
   if (score >= 9) {
