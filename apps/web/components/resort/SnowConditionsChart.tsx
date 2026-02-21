@@ -1,20 +1,11 @@
 'use client'
 
 import { SkiQualityCalendar } from '@/lib/database.types'
+import { MONTH_SHORT, sortCalendar, findBestMonth } from '@/lib/calendar-utils'
 import { motion } from 'framer-motion'
 
 interface SnowConditionsChartProps {
   calendar: SkiQualityCalendar[]
-}
-
-// Northern hemisphere: Dec-Apr; Southern: Jun-Oct
-const NORTH_ORDER = [12, 1, 2, 3, 4]
-const SOUTH_ORDER = [6, 7, 8, 9, 10]
-
-const MONTH_LABELS: Record<number, string> = {
-  1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May',
-  6: 'Jun', 7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct',
-  11: 'Nov', 12: 'Dec',
 }
 
 const CROWD_LABELS: Record<string, string> = {
@@ -35,33 +26,11 @@ function getBarColor(score: number): string {
   return 'from-coral-400 to-coral-500'
 }
 
-function getSortOrder(months: number[]): number[] {
-  const hasSouthern = months.some(m => m >= 6 && m <= 10)
-  const hasNorthern = months.some(m => m === 12 || (m >= 1 && m <= 4))
-
-  if (hasSouthern && !hasNorthern) return SOUTH_ORDER
-  if (hasNorthern) return NORTH_ORDER
-  // Fallback: sort by month number
-  return [...months].sort((a, b) => a - b)
-}
-
 export function SnowConditionsChart({ calendar }: SnowConditionsChartProps) {
   if (!calendar || calendar.length === 0) return null
 
-  const months = calendar.map(c => c.month)
-  const sortOrder = getSortOrder(months)
-
-  const sorted = [...calendar].sort((a, b) => {
-    const ai = sortOrder.indexOf(a.month)
-    const bi = sortOrder.indexOf(b.month)
-    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
-  })
-
-  const bestMonth = sorted.reduce((best, current) => {
-    if (!best.family_recommendation) return current
-    if (!current.family_recommendation) return best
-    return current.family_recommendation > best.family_recommendation ? current : best
-  }, sorted[0])
+  const sorted = sortCalendar(calendar)
+  const bestMonth = findBestMonth(sorted)
 
   const scores = sorted.map(r => r.family_recommendation ?? 0).filter(s => s > 0)
   const maxScore = Math.max(...scores, 1)
@@ -71,7 +40,7 @@ export function SnowConditionsChart({ calendar }: SnowConditionsChartProps) {
   return (
     <div
       role="img"
-      aria-label={`Snow conditions chart showing family scores by month. Best month: ${MONTH_LABELS[bestMonth?.month] ?? 'unknown'} with a score of ${bestMonth?.family_recommendation ?? 'N/A'} out of 10.`}
+      aria-label={`Snow conditions chart showing family scores by month. Best month: ${bestMonth ? MONTH_SHORT[bestMonth.month] : 'unknown'} with a score of ${bestMonth?.family_recommendation ?? 'N/A'} out of 10.`}
       className="rounded-2xl bg-white border border-dark-100 shadow-card p-6 sm:p-8"
     >
       <div className="relative flex items-end justify-center gap-2 sm:gap-4 h-52 sm:h-60">
@@ -135,7 +104,7 @@ export function SnowConditionsChart({ calendar }: SnowConditionsChartProps) {
 
               {/* Month label */}
               <span className="text-xs font-semibold text-dark-700">
-                {MONTH_LABELS[row.month] ?? row.month}
+                {MONTH_SHORT[row.month] ?? row.month}
               </span>
             </div>
           )
