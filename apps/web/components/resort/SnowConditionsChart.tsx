@@ -63,7 +63,10 @@ export function SnowConditionsChart({ calendar }: SnowConditionsChartProps) {
     return current.family_recommendation > best.family_recommendation ? current : best
   }, sorted[0])
 
-  const maxScore = Math.max(...sorted.map(r => r.family_recommendation ?? 0), 1)
+  const scores = sorted.map(r => r.family_recommendation ?? 0).filter(s => s > 0)
+  const maxScore = Math.max(...scores, 1)
+  const minScore = Math.min(...scores, 0)
+  const range = maxScore - minScore || 1
 
   return (
     <div
@@ -71,14 +74,21 @@ export function SnowConditionsChart({ calendar }: SnowConditionsChartProps) {
       aria-label={`Snow conditions chart showing family scores by month. Best month: ${MONTH_LABELS[bestMonth?.month] ?? 'unknown'} with a score of ${bestMonth?.family_recommendation ?? 'N/A'} out of 10.`}
       className="rounded-2xl bg-white border border-dark-100 shadow-card p-6 sm:p-8"
     >
-      <div className="flex items-end justify-center gap-3 sm:gap-5 h-48 sm:h-56">
+      <div className="relative flex items-end justify-center gap-2 sm:gap-4 h-52 sm:h-60">
+        {/* Faint grid lines */}
+        <div className="absolute inset-0 flex flex-col justify-between pointer-events-none" aria-hidden="true">
+          <div className="border-b border-dashed border-dark-100/60" />
+          <div className="border-b border-dashed border-dark-100/60" />
+          <div className="border-b border-dashed border-dark-100/60" />
+          <div />
+        </div>
         {sorted.map((row, i) => {
           const score = row.family_recommendation ?? 0
-          const heightPercent = maxScore > 0 ? (score / 10) * 100 : 0
+          const heightPercent = score > 0 ? ((score - minScore) / range) * 70 + 25 : 4
           const isBest = row.id === bestMonth?.id && score >= 8
 
           return (
-            <div key={row.id} className="flex flex-col items-center gap-2 flex-1 max-w-16 sm:max-w-20">
+            <div key={row.id} className="flex flex-col items-center gap-1.5 flex-1 max-w-20 sm:max-w-24 z-10 h-full">
               {/* Best pill */}
               {isBest && (
                 <motion.span
@@ -97,7 +107,7 @@ export function SnowConditionsChart({ calendar }: SnowConditionsChartProps) {
               </span>
 
               {/* Bar */}
-              <div className="w-full flex items-end" style={{ height: '100%' }}>
+              <div className="w-full flex items-end flex-1">
                 <motion.div
                   initial={{ height: 0 }}
                   animate={{ height: `${Math.max(heightPercent, 4)}%` }}

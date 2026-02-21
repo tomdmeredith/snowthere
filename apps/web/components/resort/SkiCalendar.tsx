@@ -31,21 +31,45 @@ function getSortOrder(months: number[]): number[] {
   return [...months].sort((a, b) => a - b)
 }
 
-const SnowDots = ({ score }: { score: number | null }) => {
+const SnowQualityBadge = ({ score }: { score: number | null }) => {
   if (!score) return <span className="text-dark-300">—</span>
+  if (score >= 5) {
+    return (
+      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-teal-50 to-mint-50 text-teal-700 px-3 py-1.5 text-xs font-semibold rounded-full border border-teal-200 shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-gradient-to-br from-teal-400 to-teal-500" />
+        Amazing
+      </span>
+    )
+  }
+  if (score >= 4) {
+    return (
+      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-teal-50/70 to-mint-50/50 text-teal-600 px-3 py-1.5 text-xs font-semibold rounded-full border border-teal-200/70 shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-gradient-to-br from-teal-300 to-teal-400" />
+        Great
+      </span>
+    )
+  }
+  if (score >= 3) {
+    return (
+      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-gold-50 to-gold-100/50 text-gold-700 px-3 py-1.5 text-xs font-semibold rounded-full border border-gold-200 shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-gradient-to-br from-gold-400 to-gold-500" />
+        Good
+      </span>
+    )
+  }
+  if (score >= 2) {
+    return (
+      <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-coral-50/70 to-coral-100/30 text-coral-600 px-3 py-1.5 text-xs font-semibold rounded-full border border-coral-200/70 shadow-sm">
+        <span className="w-2 h-2 rounded-full bg-gradient-to-br from-coral-300 to-coral-400" />
+        Okay
+      </span>
+    )
+  }
   return (
-    <div className="flex justify-center gap-1.5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <div
-          key={i}
-          className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-            i <= score
-              ? 'bg-gradient-to-br from-teal-400 to-teal-500 shadow-sm'
-              : 'bg-dark-200'
-          }`}
-        />
-      ))}
-    </div>
+    <span className="inline-flex items-center gap-1.5 bg-gradient-to-r from-coral-50 to-coral-100/50 text-coral-700 px-3 py-1.5 text-xs font-semibold rounded-full border border-coral-200 shadow-sm">
+      <span className="w-2 h-2 rounded-full bg-gradient-to-br from-coral-400 to-coral-500" />
+      Slim
+    </span>
   )
 }
 
@@ -179,7 +203,7 @@ export function SkiCalendar({ calendar }: SkiCalendarProps) {
                 <div className="space-y-2">
                   <span className="text-dark-500 text-xs font-bold uppercase tracking-wider">Snow</span>
                   <div>
-                    <SnowDots score={row.snow_quality_score} />
+                    <SnowQualityBadge score={row.snow_quality_score} />
                   </div>
                 </div>
                 <div className="space-y-2">
@@ -254,7 +278,7 @@ export function SkiCalendar({ calendar }: SkiCalendarProps) {
                       </div>
                     </td>
                     <td className="px-6 py-5 text-center">
-                      <SnowDots score={row.snow_quality_score} />
+                      <SnowQualityBadge score={row.snow_quality_score} />
                     </td>
                     <td className="px-6 py-5 text-center">
                       <CrowdBadge level={row.crowd_level} />
@@ -274,7 +298,7 @@ export function SkiCalendar({ calendar }: SkiCalendarProps) {
       </div>
 
       <p className="text-xs text-dark-400 mt-5 text-center italic">
-        Snow rating shown as dots (1-5). Family score considers snow, crowds, prices, and school holidays.
+        Family score considers snow quality, crowd levels, pricing, and school holidays.
       </p>
     </section>
   )
